@@ -1,2 +1,3 @@
-# POF
-Pharo Object Fuzzer
+# En
+
+Object Graph Language and Object Graph Fuzzer
