@@ -1,8 +1,8 @@
 Class {
 	#name : 'RandomFuzzer',
 	#superclass : 'Object',
-	#category : 'ObjectFuzzer-RandomObjectFuzzer',
-	#package : 'ObjectFuzzer',
+	#category : 'En-RandomObjectFuzzer',
+	#package : 'En',
 	#tag : 'RandomObjectFuzzer'
 }
 

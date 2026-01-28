@@ -1,8 +1,8 @@
 Class {
 	#name : 'ProxyFuzzer',
 	#superclass : 'Object',
-	#category : 'ObjectFuzzer-ProxyObjectFuzzer',
-	#package : 'ObjectFuzzer',
+	#category : 'En-ProxyObjectFuzzer',
+	#package : 'En',
 	#tag : 'ProxyObjectFuzzer'
 }
 

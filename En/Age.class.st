@@ -4,8 +4,8 @@ Class {
 	#instVars : [
 		'value'
 	],
-	#category : 'ObjectFuzzer-Example',
-	#package : 'ObjectFuzzer',
+	#category : 'En-Example',
+	#package : 'En',
 	#tag : 'Example'
 }
 

@@ -4,8 +4,8 @@ Class {
 	#instVars : [
 		'history'
 	],
-	#category : 'ObjectFuzzer-ProxyObjectFuzzer',
-	#package : 'ObjectFuzzer',
+	#category : 'En-ProxyObjectFuzzer',
+	#package : 'En',
 	#tag : 'ProxyObjectFuzzer'
 }
 
