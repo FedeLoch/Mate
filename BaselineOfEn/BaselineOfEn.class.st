@@ -10,7 +10,7 @@ BaselineOfEn >> baseline: spec [
 
 	<baseline>
 	spec for: #common do: [
-		spec baseline: 'PBT' with: [ spec repository: 'github://FedeLoch/PBT:main' ].
+		spec baseline: 'PBT' with: [ spec repository: 'github://FedeLoch/Ume:main' ].
 		spec package: 'En' with: [ spec requires: #( 'PBT' ) ].
 	]
 ]
