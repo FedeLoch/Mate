@@ -17,4 +17,9 @@ EnPersonGrammar >> initialize [
 	self addTypeDeclaration: (EnInstanceDeclaration new type: Age; instanceVariableDeclarations: {
 		EnInstanceVariableDeclaration new name: 'value'; type: SmallInteger 
 	}).
+	
+		"
+		Person -> { age: Age }.
+		Age -> { value: SmallInteger }
+	"
 ]

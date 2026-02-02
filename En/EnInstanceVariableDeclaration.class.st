@@ -3,17 +3,18 @@ Class {
 	#superclass : 'Object',
 	#instVars : [
 		'name',
-		'type'
+		'type',
+		'constraint'
 	],
 	#category : 'En-Grammar',
 	#package : 'En',
 	#tag : 'Grammar'
 }
 
-{ #category : 'as yet unclassified' }
-EnInstanceVariableDeclaration >> gen [
+{ #category : 'accessing' }
+EnInstanceVariableDeclaration >> constraint: aConstraint [
 
-	1 halt.
+	constraint := aConstraint 
 ]
 
 { #category : 'accessing' }
