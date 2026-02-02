@@ -67,7 +67,7 @@ EnGenerator >> visitInstanceVariableDeclaration: instVarDecl from: context [
 
 	| type declaration |
 	
-	type := instVarDecl type getOne.
+	type := instVarDecl chooseOneType.
 	
 	declaration := grammar typeDeclarations at: type ifPresent: [ :decl | decl ] ifAbsent: [
 		self emptyInstanceDeclaration: type

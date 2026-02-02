@@ -1,15 +1,20 @@
 Class {
 	#name : 'EnInstanceVariableDeclaration',
-	#superclass : 'Object',
+	#superclass : 'EnDeclaration',
 	#instVars : [
 		'name',
-		'type',
 		'constraint'
 	],
 	#category : 'En-Grammar',
 	#package : 'En',
 	#tag : 'Grammar'
 }
+
+{ #category : 'as yet unclassified' }
+EnInstanceVariableDeclaration >> chooseOneType [
+
+	^ type getOne
+]
 
 { #category : 'accessing' }
 EnInstanceVariableDeclaration >> constraint: aConstraint [
@@ -27,16 +32,4 @@ EnInstanceVariableDeclaration >> name [
 EnInstanceVariableDeclaration >> name: instanceVariableName [
 
 	name := instanceVariableName 
-]
-
-{ #category : 'accessing' }
-EnInstanceVariableDeclaration >> type [
-
-	^ type
-]
-
-{ #category : 'accessing' }
-EnInstanceVariableDeclaration >> type: instanceVariableType [
-
-	type := instanceVariableType 
 ]

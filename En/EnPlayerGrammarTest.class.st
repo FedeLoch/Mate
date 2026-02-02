@@ -37,5 +37,4 @@ EnPlayerGrammarTest >> testGrammarCanGenerateAPersonAndValidatesItsConstraints [
 	self assert: ({ Rogue . Warrior . Mage } includes: player characterClass class).
 	self assert: ((0 to: 99) includes: player level).
 	self assert: (player missingExperienceForNextLevel >= 0).
-
 ]

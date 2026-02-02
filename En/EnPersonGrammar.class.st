@@ -7,6 +7,15 @@ Class {
 }
 
 { #category : 'accessing' }
+EnPersonGrammar >> defineGrammar [ 
+
+	^ '
+	 	Person -> { age: Age }.
+	 	Age -> { value: SmallInteger }.
+	'
+]
+
+{ #category : 'accessing' }
 EnPersonGrammar >> initialize [ 
 	
 	super initialize.
