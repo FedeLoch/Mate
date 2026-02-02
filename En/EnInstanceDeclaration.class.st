@@ -22,7 +22,7 @@ EnInstanceDeclaration >> instanceVariableDeclarations: decls [
 ]
 
 { #category : 'visiting' }
-EnInstanceDeclaration >> visit: generator from: context [
+EnInstanceDeclaration >> visiting: generator from: context [
 
 	^ generator visitInstanceDeclaration: self from: context 
 ]

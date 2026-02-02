@@ -57,5 +57,12 @@ EnTypeDeclaration >> updateVisits: context [
 { #category : 'visiting' }
 EnTypeDeclaration >> visit: generator from: context [
 
+	self updateVisits: context.
+	^ self visiting: generator from: context
+]
+
+{ #category : 'visiting' }
+EnTypeDeclaration >> visiting: generator from: context [
+
 	self subclassResponsibility 
 ]
