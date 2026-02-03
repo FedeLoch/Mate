@@ -22,8 +22,8 @@ Metacello new
 Define a `Person` with an `Age`:
 
 ```smalltalk
-	 	Person -> { age: Age }.
-	 	Age -> { value: SmallInteger }
+	Person -> { age: Age }.
+	Age -> { value: SmallInteger }
 ```
 
 ```smalltalk
