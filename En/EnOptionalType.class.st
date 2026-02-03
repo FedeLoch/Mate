@@ -31,7 +31,7 @@ EnOptionalType >> getOneFrom: context [
 	| totalVisits bestType bestScore |
 	
 	"If not enough data, use random selection"
-	totalVisits := visits values sum.
+	totalVisits := visits ifEmpty: [ 0 ] ifNotEmpty: [ visits values sum ].
 	totalVisits < (optionTypes size * 2) ifTrue: [ ^ self getOne ].
 	
 	bestType := nil.
