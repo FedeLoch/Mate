@@ -157,8 +157,8 @@ EnPlayerGrammar >> initialize
 	}).
 	
 	self addTypeDeclaration: (EnInstDecl new type: BlCustomVisuals; instanceVariableDeclarations:{
-		EnInstVarDecl new name: 'background:'; type: (BlPaintBackground | BlTransparentBackground).
-		EnInstVarDecl new name: 'background:'; type: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry).
+		EnInstVarDecl new name: 'background'; type: (BlPaintBackground | BlTransparentBackground).
+		EnInstVarDecl new name: 'geometry'; type: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry).
 		EnInstVarDecl new name: 'clipChildren:'; type: Boolean.
 	}).
 	
@@ -181,7 +181,7 @@ EnPlayerGrammar >> initialize
 	}).
 	
 	self addTypeDeclaration: (EnInstDecl new type: BlTriangleGeometry; instanceVariableDeclarations: {
-		EnInstVarDecl new name: 'orientation:'; constraint: (EnConstraint oneOf: { #top . #right . #left . #bottom }).
+		EnInstVarDecl new name: 'orientation'; constraint: (EnConstraint oneOf: { #top . #right . #left . #bottom }).
 	}).
 ```
 
