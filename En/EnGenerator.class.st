@@ -43,23 +43,42 @@ EnGenerator >> grammar: aGrammar [
 { #category : 'visiting' }
 EnGenerator >> visitBuiltinDeclaration: decl from: context [
 	
-	^ EnOGBuiltInNode new declaration: decl; context: context
+	^ self visitBuiltinDeclaration: decl from: context constraint: nil
+
+]
+
+{ #category : 'visiting' }
+EnGenerator >> visitBuiltinDeclaration: decl from: context constraint: aConstraint [
+	
+	^ EnOGBuiltInNode new 
+		declaration: decl; 
+		context: context;
+		constraint: aConstraint
 
 ]
 
 { #category : 'visiting' }
 EnGenerator >> visitClassDeclaration: decl from: context [ 
 
-	1 halt.
+	self error: 'Class declarations not yet implemented'.
 ]
 
 { #category : 'visiting' }
 EnGenerator >> visitInstanceDeclaration: decl from: context [ 
 
-	^ decl instanceVariableDeclarations inject: (EnOGInstanceNode new declaration: decl; context: context) into: [ :node :instVarDecl |
-		node addEdge: (self visitInstanceVariableDeclaration: instVarDecl from: context) at: instVarDecl name.
-		node.
-	]
+	| childContext node |
+	
+	"Create a new context with this declaration in the path"
+	childContext := context copy.
+	childContext push: decl.
+	
+	node := EnOGInstanceNode new declaration: decl; context: childContext.
+	
+	decl instanceVariableDeclarations do: [ :instVarDecl |
+		node addEdge: (self visitInstanceVariableDeclaration: instVarDecl from: childContext) at: instVarDecl name.
+	].
+
+	^ node
 ]
 
 { #category : 'visiting' }
@@ -67,10 +86,16 @@ EnGenerator >> visitInstanceVariableDeclaration: instVarDecl from: context [
 
 	| type declaration |
 	
-	type := instVarDecl chooseOneType.
+	type := instVarDecl chooseOneTypeFrom: context.
 	
 	declaration := grammar typeDeclarations at: type ifPresent: [ :decl | decl ] ifAbsent: [
 		self emptyInstanceDeclaration: type
+	].
+	
+	"Pass constraint through for built-in types"
+	"TODO: review this, don't use if"
+	(declaration isKindOf: EnBuiltInDeclaration) ifTrue: [
+		^ self visitBuiltinDeclaration: declaration from: context constraint: instVarDecl constraint
 	].
 	
 	^ declaration visit: self from: context

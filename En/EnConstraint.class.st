@@ -23,6 +23,12 @@ EnConstraint class >> greaterThan: aValue [
 ]
 
 { #category : 'as yet unclassified' }
+EnConstraint >> universe [ 
+
+	^ universe
+]
+
+{ #category : 'as yet unclassified' }
 EnConstraint >> universe: aUniverse [ 
 
 	universe := aUniverse

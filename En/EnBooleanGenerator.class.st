@@ -5,3 +5,9 @@ Class {
 	#package : 'En',
 	#tag : 'BuiltIn Generators'
 }
+
+{ #category : 'translating' }
+EnBooleanGenerator >> generate [
+
+	^ { true . false } atRandom
+]

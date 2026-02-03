@@ -19,15 +19,33 @@ EnOGDerivationNode >> addEdge: anEdge at: key [
 ]
 
 { #category : 'accessing' }
+EnOGDerivationNode >> context [
+
+	^ context
+]
+
+{ #category : 'accessing' }
 EnOGDerivationNode >> context: aContext [
 
 	context := aContext 
 ]
 
 { #category : 'accessing' }
+EnOGDerivationNode >> declaration [
+
+	^ declaration
+]
+
+{ #category : 'accessing' }
 EnOGDerivationNode >> declaration: anEnInstanceDeclaration [ 
 
 	declaration := anEnInstanceDeclaration
+]
+
+{ #category : 'accessing' }
+EnOGDerivationNode >> edges [
+
+	^ edges
 ]
 
 { #category : 'as yet unclassified' }
@@ -52,7 +70,18 @@ EnOGDerivationNode >> instantiate [
 ]
 
 { #category : 'as yet unclassified' }
-EnOGDerivationNode >> recursiveBackPropagate: improvement from: context seen: set [
+EnOGDerivationNode >> recursiveBackPropagate: improvement from: aContext seen: set [
+	"Update this node's declaration and recursively propagate to children.
+	 The 'seen' set prevents infinite loops in cyclic graphs."
 
-	1 halt.
+	(set includes: self) ifTrue: [ ^ self ].
+	set add: self.
+	
+	"Update this declaration's reward"
+	declaration updateReward: improvement context: aContext.
+	
+	"Propagate to all child edges"
+	edges valuesDo: [ :childNode |
+		childNode recursiveBackPropagate: improvement from: aContext seen: set.
+	].
 ]

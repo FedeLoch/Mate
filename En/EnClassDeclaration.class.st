@@ -7,7 +7,7 @@ Class {
 }
 
 { #category : 'visiting' }
-EnClassDeclaration >> visiting: generator from: context [
+EnClassDeclaration >> visiting: aVisitor from: context [
 
-	^ generator visitClassDeclaration: self from: context 
+	^ aVisitor visitClassDeclaration: self from: context 
 ]

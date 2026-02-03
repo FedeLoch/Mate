@@ -11,3 +11,10 @@ EnBuiltInGenerator >> generate [
 
 	self subclassResponsibility 
 ]
+
+{ #category : 'translating' }
+EnBuiltInGenerator >> generateWithConstraint: aConstraint [
+	"TODO: Subclasses override it."
+
+	^ self generate
+]

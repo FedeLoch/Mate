@@ -16,6 +16,18 @@ EnInstanceVariableDeclaration >> chooseOneType [
 	^ type getOne
 ]
 
+{ #category : 'as yet unclassified' }
+EnInstanceVariableDeclaration >> chooseOneTypeFrom: context [
+
+	^ type getOneFrom: context
+]
+
+{ #category : 'accessing' }
+EnInstanceVariableDeclaration >> constraint [
+
+	^ constraint
+]
+
 { #category : 'accessing' }
 EnInstanceVariableDeclaration >> constraint: aConstraint [
 

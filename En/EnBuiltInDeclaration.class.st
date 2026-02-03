@@ -22,7 +22,7 @@ EnBuiltInDeclaration >> generator: aGenerator [
 ]
 
 { #category : 'visiting' }
-EnBuiltInDeclaration >> visiting: generator from: context [
+EnBuiltInDeclaration >> visiting: aVisitor from: context [
 
-	^ generator visitBuiltinDeclaration: self from: context 
+	^ aVisitor visitBuiltinDeclaration: self from: context 
 ]
