@@ -156,7 +156,7 @@ EnPlayerGrammar >> initialize
 		EnInstVarDecl new name: 'array'; type: (EnArray of: BlElement); constraint: (EnArrayConstraint sizeBetween: 0 and: 30)
 	}).
 	
-	self addTypeDeclaration: (EnInstVarDecl new type: BlCustomVisuals; instanceVariableDeclarations:{
+	self addTypeDeclaration: (EnInstDecl new type: BlCustomVisuals; instanceVariableDeclarations:{
 		EnInstVarDecl new name: 'background:'; type: (BlPaintBackground | BlTransparentBackground).
 		EnInstVarDecl new name: 'background:'; type: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry).
 		EnInstVarDecl new name: 'clipChildren:'; type: Boolean.
