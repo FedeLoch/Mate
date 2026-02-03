@@ -2,12 +2,19 @@ Class {
 	#name : 'EnGenerator',
 	#superclass : 'Object',
 	#instVars : [
-		'grammar'
+		'grammar',
+		'builtInGenerators'
 	],
 	#category : 'En-Parsing',
 	#package : 'En',
 	#tag : 'Parsing'
 }
+
+{ #category : 'visiting' }
+EnGenerator >> builInInstance: decl constraint: aConstraint [
+
+	^ (builtInGenerators at: decl type) generateWithConstraint: aConstraint
+]
 
 { #category : 'as yet unclassified' }
 EnGenerator >> emptyInstanceDeclaration: aClass [
@@ -18,7 +25,7 @@ EnGenerator >> emptyInstanceDeclaration: aClass [
 { #category : 'accessing' }
 EnGenerator >> gen: type [
 
-	^ (self gen: (grammar typeDeclarations at: type) from: EnContext new) instantiate
+	^ (self gen: (grammar typeDeclarations at: type) from: EnContext new) instance
 ]
 
 { #category : 'accessing' }
@@ -40,6 +47,28 @@ EnGenerator >> grammar: aGrammar [
 	grammar := aGrammar
 ]
 
+{ #category : 'accessing' }
+EnGenerator >> initialize [ 
+
+	super initialize.
+	
+	builtInGenerators := {
+		SmallInteger -> EnSmallIntegerGenerator new.
+		Float -> EnFloatGenerator new.
+		Boolean -> EnBooleanGenerator new.
+		String -> EnStringGenerator new
+	} asDictionary
+]
+
+{ #category : 'visiting' }
+EnGenerator >> objectInstance: node constraint: constraint [
+
+	^ node edges keys inject: node declaration type new into: [ :inst :edgeName |
+		inst instVarNamed: edgeName put: (node edges at: edgeName) instance.
+		inst
+	]
+]
+
 { #category : 'visiting' }
 EnGenerator >> visitBuiltinDeclaration: decl from: context [
 	
@@ -49,11 +78,12 @@ EnGenerator >> visitBuiltinDeclaration: decl from: context [
 
 { #category : 'visiting' }
 EnGenerator >> visitBuiltinDeclaration: decl from: context constraint: aConstraint [
+
+	| instance |
 	
-	^ EnOGBuiltInNode new 
-		declaration: decl; 
-		context: context;
-		constraint: aConstraint
+	instance := self builInInstance: decl constraint: aConstraint.
+
+	^ EnOGBuiltInNode new declaration: decl; instance: instance; context: context
 
 ]
 
@@ -77,6 +107,8 @@ EnGenerator >> visitInstanceDeclaration: decl from: context [
 	decl instanceVariableDeclarations do: [ :instVarDecl |
 		node addEdge: (self visitInstanceVariableDeclaration: instVarDecl from: childContext) at: instVarDecl name.
 	].
+
+	node instance: (self objectInstance: node constraint: nil).
 
 	^ node
 ]
