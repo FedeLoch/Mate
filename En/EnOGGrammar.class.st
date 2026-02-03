@@ -34,7 +34,8 @@ EnOGGrammar >> builtInTypeDeclarations [
 		SmallInteger -> EnSmallIntegerGenerator.
 		Float -> EnFloatGenerator.
 		Boolean -> EnBooleanGenerator.
-		String -> EnStringGenerator
+		String -> EnStringGenerator.
+		EnArray -> EnArrayGenerator
 	}.
 
 	^ builtinTypesDefinition inject: Dictionary new into: [ :dict :assoc | | type |

@@ -20,3 +20,9 @@ EnArray >> elementType: anElementType [
 
 	elementType := anElementType
 ]
+
+{ #category : 'as yet unclassified' }
+EnArray >> getOneFrom: anEnContext [ 
+	
+	^ self class
+]
