@@ -4,14 +4,17 @@
 
 # Mate - Object Graph Language
 
-Mate is an object graph language implementation that allows you to define grammars representing software system structures and generate valid object instances from those grammars. It supports:
+Mate is an object graph language implementation that allows you to define grammars representing software system structures and generate valid object instances from those grammars. To know more about Mate, visit the [Mate Language](https://github.com/FedeLoch/Mate/wiki/Mate-Language) page.
 
-- **Type constraints** — Specify valid ranges for primitive types
-- **Polymorphic types** — Use `|` operator for type alternatives
-- **Reward-based learning** — It learns which type choices lead to better outcomes
-- **Derivation trees** — Inspect generation structure before instantiation
+- [Mate Grammar Examples](https://github.com/FedeLoch/Mate/wiki/Grammar-Examples)
+- [How Mate Works](https://github.com/FedeLoch/Mate/wiki/How-Mate-Works)
+- [Derivation Model](https://github.com/FedeLoch/Mate/wiki/Derivation-Model)
+- [Fuzzing](https://github.com/FedeLoch/Mate/wiki/Fuzzing)
+- [Parsing](https://github.com/FedeLoch/Mate/wiki/Parsing)
+- [Object Graph Type Validation](https://github.com/FedeLoch/Mate/wiki/Object-Graph-Type-Validation)
+- [Dynamic Grammar Generation by Test Suites](https://github.com/FedeLoch/Mate/wiki/Dynamic-Grammar-generation-by-Test-Suites)
 
-## Getting Started
+## Quick Start
 
 ```Smalltalk
 Metacello new
