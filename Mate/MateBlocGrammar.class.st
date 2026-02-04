@@ -11,18 +11,18 @@ MateBlocGrammar >> defineGrammar [
 
 	^ '
 		BlElement -> {
-			children: BlElementArray,
+			children: BlChildrenArray,
 			visuals: BlCustomVisuals,
 			constraints: BlLayoutCommonConstraints
 		}.
 		
-		BlElementArray -> { 
+		BlChildrenArray -> { 
 			array: { type: [ BlElement ], sizeBetween: 0 and: 30 }
 		}.
 		
 		BlCustomVisuals -> { 
 			background: (BlPaintBackground | BlTransparentBackground),
-			geometry: (BlRectangleGeometry | BlElipseGeometry | BlTriangleGeometry),
+			geometry: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry),
 			clipChildren: Boolean,
 		}.
 		
