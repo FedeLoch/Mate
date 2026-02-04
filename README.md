@@ -1,5 +1,9 @@
 # En - Object Graph Language
 
+<p align="center">
+  <img src="images/mate.png" alt="Logo" width="100"/>
+</p>
+
 En is an object graph language implementation that allows you to define grammars representing software system structures and generate valid object instances from those grammars. It supports:
 
 - **Type constraints** — Specify valid ranges for primitive types
