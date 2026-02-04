@@ -51,6 +51,7 @@ MateDecl >> updateVisits: context [
 MateDecl >> visit: generator from: context [
 
 	self updateVisits: context.
+
 	^ self visiting: generator from: context
 ]
 

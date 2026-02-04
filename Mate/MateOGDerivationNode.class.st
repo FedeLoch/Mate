@@ -7,9 +7,9 @@ Class {
 		'context',
 		'instance'
 	],
-	#category : 'Mate-Parsing',
+	#category : 'Mate-Derivation Tree',
 	#package : 'Mate',
-	#tag : 'Parsing'
+	#tag : 'Derivation Tree'
 }
 
 { #category : 'initialization' }

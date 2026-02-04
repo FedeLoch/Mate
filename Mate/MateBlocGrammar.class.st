@@ -63,9 +63,8 @@ MateBlocGrammar >> initialize [
 		MateInstVarDecl new name: 'constraints'; type: BlLayoutCommonConstraints.
 	}).
 	
-	"Cómo hago esto ? El array no puede ser un builtin, tiene que ser generada la derivación con el array"
 	self addTypeDeclaration: (MateInstDecl new type: BlChildrenArray; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'array'; type: (MateArray of: BlElement); constraint: (MateArrayConstraint sizeBetween: 0 and: 30)
+		MateInstArrayVarDecl new name: 'array'; elementType: BlElement; sizeBetween: 0 and: 30.
 	}).
 	
 	self addTypeDeclaration: (MateInstDecl new type: BlCustomVisuals; instanceVariableDeclarations:{
@@ -93,6 +92,6 @@ MateBlocGrammar >> initialize [
 	}).
 	
 	self addTypeDeclaration: (MateInstDecl new type: BlTriangleGeometry; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'orientation'; constraint: (MateConstraint oneOf: { #top . #right . #left . #bottom }).
+		MateInstOneOfVarDecl new name: 'orientation'; options: { #top . #right . #left . #bottom }.
 	}).
 ]

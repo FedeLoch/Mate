@@ -1,9 +1,9 @@
 Class {
 	#name : 'MateOGInstanceNode',
 	#superclass : 'MateOGDerivationNode',
-	#category : 'Mate-Parsing',
+	#category : 'Mate-Derivation Tree',
 	#package : 'Mate',
-	#tag : 'Parsing'
+	#tag : 'Derivation Tree'
 }
 
 { #category : 'as yet unclassified' }

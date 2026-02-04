@@ -104,8 +104,9 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 	
 	node := MateOGInstanceNode new declaration: decl; context: childContext.
 	
-	decl instanceVariableDeclarations do: [ :instVarDecl |
-		node addEdge: (self visitInstanceVariableDeclaration: instVarDecl from: childContext) at: instVarDecl name.
+	decl instanceVariableDeclarations do: [ :instVarDecl | | edge |
+		edge := instVarDecl visit: self from: childContext.
+		node addEdge: edge at: instVarDecl name.
 	].
 
 	node instance: (self objectInstance: node constraint: nil).
@@ -119,6 +120,9 @@ MateGenerator >> visitInstanceVariableDeclaration: instVarDecl from: context [
 	| type declaration |
 	
 	type := instVarDecl chooseOneTypeFrom: context.
+	1halt.
+	
+	"Puede ser una instancia de un objecto"
 	
 	declaration := grammar typeDeclarations at: type ifPresent: [ :decl | decl ] ifAbsent: [
 		self emptyInstanceDeclaration: type

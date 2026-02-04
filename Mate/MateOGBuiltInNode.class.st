@@ -1,7 +1,7 @@
 Class {
 	#name : 'MateOGBuiltInNode',
 	#superclass : 'MateOGDerivationNode',
-	#category : 'Mate-Parsing',
+	#category : 'Mate-Derivation Tree',
 	#package : 'Mate',
-	#tag : 'Parsing'
+	#tag : 'Derivation Tree'
 }
