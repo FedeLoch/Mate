@@ -83,6 +83,9 @@ MateGenerator >> visitArrayDecl: decl from: context [
 
 	| node size edges childContext |
 	
+	"Check if we've exceeded max derivation height"
+	context level >= maxDerivationHeight ifTrue: [ ^ nil ].
+	
 	childContext := context copy.
 	childContext push: decl.
 	size := (decl minSize to: decl maxSize) atRandom.
@@ -145,6 +148,9 @@ MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 MateGenerator >> visitInstanceDeclaration: decl from: context [ 
 
 	| childContext node |
+	
+	"Check if we've exceeded max derivation height"
+	context level >= maxDerivationHeight ifTrue: [ ^ nil ].
 	
 	"Create a new context with this declaration in the path"
 	childContext := context copy.
