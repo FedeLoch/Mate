@@ -18,7 +18,6 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlChildrenArray [
 	| gen |
 	
 	gen := grammar gen: BlChildrenArray.
-	"TODO: limit the derivation tree height"
 	self assert: gen class equals: BlChildrenArray.
 	self assert: (gen array) class equals: Array.
 	self assert: ((0 to: 30) includes: gen array size).
@@ -48,7 +47,6 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlElement [
 	| gen |
 	
 	gen := grammar gen: BlElement.
-
 	self assert: (gen class) equals: BlElement.
 	self assert: (gen children class) equals: BlChildrenArray.
 	self assert: (gen visuals class) equals: BlCustomVisuals.

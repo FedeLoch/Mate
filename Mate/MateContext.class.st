@@ -41,6 +41,18 @@ MateContext >> initialize [
 ]
 
 { #category : 'accessing' }
+MateContext >> level [
+
+	^ level
+]
+
+{ #category : 'accessing' }
+MateContext >> level: anInteger [
+
+	level := anInteger
+]
+
+{ #category : 'accessing' }
 MateContext >> parentNode [
 
 	^ parentNode
@@ -62,18 +74,6 @@ MateContext >> path [
 MateContext >> path: aCollection [
 
 	path := aCollection
-]
-
-{ #category : 'accessing' }
-MateContext >> level [
-
-	^ level
-]
-
-{ #category : 'accessing' }
-MateContext >> level: anInteger [
-
-	level := anInteger
 ]
 
 { #category : 'navigation' }

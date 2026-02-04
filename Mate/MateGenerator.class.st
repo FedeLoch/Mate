@@ -56,7 +56,7 @@ MateGenerator >> grammar: aGrammar [
 MateGenerator >> initialize [ 
 
 	super initialize.
-	
+	maxDerivationHeight := 10.
 	builtInGenerators := {
 		SmallInteger -> MateSmallIntegerGenerator new.
 		Float -> MateFloatGenerator new.
@@ -65,8 +65,18 @@ MateGenerator >> initialize [
 		Color -> MateColorGenerator new.
 		Point -> MatePointGenerator new
 	} asDictionary.
-	
-	maxDerivationHeight := 100
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxDerivationHeight [
+
+	^ maxDerivationHeight
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxDerivationHeight: height [
+
+	maxDerivationHeight := height 
 ]
 
 { #category : 'visiting' }
@@ -83,15 +93,15 @@ MateGenerator >> visitArrayDecl: decl from: context [
 
 	| node size edges childContext |
 	
-	"Check if we've exceeded max derivation height"
-	context level >= maxDerivationHeight ifTrue: [ ^ nil ].
-	
 	childContext := context copy.
 	childContext push: decl.
-	size := (decl minSize to: decl maxSize) atRandom.
+
+	"Check if we've exceeded max derivation height"
+	size := (childContext level >= maxDerivationHeight) ifTrue: [ 0 ]
+		ifFalse: [ (decl minSize to: decl maxSize) atRandom ].
 	
 	node := MateOGDerivationNode new declaration: decl; context: childContext.
-	
+
 	edges := (1 to: size) collect: [ :i | | edge |
 		edge := self gen: decl elementType from: childContext.
 		node addEdge: edge at: i.
@@ -135,10 +145,6 @@ MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 	declaration := grammar typeDeclarations at: type ifPresent: #yourself ifAbsent: [
 		self emptyInstanceDeclaration: type
 	].
-"
-	declaration isBuiltin ifTrue: [
-		^ self genBuiltinDerivation declaration from: context constraint: instVarDecl constraint
-	]."
 
 	^ declaration visit: self from: context constraint: instVarDecl constraint
 
@@ -149,18 +155,18 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 
 	| childContext node |
 	
-	"Check if we've exceeded max derivation height"
-	context level >= maxDerivationHeight ifTrue: [ ^ nil ].
-	
 	"Create a new context with this declaration in the path"
 	childContext := context copy.
 	childContext push: decl.
 	
 	node := MateOGInstanceNode new declaration: decl; context: childContext.
 	
-	decl instanceVariableDeclarations do: [ :instVarDecl | | edge |
-		edge := instVarDecl visit: self from: childContext constraint: nil.
-		node addEdge: edge at: instVarDecl name.
+	"Check if we've exceeded max derivation height"
+	(childContext level >= maxDerivationHeight) ifFalse: [
+		decl instanceVariableDeclarations do: [ :instVarDecl | | edge |
+			edge := instVarDecl visit: self from: childContext constraint: nil.
+			node addEdge: edge at: instVarDecl name.
+		]
 	].
 
 	node instance: (self objectInstance: node constraint: nil).
