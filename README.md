@@ -4,8 +4,9 @@
 
 # Mate - Object Graph Language
 
-Mate is an object graph language implementation that allows you to define grammars representing software system structures and generate valid object instances from those grammars. To know more about Mate, visit the [Mate Language](https://github.com/FedeLoch/Mate/wiki/Mate-Language) page.
+Mate is an object graph language implementation that allows you to define grammars representing software system structures and generate valid object instances from those grammars. To know more about Mate:
 
+- [Mate Language](https://github.com/FedeLoch/Mate/wiki/Mate-Language)
 - [Mate Grammar Examples](https://github.com/FedeLoch/Mate/wiki/Grammar-Examples)
 - [How Mate Works](https://github.com/FedeLoch/Mate/wiki/How-Mate-Works)
 - [Derivation Model](https://github.com/FedeLoch/Mate/wiki/Derivation-Model)
