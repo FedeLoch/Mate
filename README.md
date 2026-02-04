@@ -1,8 +1,8 @@
-# Mate - Object Graph Language
-
 <p align="center">
   <img src="images/mate.png" alt="Logo" width="150"/>
 </p>
+
+# Mate - Object Graph Language
 
 Mate is an object graph language implementation that allows you to define grammars representing software system structures and generate valid object instances from those grammars. It supports:
 
