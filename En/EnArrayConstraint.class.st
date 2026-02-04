@@ -8,9 +8,9 @@ Class {
 	#classInstVars : [
 		'minSize'
 	],
-	#category : 'En-Grammar',
+	#category : 'En-Constraints',
 	#package : 'En',
-	#tag : 'Grammar'
+	#tag : 'Constraints'
 }
 
 { #category : 'as yet unclassified' }

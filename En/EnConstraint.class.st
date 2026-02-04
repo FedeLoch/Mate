@@ -4,9 +4,9 @@ Class {
 	#instVars : [
 		'universe'
 	],
-	#category : 'En-Grammar',
+	#category : 'En-Constraints',
 	#package : 'En',
-	#tag : 'Grammar'
+	#tag : 'Constraints'
 }
 
 { #category : 'comparing' }

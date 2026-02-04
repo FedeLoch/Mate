@@ -63,14 +63,15 @@ EnBlocGrammar >> initialize [
 		EnInstVarDecl new name: 'constraints'; type: BlLayoutCommonConstraints.
 	}).
 	
+	"Cómo hago esto ? El array no puede ser un builtin, tiene que ser generada la derivación con el array"
 	self addTypeDeclaration: (EnInstDecl new type: BlChildrenArray; instanceVariableDeclarations: {
 		EnInstVarDecl new name: 'array'; type: (EnArray of: BlElement); constraint: (EnArrayConstraint sizeBetween: 0 and: 30)
 	}).
 	
-	self addTypeDeclaration: (EnInstVarDecl new type: BlCustomVisuals; instanceVariableDeclarations:{
-		EnInstVarDecl new name: 'background:'; type: (BlPaintBackground | BlTransparentBackground).
-		EnInstVarDecl new name: 'background:'; type: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry).
-		EnInstVarDecl new name: 'clipChildren:'; type: Boolean.
+	self addTypeDeclaration: (EnInstDecl new type: BlCustomVisuals; instanceVariableDeclarations:{
+		EnInstVarDecl new name: 'background'; type: (BlPaintBackground | BlTransparentBackground).
+		EnInstVarDecl new name: 'geometry'; type: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry).
+		EnInstVarDecl new name: 'clipChildren'; type: Boolean.
 	}).
 	
 	self addTypeDeclaration: (EnInstDecl new type: BlLayoutCommonConstraints; instanceVariableDeclarations: { 	
@@ -92,6 +93,6 @@ EnBlocGrammar >> initialize [
 	}).
 	
 	self addTypeDeclaration: (EnInstDecl new type: BlTriangleGeometry; instanceVariableDeclarations: {
-		EnInstVarDecl new name: 'orientation:'; constraint: (EnConstraint oneOf: { #top . #right . #left . #bottom }).
+		EnInstVarDecl new name: 'orientation'; constraint: (EnConstraint oneOf: { #top . #right . #left . #bottom }).
 	}).
 ]

@@ -2,7 +2,7 @@ Class {
 	#name : 'EnArray',
 	#superclass : 'Object',
 	#instVars : [
-		'itemType'
+		'elementType'
 	],
 	#category : 'En-Custom Types',
 	#package : 'En',
@@ -10,19 +10,19 @@ Class {
 }
 
 { #category : 'instance creation' }
-EnArray class >> itemType: anItemType [
+EnArray class >> of: elementType [
 
-	itemType := anItemType
-]
-
-{ #category : 'instance creation' }
-EnArray class >> of: itemType [
-
-	^ self new itemType: itemType
+	^ self new elementType: elementType
 ]
 
 { #category : 'accessing' }
-EnArray >> itemType: anItemType [
+EnArray >> elementType: anElementType [
 
-	itemType := anItemType
+	elementType := anElementType
+]
+
+{ #category : 'as yet unclassified' }
+EnArray >> getOneFrom: anEnContext [ 
+	
+	^ self class
 ]

@@ -28,18 +28,12 @@ EnOGGrammar >> backpropagate: node improvement: improvement from: context [
 { #category : 'accessing' }
 EnOGGrammar >> builtInTypeDeclarations [
 
-	| builtinTypesDefinition |
+	| builtInTypes |
 
-	builtinTypesDefinition := {
-		SmallInteger -> EnSmallIntegerGenerator.
-		Float -> EnFloatGenerator.
-		Boolean -> EnBooleanGenerator.
-		String -> EnStringGenerator
-	}.
+	builtInTypes := { SmallInteger. Float . Boolean . String }.
 
-	^ builtinTypesDefinition inject: Dictionary new into: [ :dict :assoc | | type |
-		type := assoc key.
-		dict at: type put: (EnBuiltInDecl new type: type; grammar: self; generator: assoc value new).
+	^ builtInTypes inject: Dictionary new into: [ :dict :type |
+		dict at: type put: (EnBuiltInDecl new type: type; grammar: self).
 		dict
 	]
 ]

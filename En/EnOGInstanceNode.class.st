@@ -7,15 +7,6 @@ Class {
 }
 
 { #category : 'as yet unclassified' }
-EnOGInstanceNode >> getInstance [
-
-	^ edges keys inject: declaration type new into: [ :inst :edgeName |
-		inst instVarNamed: edgeName put: (edges at: edgeName) instantiate.
-		inst
-	]
-]
-
-{ #category : 'as yet unclassified' }
 EnOGInstanceNode >> recursiveBackPropagate: improvement from: aContext seen: set [
 	"Instance nodes propagate to their edges (instance variable values)"
 

@@ -48,12 +48,6 @@ EnOGDerivationNode >> edges [
 	^ edges
 ]
 
-{ #category : 'as yet unclassified' }
-EnOGDerivationNode >> getInstance [
-
-	self subclassResponsibility 
-]
-
 { #category : 'initialization' }
 EnOGDerivationNode >> initialize [ 
 	
@@ -62,11 +56,15 @@ EnOGDerivationNode >> initialize [
 ]
 
 { #category : 'as yet unclassified' }
-EnOGDerivationNode >> instantiate [
+EnOGDerivationNode >> instance [
 
-	instance ifNil: [ instance := self getInstance ].
-	
 	^ instance
+]
+
+{ #category : 'accessing' }
+EnOGDerivationNode >> instance: anInstance [
+
+	instance := anInstance 
 ]
 
 { #category : 'as yet unclassified' }
