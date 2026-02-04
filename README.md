@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/mate.png" alt="Logo" width="150"/>
+  <img src="images/mate.png" alt="Logo" width="200"/>
 </p>
 
 # Mate - Object Graph Language
