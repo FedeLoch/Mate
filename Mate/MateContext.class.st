@@ -3,7 +3,8 @@ Class {
 	#superclass : 'Object',
 	#instVars : [
 		'path',
-		'parentNode'
+		'parentNode',
+		'level'
 	],
 	#category : 'Mate-Parsing',
 	#package : 'Mate',
@@ -15,7 +16,8 @@ MateContext >> copy [
 
 	^ self class new 
 		path: path copy;
-		parentNode: parentNode
+		parentNode: parentNode;
+		level: level + 1
 ]
 
 { #category : 'accessing' }
@@ -35,6 +37,19 @@ MateContext >> initialize [
 
 	super initialize.
 	path := OrderedCollection new.
+	level := 0.
+]
+
+{ #category : 'accessing' }
+MateContext >> level [
+
+	^ level
+]
+
+{ #category : 'accessing' }
+MateContext >> level: anInteger [
+
+	level := anInteger
 ]
 
 { #category : 'accessing' }

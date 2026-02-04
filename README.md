@@ -108,42 +108,42 @@ player level.           "=> 47 (always 0-99)"
 
 ```smalltalk
 	BlElement -> {
-		children: BlElementArray,
+		children: BlChildrenArray,
 		visuals: BlCustomVisuals,
 		constraints: BlLayoutCommonConstraints
 	}.
 		
-	BlElementArray -> { 
-		array: { type: [ BlElement ], sizeBetween: 0 and: 30 }
-	}.
-		
-	BlCustomVisuals -> { 
-		background: (BlPaintBackground | BlTransparentBackground),
-		geometry: (BlRectangleGeometry | BlElipseGeometry | BlTriangleGeometry),
-		clipChildren: Boolean,
-	}.
-		
-	BlLayoutCommonConstraints -> {
-		position: Point,
-		vertical: BlLayoutCommonConstraintsAxis,
-		horizontal: BlLayoutCommonConstraintsAxis
-	}.
-		
-	BlLayoutCommonConstraintsAxis -> {
-		resizer: BlLayoutExactResizer
-	}.
-		
-	BlLayoutExactResizer -> {
-		size: SmallInteger
-	}.
-		
-	BlPaintBackground -> {
-		paint: Color
-	}.
-		
-	BlTriangleGeometry -> {
-		orientation: { oneOf: { #top . #right . #left . #bottom } }
-	}
+    BlChildrenArray -> { 
+        array: { type: [ BlElement ], sizeBetween: 0 and: 30 }
+    }.
+    
+    BlCustomVisuals -> { 
+        background: (BlPaintBackground | BlTransparentBackground),
+        geometry: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry),
+        clipChildren: Boolean,
+    }.
+    
+    BlLayoutCommonConstraints -> {
+        position: Point,
+        vertical: BlLayoutCommonConstraintsAxis,
+        horizontal: BlLayoutCommonConstraintsAxis
+    }.
+    
+    BlLayoutCommonConstraintsAxis -> {
+        resizer: BlLayoutExactResizer
+    }.
+    
+    BlLayoutExactResizer -> {
+        size: SmallInteger
+    }.
+    
+    BlPaintBackground -> {
+        paint: Color
+    }.
+    
+    BlTriangleGeometry -> {
+        orientation: { oneOf: { #top . #right . #left . #bottom } }
+    }
 ```
 
 ```smalltalk
@@ -157,7 +157,7 @@ MatePlayerGrammar >> initialize
 	}).
 	
 	self addTypeDeclaration: (MateInstDecl new type: BlChildrenArray; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'array'; type: (MateArray of: BlElement); constraint: (MateArrayConstraint sizeBetween: 0 and: 30)
+		MateInstArrayVarDecl new name: 'array'; elementType: BlElement; sizeBetween: 0 and: 30.
 	}).
 	
 	self addTypeDeclaration: (MateInstDecl new type: BlCustomVisuals; instanceVariableDeclarations:{
@@ -185,7 +185,7 @@ MatePlayerGrammar >> initialize
 	}).
 	
 	self addTypeDeclaration: (MateInstDecl new type: BlTriangleGeometry; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'orientation'; constraint: (MateConstraint oneOf: { #top . #right . #left . #bottom }).
+		MateInstOneOfVarDecl new name: 'orientation'; options: { #top . #right . #left . #bottom }.
 	}).
 ```
 
