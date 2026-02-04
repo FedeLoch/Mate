@@ -3,7 +3,8 @@ Class {
 	#superclass : 'Object',
 	#instVars : [
 		'grammar',
-		'builtInGenerators'
+		'builtInGenerators',
+		'maxDerivationHeight'
 	],
 	#category : 'Mate-Parsing',
 	#package : 'Mate',
@@ -63,7 +64,9 @@ MateGenerator >> initialize [
 		String -> MateStringGenerator new.
 		Color -> MateColorGenerator new.
 		Point -> MatePointGenerator new
-	} asDictionary
+	} asDictionary.
+	
+	maxDerivationHeight := 100
 ]
 
 { #category : 'visiting' }
