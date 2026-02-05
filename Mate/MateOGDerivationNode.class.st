@@ -98,22 +98,27 @@ MateOGDerivationNode >> recursiveBackPropagate: improvement from: aContext seen:
 
 { #category : 'rendering' }
 MateOGDerivationNode >> render [
-	
+
 	| canvas shapes |
-	
 	shapes := self shapes.
 	canvas := RSCanvas new.
 	canvas addAll: shapes.
 
-	RSLineBuilder arrowedLine withBorderAttachPoint; canvas: canvas; connectFrom: [ :e | e context parentNode ].
-	RSHorizontalTreeLayout new 
+	RSLineBuilder arrowedLine
+		withBorderAttachPoint;
+		canvas: canvas;
+		connectFrom: [ :e | e context parentNode ].
+
+	(shapes size >= 100
+		 ifTrue: [ RSRadialTreeLayout ]
+		 ifFalse: [ RSHorizontalDominanceTreeLayout ]) new
 		horizontalGap: 50;
 		verticalGap: 30;
 		on: canvas nodes.
-	
+
 	canvas @ RSCanvasController.
 	canvas @ RSZoomToFitCanvasInteraction.
-	
+
 	^ canvas
 ]
 
