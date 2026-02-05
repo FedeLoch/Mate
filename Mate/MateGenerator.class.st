@@ -159,7 +159,8 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 	childContext := context copy.
 	childContext push: decl.
 	
-	node := MateOGInstanceNode new declaration: decl; context: childContext.
+	node := MateOGInstanceNode new declaration: decl; context: context.
+	childContext parentNode: node.
 	
 	"Check if we've exceeded max derivation height"
 	(childContext level >= maxDerivationHeight) ifFalse: [

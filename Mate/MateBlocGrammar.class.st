@@ -17,7 +17,7 @@ MateBlocGrammar >> defineGrammar [
 		}.
 		
 		BlChildrenArray -> { 
-			array: { type: [ BlElement ], sizeBetween: 0 and: 30 }
+			array: { type: [ BlElement ], sizeBetween: 0 and: 10 }
 		}.
 		
 		BlCustomVisuals -> { 
@@ -64,7 +64,7 @@ MateBlocGrammar >> initialize [
 	}).
 	
 	self addTypeDeclaration: (MateInstDecl new type: BlChildrenArray; instanceVariableDeclarations: {
-		MateInstArrayVarDecl new name: 'array'; elementType: BlElement; sizeBetween: 0 and: 30.
+		MateInstArrayVarDecl new name: 'array'; elementType: BlElement; sizeBetween: 0 and: 10.
 	}).
 	
 	self addTypeDeclaration: (MateInstDecl new type: BlCustomVisuals; instanceVariableDeclarations:{

@@ -20,7 +20,7 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlChildrenArray [
 	gen := grammar gen: BlChildrenArray.
 	self assert: gen class equals: BlChildrenArray.
 	self assert: (gen array) class equals: Array.
-	self assert: ((0 to: 30) includes: gen array size).
+	self assert: ((0 to: 10) includes: gen array size).
 ]
 
 { #category : 'tests' }
