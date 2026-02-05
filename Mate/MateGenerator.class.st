@@ -138,7 +138,7 @@ MateGenerator >> visitClassDeclaration: decl from: context [
 { #category : 'visiting' }
 MateGenerator >> visitInstVarDecl: instVarDecl from: context [ 
 
-	| type declaration |
+	| type declaration derivation |
 	
 	type := instVarDecl chooseOneTypeFrom: context.
 	
@@ -146,8 +146,9 @@ MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 		self emptyInstanceDeclaration: type
 	].
 
-	^ declaration visit: self from: context constraint: instVarDecl constraint
+	derivation := declaration visit: self from: context constraint: instVarDecl constraint.
 
+	^ derivation declaration: instVarDecl
 ]
 
 { #category : 'visiting' }

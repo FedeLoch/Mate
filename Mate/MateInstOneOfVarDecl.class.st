@@ -28,6 +28,12 @@ MateInstOneOfVarDecl >> options: someOptions [
 	options := someOptions
 ]
 
+{ #category : 'as yet unclassified' }
+MateInstOneOfVarDecl >> updateReward: improvement context: context [
+
+	1 halt.
+]
+
 { #category : 'visiting' }
 MateInstOneOfVarDecl >> visiting: aVisitor from: context constraint: aConstraint [
 
