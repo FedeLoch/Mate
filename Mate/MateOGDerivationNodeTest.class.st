@@ -19,6 +19,18 @@ MateOGDerivationNodeTest >> blocElementDerivationRender [
 ]
 
 { #category : 'as yet unclassified' }
+MateOGDerivationNodeTest >> personDerivationRender [
+
+	<script: ' self new personDerivationRender'>
+	| generator derivation |
+	generator  := MatePersonGrammar new generator.
+	
+	derivation := generator gen: Person from: MateContext new.
+
+	^ derivation render inspect
+]
+
+{ #category : 'as yet unclassified' }
 MateOGDerivationNodeTest >> playerDerivationRender [
 
 	<script: ' self new playerDerivationRender'>

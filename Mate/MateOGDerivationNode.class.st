@@ -73,6 +73,12 @@ MateOGDerivationNode >> instance: anInstance [
 	instance := anInstance 
 ]
 
+{ #category : 'rendering' }
+MateOGDerivationNode >> nodeColor [
+	
+	^ Color fromHexString: '9B59B6'
+]
+
 { #category : 'as yet unclassified' }
 MateOGDerivationNode >> recursiveBackPropagate: improvement from: aContext seen: set [
 	"Update this node's declaration and recursively propagate to children.
@@ -98,29 +104,66 @@ MateOGDerivationNode >> render [
 	shapes := self shapes.
 	canvas := RSCanvas new.
 	canvas addAll: shapes.
-	
+
 	RSLineBuilder arrowedLine withBorderAttachPoint; canvas: canvas; connectFrom: [ :e | e context parentNode ].
-	RSTreeLayout on: canvas nodes.
+	RSHorizontalTreeLayout new 
+		horizontalGap: 50;
+		verticalGap: 30;
+		on: canvas nodes.
 	
 	canvas @ RSCanvasController.
+	canvas @ RSZoomToFitCanvasInteraction.
+	
 	^ canvas
 ]
 
 { #category : 'accessing' }
 MateOGDerivationNode >> shape [
 	
-	| label circle color |
+	| label box color composite |
 	
 	label := self asLabel.
-	color := RSColorPalette sequential blues3 range first.
+	color := self nodeColor.
 	
-	circle := RSEllipse new extent: label extent + 10; color: color.
+	"Rounded rectangle with gradient"
+	box := RSBox new 
+		extent: (label extent + (20@16));
+		cornerRadius: 8;
+		color: color;
+		border: (RSBorder new 
+			width: 2; 
+			color: (color mixed: 0.7 with: Color black)).
 	
-	^ RSComposite new draggable; model: self; shapes: (RSGroup with: circle with: label)
+	composite := RSComposite new
+		draggable;
+		model: self;
+		shapes: (RSGroup with: box with: label);
+		yourself.
+	
+	"Add popup on hover"
+	composite @ (RSPopup new text: [ :node | node tooltipText ]).
+	
+	^ composite
 ]
 
 { #category : 'accessing' }
 MateOGDerivationNode >> shapes [
 	
-	^ { self shape }, (edges flatCollect: #shapes)
+	^ { self shape }, (edges flatCollect: [ :edge | edge shapes ])
+]
+
+{ #category : 'rendering' }
+MateOGDerivationNode >> tooltipText [
+		
+	^ String streamContents: [ :s |
+		s nextPutAll: 'Type: '; nextPutAll: declaration name asString.
+		instance ifNotNil: [ 
+			s cr; nextPutAll: 'Value: '; nextPutAll: instance printString.
+		].
+		context ifNotNil: [
+			context level ifNotNil: [ :lvl |
+				s cr; nextPutAll: 'Level: '; nextPutAll: lvl asString.
+			].
+		].
+	]
 ]
