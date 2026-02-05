@@ -177,9 +177,10 @@ MateOGDerivationNode >> buildEdgesOn: canvas [
 				to: childShape;
 				color: (Color gray alpha: 0.6);
 				border: (RSBorder new color: (Color gray alpha: 0.6); width: 1.5);
-				markerEnd: (RSShapeFactory arrow 
-					size: 10; 
-					color: (Color gray alpha: 0.8)).
+				yourself.
+			line markerEnd: (RSShapeFactory arrow 
+				size: 10; 
+				color: (Color gray alpha: 0.8)).
 			
 			"Add edge label"
 			labelShape := RSLabel new
@@ -188,16 +189,7 @@ MateOGDerivationNode >> buildEdgesOn: canvas [
 				color: (Color gray darker);
 				yourself.
 			
-			line propertyAt: #label put: labelShape.
 			canvas add: labelShape.
-			
-			"Position label at midpoint of edge (will be adjusted after layout)"
-			line when: RSPositionChangedEvent do: [ :evt |
-				| mid |
-				mid := (line startPoint + line endPoint) / 2.
-				labelShape position: mid - (0@10).
-			].
-			
 			lines add: line.
 		].
 	].
