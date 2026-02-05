@@ -6,6 +6,12 @@ Class {
 	#tag : 'Derivation Tree'
 }
 
+{ #category : 'rendering' }
+MateOGInstanceNode >> nodeColor [
+	
+	^ Color fromHexString: '3498DB'
+]
+
 { #category : 'as yet unclassified' }
 MateOGInstanceNode >> recursiveBackPropagate: improvement from: aContext seen: set [
 	"Instance nodes propagate to their edges (instance variable values)"
@@ -21,10 +27,3 @@ MateOGInstanceNode >> recursiveBackPropagate: improvement from: aContext seen: s
 		childNode recursiveBackPropagate: improvement from: aContext seen: set.
 	].
 ]
-
-{ #category : 'rendering' }
-MateOGInstanceNode >> nodeColor [
-	
-	^ Color fromHexString: '3498DB'
-]
-

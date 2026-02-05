@@ -11,4 +11,3 @@ MateOGBuiltInNode >> nodeColor [
 
 	^ Color fromHexString: '27AE60'
 ]
-

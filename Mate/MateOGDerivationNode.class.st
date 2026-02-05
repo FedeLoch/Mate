@@ -73,6 +73,12 @@ MateOGDerivationNode >> instance: anInstance [
 	instance := anInstance 
 ]
 
+{ #category : 'rendering' }
+MateOGDerivationNode >> nodeColor [
+	
+	^ Color fromHexString: '9B59B6'
+]
+
 { #category : 'as yet unclassified' }
 MateOGDerivationNode >> recursiveBackPropagate: improvement from: aContext seen: set [
 	"Update this node's declaration and recursively propagate to children.
@@ -93,30 +99,20 @@ MateOGDerivationNode >> recursiveBackPropagate: improvement from: aContext seen:
 { #category : 'rendering' }
 MateOGDerivationNode >> render [
 	
-	| canvas shapes lines |
+	| canvas shapes |
 	
 	shapes := self shapes.
 	canvas := RSCanvas new.
 	canvas addAll: shapes.
-	
-	"Build edges with labels"
-	lines := self buildEdgesOn: canvas.
-	canvas addAll: lines.
-	
-	"Apply horizontal tree layout for better readability"
+
+	RSLineBuilder arrowedLine withBorderAttachPoint; canvas: canvas; connectFrom: [ :e | e context parentNode ].
 	RSHorizontalTreeLayout new 
 		horizontalGap: 50;
 		verticalGap: 30;
 		on: canvas nodes.
 	
-	"Add interactions"
 	canvas @ RSCanvasController.
 	canvas @ RSZoomToFitCanvasInteraction.
-	
-	"Add minimap for overview navigation"
-	canvas addInteraction: (RSMiniMap new 
-		extent: 150@100;
-		yourself).
 	
 	^ canvas
 ]
@@ -157,59 +153,12 @@ MateOGDerivationNode >> shapes [
 ]
 
 { #category : 'rendering' }
-MateOGDerivationNode >> buildEdgesOn: canvas [
-	"Build labeled edges connecting parent to children"
-	
-	| lines |
-	lines := OrderedCollection new.
-	
-	edges keysAndValuesDo: [ :slotName :childNode |
-		| parentShape childShape line labelShape |
-		
-		parentShape := canvas shapeFromModel: self.
-		childShape := canvas shapeFromModel: childNode.
-		
-		(parentShape notNil and: [ childShape notNil ]) ifTrue: [
-			"Create curved arrow line"
-			line := RSBezier new
-				withVerticalAttachPoint;
-				from: parentShape;
-				to: childShape;
-				color: (Color gray alpha: 0.6);
-				border: (RSBorder new color: (Color gray alpha: 0.6); width: 1.5);
-				yourself.
-			line markerEnd: (RSShapeFactory arrow 
-				size: 10; 
-				color: (Color gray alpha: 0.8)).
-			
-			"Add edge label"
-			labelShape := RSLabel new
-				text: slotName asString;
-				fontSize: 9;
-				color: (Color gray darker);
-				yourself.
-			
-			canvas add: labelShape.
-			lines add: line.
-		].
-	].
-	
-	^ lines
-]
-
-{ #category : 'rendering' }
-MateOGDerivationNode >> nodeColor [
-	
-	^ Color fromHexString: '9B59B6'
-]
-
-{ #category : 'rendering' }
 MateOGDerivationNode >> tooltipText [
 		
 	^ String streamContents: [ :s |
 		s nextPutAll: 'Type: '; nextPutAll: declaration name asString.
 		instance ifNotNil: [ 
-			s cr; nextPutAll: 'Value: '; nextPutAll: instance printString truncateWithElipsisTo: 50.
+			s cr; nextPutAll: 'Value: '; nextPutAll: instance printString.
 		].
 		context ifNotNil: [
 			context level ifNotNil: [ :lvl |
@@ -218,4 +167,3 @@ MateOGDerivationNode >> tooltipText [
 		].
 	]
 ]
-
