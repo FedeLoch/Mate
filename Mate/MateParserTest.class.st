@@ -2,7 +2,8 @@ Class {
 	#name : 'MateParserTest',
 	#superclass : 'TestCase',
 	#instVars : [
-		'grammar'
+		'grammar',
+		'parser'
 	],
 	#category : 'Mate-Parsing Tests',
 	#package : 'Mate',
@@ -14,8 +15,9 @@ MateParserTest >> doTest: obj [
 
 	| derivation |
 	
-	derivation := grammar parser parse: obj.
+	derivation := parser parse: obj.
 	self assert: derivation instance equals: obj.
+	
 	1 halt.
 ]
 
@@ -28,5 +30,6 @@ MateParserTest >> newGrammar [
 { #category : 'running' }
 MateParserTest >> setUp [
 	super setUp.
-	grammar := self newGrammar
+	grammar := self newGrammar.
+	parser := grammar parser
 ]
