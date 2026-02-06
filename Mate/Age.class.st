@@ -9,14 +9,14 @@ Class {
 	#tag : 'Testing Models'
 }
 
-{ #category : 'accessing' }
-Age >> age: anAge [
-	
-	age := anAge 
-]
-
 { #category : 'evaluating' }
 Age >> value [ 
 
 	^ value
+]
+
+{ #category : 'accessing' }
+Age >> value: anAge [
+	
+	value := anAge 
 ]

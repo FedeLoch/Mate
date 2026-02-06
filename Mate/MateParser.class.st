@@ -10,7 +10,19 @@ Class {
 }
 
 { #category : 'accessing' }
+MateParser >> grammar [
+
+	^ grammar
+]
+
+{ #category : 'accessing' }
 MateParser >> grammar: aGrammar [
 
 	grammar := aGrammar 
+]
+
+{ #category : 'parsing' }
+MateParser >> parse: obj [ 
+
+	^ self parse: obj class from: MateContext new
 ]

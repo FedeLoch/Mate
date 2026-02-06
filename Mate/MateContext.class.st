@@ -6,9 +6,9 @@ Class {
 		'parentNode',
 		'level'
 	],
-	#category : 'Mate-Generation',
+	#category : 'Mate-Derivation Tree',
 	#package : 'Mate',
-	#tag : 'Generation'
+	#tag : 'Derivation Tree'
 }
 
 { #category : 'copying' }
