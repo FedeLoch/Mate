@@ -209,6 +209,6 @@ grammar := MatePlayerGrammar new.
 derivationTree := grammar gen: Player from: MateContext new.
 player := derivationTree instance.
 
-"After testing: propagate improvement score"
+"Propagating feedback for future generations"
 grammar backpropagate: derivationTree improvement: 42.
 ```
