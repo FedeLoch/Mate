@@ -1,8 +1,7 @@
 Class {
 	#name : 'MateGenerator',
-	#superclass : 'Object',
+	#superclass : 'MateGrammarVisitor',
 	#instVars : [
-		'grammar',
 		'builtInGenerators',
 		'maxDerivationHeight'
 	],
@@ -38,18 +37,6 @@ MateGenerator >> gen: type from: context [
 
 	^ decl visit: self from: context constraint: nil
 
-]
-
-{ #category : 'accessing' }
-MateGenerator >> grammar [
-
-	^ grammar	
-]
-
-{ #category : 'accessing' }
-MateGenerator >> grammar: aGrammar [
-
-	grammar := aGrammar
 ]
 
 { #category : 'accessing' }
@@ -136,7 +123,7 @@ MateGenerator >> visitClassDeclaration: decl from: context [
 ]
 
 { #category : 'visiting' }
-MateGenerator >> visitInstVarDecl: instVarDecl from: context [ 
+MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 
 	| type declaration derivation |
 	
@@ -152,7 +139,7 @@ MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 ]
 
 { #category : 'visiting' }
-MateGenerator >> visitInstanceDeclaration: decl from: context [ 
+MateGenerator >> visitInstanceDeclaration: decl from: context [
 
 	| childContext node |
 	
@@ -177,7 +164,7 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 ]
 
 { #category : 'visiting' }
-MateGenerator >> visitOneOfDecl: decl from: context [ 
+MateGenerator >> visitOneOfDecl: decl from: context [
 
 	| instance |
 	"TODO: Delete MateOGBuiltInNode and use only one node type?"
