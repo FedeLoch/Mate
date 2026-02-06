@@ -201,7 +201,7 @@ Propagate rewards through the derivation tree to improve future generations:
 ```smalltalk
 grammar := MatePlayerGrammar new.
 derivationTree := grammar gen: Player from: MateContext new.
-player := derivationTree instantiate.
+player := derivationTree instance.
 
 "After testing: propagate improvement score"
 grammar backpropagate: derivationTree improvement: 42.
