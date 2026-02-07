@@ -33,26 +33,15 @@ Metacello new
 
 ## Examples
 
-Define a `Person` with an `Age`:
+
+### `Person` Object Graph Grammar:
 
 ```smalltalk
-	Person -> { age: Age }.
-	Age -> { value: SmallInteger }
+Person -> { age: Age }
+Age -> { value: SmallInteger }
 ```
 
-```smalltalk
-MatePersonGrammar >> initialize
-    super initialize.
-    
-	self addTypeDeclaration: (MateInstDecl new type: Person; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'age'; type: Age 
-	}).
-	self addTypeDeclaration: (MateInstDecl new type: Age; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'value'; type: SmallInteger 
-	}).
-```
-
-Generate instances:
+Generating Person instances:
 
 ```smalltalk
 grammar := MatePersonGrammar new.
@@ -61,31 +50,10 @@ person := grammar gen: Person.
 person age.  "=> 42 (random SmallInteger)"
 ```
 
-### Polymorphic Types
-
-Use `|` for type alternatives:
+### `Player` Object Graph Grammar:
 
 ```smalltalk
-MateInstVarDecl new 
-    name: 'characterClass'; 
-    type: (Warrior | Rogue | Mage).
-```
-
-### Constrained Values
-
-Add constraints to limit generated values:
-
-```smalltalk
-MateInstanceVariableDeclaration new 
-    name: 'level'; 
-    type: SmallInteger; 
-    constraint: (MateConstraint between: 0 and: 99).
-```
-
-### Example 2: Player Grammar
-
-```smalltalk
-    Player -> {
+Player -> {
 			name: String,
 			characterClass: Warrior | Rogue | Mage,
 			level: { type: SmallInteger, between: 0 and: 99 },
@@ -93,17 +61,7 @@ MateInstanceVariableDeclaration new
 		}
 ```
 
-```smalltalk
-MatePlayerGrammar >> initialize
-    super initialize.
-    
-	self addTypeDeclaration: (MateInstDecl new type: Player; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'name'; type: String.
-		MateInstVarDecl new name: 'characterClass'; type: (Warrior | Rogue | Mage).
-		MateInstVarDecl new name: 'level'; type: SmallInteger; constraint: (MateConstraint between: 0 and: 99).
-		MateInstVarDecl new name: 'missingExperienceForNextLevel'; type: SmallInteger; constraint: (MateConstraint greaterThan: 0).
-	}).
-```
+Generating player instances:
 
 ```smalltalk
 grammar := MatePlayerGrammar new.
@@ -114,7 +72,7 @@ player characterClass.  "=> a Warrior"
 player level.           "=> 47 (always 0-99)"
 ```
 
-### Example 3: Bloc Element Grammar
+### `Bloc Element` Object Graph Grammar
 
 ```smalltalk
 	BlElement -> {
@@ -156,49 +114,12 @@ player level.           "=> 47 (always 0-99)"
     }
 ```
 
-```smalltalk
-MatePlayerGrammar >> initialize
-    super initialize.
-    
-    self addTypeDeclaration: (MateInstDecl new type: BlElement; instanceVariableDeclarations: { 	
-		MateInstVarDecl new name: 'children'; type: BlChildrenArray.
-		MateInstVarDecl new name: 'visuals'; type: BlCustomVisuals.
-		MateInstVarDecl new name: 'constraints'; type: BlLayoutCommonConstraints.
-	}).
-	
-	self addTypeDeclaration: (MateInstDecl new type: BlChildrenArray; instanceVariableDeclarations: {
-		MateInstArrayVarDecl new name: 'array'; elementType: BlElement; sizeBetween: 0 and: 30.
-	}).
-	
-	self addTypeDeclaration: (MateInstDecl new type: BlCustomVisuals; instanceVariableDeclarations:{
-		MateInstVarDecl new name: 'background'; type: (BlPaintBackground | BlTransparentBackground).
-		MateInstVarDecl new name: 'geometry'; type: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry).
-		MateInstVarDecl new name: 'clipChildren'; type: Boolean.
-	}).
-	
-	self addTypeDeclaration: (MateInstDecl new type: BlLayoutCommonConstraints; instanceVariableDeclarations: { 	
-		MateInstVarDecl new name: 'position'; type: Point.
-		MateInstVarDecl new name: 'vertical'; type: BlLayoutCommonConstraintsAxis.
-		MateInstVarDecl new name: 'horizontal'; type: BlLayoutCommonConstraintsAxis.
-	}).
-	
-	self addTypeDeclaration: (MateInstDecl new type: BlLayoutCommonConstraintsAxis; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'resizer'; type: BlLayoutExactResizer.
-	}).
-	
-	self addTypeDeclaration: (MateInstDecl new type: BlLayoutExactResizer; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'size'; type: SmallInteger.
-	}).
-	
-	self addTypeDeclaration: (MateInstDecl new type: BlPaintBackground; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'paint'; type: Color.
-	}).
-	
-	self addTypeDeclaration: (MateInstDecl new type: BlTriangleGeometry; instanceVariableDeclarations: {
-		MateInstOneOfVarDecl new name: 'orientation'; options: { #top . #right . #left . #bottom }.
-	}).
-```
+Generating Bloc Element instances:
 
+```smalltalk
+grammar := MateBlocGrammar new.
+element := grammar gen: BlElement.
+```
 
 ### Backpropagation
 
