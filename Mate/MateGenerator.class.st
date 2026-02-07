@@ -16,12 +16,6 @@ MateGenerator >> builInInstance: decl constraint: aConstraint [
 	^ (builtInGenerators at: decl type) generateWithConstraint: aConstraint
 ]
 
-{ #category : 'as yet unclassified' }
-MateGenerator >> emptyInstanceDeclaration: aClass [
-
-	^ MateInstDecl new type: aClass
-]
-
 { #category : 'accessing' }
 MateGenerator >> gen: type [
 
@@ -101,6 +95,7 @@ MateGenerator >> visitArrayDecl: decl from: context [
 { #category : 'visiting' }
 MateGenerator >> visitBuiltinDeclaration: decl from: context [
 	
+	" TODO: delete it"
 	^ self visitBuiltinDeclaration: decl from: context constraint: nil
 
 ]

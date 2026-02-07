@@ -1,6 +1,12 @@
 Extension { #name : 'Object' }
 
 { #category : '*Mate' }
+Object class >> acceptType: aType [
+	
+	^ self = aType
+]
+
+{ #category : '*Mate' }
 Object class >> getOne [
 
 	^ self
@@ -10,6 +16,12 @@ Object class >> getOne [
 Object class >> getOneFrom: context [
 	"For single types (not MateOptionalType), just return self ignoring context"
 	^ self
+]
+
+{ #category : '*Mate' }
+Object class >> types [
+
+	^ { self }
 ]
 
 { #category : '*Mate' }

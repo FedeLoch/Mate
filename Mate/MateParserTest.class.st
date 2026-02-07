@@ -16,9 +16,7 @@ MateParserTest >> doTest: obj [
 	| derivation |
 	
 	derivation := parser parse: obj.
-	self assert: derivation instance equals: obj.
-	
-	1 halt.
+	self assert: derivation instance equals: obj
 ]
 
 { #category : 'running' }

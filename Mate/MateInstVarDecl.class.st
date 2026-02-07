@@ -11,6 +11,12 @@ Class {
 }
 
 { #category : 'as yet unclassified' }
+MateInstVarDecl >> acceptType: aType [
+
+	^ type acceptType: aType
+]
+
+{ #category : 'as yet unclassified' }
 MateInstVarDecl >> chooseOneTypeFrom: context [
 
 	^ type getOneFrom: context
@@ -38,6 +44,12 @@ MateInstVarDecl >> name [
 MateInstVarDecl >> name: instanceVariableName [
 
 	name := instanceVariableName 
+]
+
+{ #category : 'accessing' }
+MateInstVarDecl >> types [
+
+	^ type types
 ]
 
 { #category : 'visiting' }

@@ -18,6 +18,12 @@ MateOptionalType class >> options: classes [
 	^ self new options: classes
 ]
 
+{ #category : 'visiting' }
+MateOptionalType >> acceptType: aType [
+
+	^ optionTypes includes: aType
+]
+
 { #category : 'as yet unclassified' }
 MateOptionalType >> getBestRewardedType: context [
 
@@ -103,6 +109,12 @@ MateOptionalType >> selectAtype: context [
 
 	"Case where we can choose a type by using previous reward information"
 	^ self getBestRewardedType: context
+]
+
+{ #category : 'visiting' }
+MateOptionalType >> types [
+
+	^ optionTypes
 ]
 
 { #category : 'as yet unclassified' }

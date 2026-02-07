@@ -9,6 +9,12 @@ Class {
 	#tag : 'Grammar'
 }
 
+{ #category : 'as yet unclassified' }
+MateGrammarVisitor >> emptyInstanceDeclaration: aClass [
+
+	^ MateInstDecl new type: aClass
+]
+
 { #category : 'accessing' }
 MateGrammarVisitor >> grammar [
 

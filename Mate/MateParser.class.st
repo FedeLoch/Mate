@@ -25,6 +25,41 @@ MateParser >> parse: type from: context [
 ]
 
 { #category : 'visiting' }
+MateParser >> visitBuiltinDeclaration: decl from: context constraint: aConstraint [
+
+	| instance |
+	
+	instance := context object.
+	
+	(instance isKindOf: decl type) ifFalse: [
+		self error: 'Expected instance of ', decl type name, ' but got ', instance class name.
+	].
+	
+	^ MateOGBuiltInNode new declaration: decl; instance: instance; context: context
+]
+
+{ #category : 'visiting' }
+MateParser >> visitInstVarDecl: instVarDecl from: context [
+
+	| instance declaration node type |
+	
+	instance := context object.
+	type := instance class.
+	
+	(instVarDecl acceptType: type) ifFalse: [
+		self error: 'Expected an instance of: ', instVarDecl types asString, ' in field: ', instVarDecl name, 'but it was:', type name
+	].
+	
+	declaration := grammar typeDeclarations at: type ifPresent: #yourself ifAbsent: [
+		self emptyInstanceDeclaration: type
+	].
+	
+	node := declaration visit: self from: context constraint: nil.
+	
+	^ node declaration: instVarDecl
+]
+
+{ #category : 'visiting' }
 MateParser >> visitInstanceDeclaration: decl from: context [
 
 	| instance childContext node |
@@ -35,17 +70,17 @@ MateParser >> visitInstanceDeclaration: decl from: context [
 		self error: 'Expected instance of ', decl type name, ' but got ', instance class name.
 	].
 
-	1 halt.
-	"Not sure how to define this"
-
 	childContext := context copy.
 	childContext push: decl.
 	
 	node := MateOGInstanceNode new declaration: decl; context: context; instance: instance.
 	childContext parentNode: node.
 	
-	decl instanceVariableDeclarations do: [ :instVarDecl | | edge |
-		edge := instVarDecl visit: self from: childContext constraint: nil.
+	decl instanceVariableDeclarations do: [ :instVarDecl | | edge specificContext |
+		specificContext := childContext copy.
+		specificContext object: (instance instVarNamed: instVarDecl name).
+
+		edge := instVarDecl visit: self from: specificContext constraint: nil.
 		node addEdge: edge at: instVarDecl name.
 	].
 	
