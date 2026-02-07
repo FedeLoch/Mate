@@ -298,3 +298,56 @@ MateLanguageParser >> createConstrainedDeclFrom: dict [
 	
 	^ decl
 ]
+
+{ #category : 'parsing' }
+MateLanguageParser >> parseNumber: stream [
+	"Simple integer parser"
+	| numStr |
+	numStr := String streamContents: [ :s |
+		[ stream peek isDigit ] whileTrue: [ s nextPut: stream next ]
+	].
+	^ numStr asNumber
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> parseSymbol: stream [
+	stream next. "#"
+	^ (self parseIdentifier: stream) asSymbol
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> parseIdentifier: stream [
+	^ String streamContents: [ :s |
+		[ stream peek isAlphaNumeric ] whileTrue: [ s nextPut: stream next ]
+	]
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> skipWhitespace: stream [
+	[ stream atEnd not and: [ stream peek <= 32 asCharacter ] ] whileTrue: [ stream next ]
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> match: string from: stream [
+	| pos |
+	pos := stream position.
+	string do: [ :char | 
+		stream atEnd ifTrue: [ stream position: pos. ^ false ].
+		(stream next = char) ifFalse: [ stream position: pos. ^ false ]
+	].
+	^ true
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> expect: string from: stream [
+	^ self match: string from: stream
+]
+
+{ #category : 'resolving' }
+MateLanguageParser >> resolveClass: aString [
+	"Mage, Warrior - generated classes? or existing?"
+	^ self class environment at: aString asSymbol ifAbsent: [ 
+		"For testing, maybe create dummy classes or error?"
+		self error: 'Class not found: ', aString
+	]
+]
