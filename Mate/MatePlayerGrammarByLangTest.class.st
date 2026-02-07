@@ -13,39 +13,12 @@ MatePlayerGrammarByLangTest >> newGrammar [
 ]
 
 { #category : 'tests' }
-MatePlayerGrammarByLangTest >> testGrammarCanGenerateAPlayer [
+MatePlayerGrammarByLangTest >> testGrammarPlayerDeclarationsMatch [
 
-	"Generalize test with a doTest grammar -> obj -> derivation -> obj"
-	| player |
-	
-	player := grammar gen: Player.
-	
-	self assert: (player class) equals: Player.
-	self assert: ({ Rogue . Warrior . Mage } includes: player characterClass class).
-]
-
-{ #category : 'tests' }
-MatePlayerGrammarByLangTest >> testGrammarCanGenerateAPlayerAndValidatesItsConstraints [
-
-	"Generalize test with a doTest grammar -> obj -> derivation -> obj"
-	| player |
-	
-	player := grammar gen: Player.
-
-	self assert: (player class) equals: Player.
-	self assert: player name class equals: ByteString.
-	self assert: ({ Rogue . Warrior . Mage } includes: player characterClass class).
-	self assert: ((0 to: 99) includes: player level).
-	self assert: (player missingExperienceForNextLevel >= 0).
-]
-
-{ #category : 'tests' }
-MatePlayerGrammarByLangTest >> testGrammarSaveRewardOnCharacterClassProduction [
-
-	| playerDerivation |
-	
-	playerDerivation := grammar generator gen: Player from: MateContext new.
-	
-	grammar backpropagate: playerDerivation improvement: 42.
-
+	self testDecl: Player expects: (MateInstDecl new type: Player; instanceVariableDeclarations: {
+		MateInstVarDecl new name: 'name'; type: ByteString.
+		MateInstVarDecl new name: 'characterClass'; type: (Warrior | Rogue | Mage).
+		MateInstVarDecl new name: 'level'; type: SmallInteger; constraint: (MateConstraint between: 0 and: 99).
+		MateInstVarDecl new name: 'missingExperienceForNextLevel'; type: SmallInteger; constraint: (MateConstraint greaterThan: 0).
+	})
 ]

@@ -11,6 +11,16 @@ Class {
 	#tag : 'Grammar'
 }
 
+{ #category : 'comparing' }
+MateInstArrayVarDecl >> = anObject [
+
+	super = anObject ifFalse: [ ^ false ].
+	
+	^ elementType = anObject elementType and: [ 
+		minSize = anObject minSize and: [ 
+			maxSize = anObject maxSize ] ]
+]
+
 { #category : 'visiting' }
 MateInstArrayVarDecl >> acceptSize: size [ 
 	
@@ -27,6 +37,12 @@ MateInstArrayVarDecl >> elementType [
 MateInstArrayVarDecl >> elementType: aType [
 
 	elementType := aType
+]
+
+{ #category : 'comparing' }
+MateInstArrayVarDecl >> hash [
+
+	^ ((super hash bitXor: elementType hash) bitXor: minSize hash) bitXor: maxSize hash
 ]
 
 { #category : 'accessing' }

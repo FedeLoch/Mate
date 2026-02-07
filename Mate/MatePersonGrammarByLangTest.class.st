@@ -13,15 +13,17 @@ MatePersonGrammarByLangTest >> newGrammar [
 ]
 
 { #category : 'tests' }
-MatePersonGrammarByLangTest >> testGrammarCanGenerateAPerson [
-
-	self assert: (grammar gen: Person) class equals: Person.
-	self assert: (grammar gen: Person) age class equals: SmallInteger
+MatePersonGrammarByLangTest >> testGrammarAgeDeclarationsMatch [
+	
+	self testDecl: Age expects: (MateInstDecl new type: Age; instanceVariableDeclarations: {
+		MateInstVarDecl new name: 'value'; type: SmallInteger 
+	})
 ]
 
 { #category : 'tests' }
-MatePersonGrammarByLangTest >> testGrammarCanGenerateAnAge [
+MatePersonGrammarByLangTest >> testGrammarPersonDeclarationsMatch [
 
-	self assert: (grammar gen: Age) class equals: Age.
-	self assert: (grammar gen: Age) value class equals: SmallInteger
+	self testDecl: Person expects: (MateInstDecl new type: Person; instanceVariableDeclarations: {
+		MateInstVarDecl new name: 'age'; type: Age 
+	})
 ]

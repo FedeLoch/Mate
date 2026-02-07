@@ -15,6 +15,6 @@ MatePlayerGrammarByLang >> defineObjectGraph [
 			characterClass: Warrior | Rogue | Mage,
 			level: { type: SmallInteger, between: 0 and: 99 },
 			missingExperienceForNextLevel: { type: SmallInteger, greaterThan: 0 }
-		}.
+		}
 	'
 ]

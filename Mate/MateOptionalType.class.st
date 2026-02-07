@@ -18,6 +18,15 @@ MateOptionalType class >> options: classes [
 	^ self new options: classes
 ]
 
+{ #category : 'comparing' }
+MateOptionalType >> = anObject [
+
+	self == anObject ifTrue: [ ^ true ].
+	self class = anObject class ifFalse: [ ^ false ].
+	
+	^ optionTypes = anObject types
+]
+
 { #category : 'visiting' }
 MateOptionalType >> acceptType: aType [
 
@@ -66,6 +75,12 @@ MateOptionalType >> getOneFrom: context [
 	self updateVisits: context selecting: selected.
 	
 	^ selected
+]
+
+{ #category : 'comparing' }
+MateOptionalType >> hash [
+
+	^ optionTypes hash
 ]
 
 { #category : 'initialization' }

@@ -28,6 +28,21 @@ MateConstraint class >> oneOf: array [
 	^ self new universe: array
 ]
 
+{ #category : 'comparing' }
+MateConstraint >> = anObject [
+
+	self == anObject ifTrue: [ ^ true ].
+	self class = anObject class ifFalse: [ ^ false ].
+	
+	^ universe = anObject universe
+]
+
+{ #category : 'comparing' }
+MateConstraint >> hash [
+
+	^ universe hash
+]
+
 { #category : 'as yet unclassified' }
 MateConstraint >> universe [ 
 

@@ -13,103 +13,71 @@ MateBlocGrammarByLangTest >> newGrammar [
 ]
 
 { #category : 'tests' }
-MateBlocGrammarByLangTest >> testGrammarCanGenerateABlChildrenArray [
-
-	| gen |
+MateBlocGrammarByLangTest >> testGrammarBlChildrenArrayDeclarationsMatch [
 	
-	gen := grammar gen: BlChildrenArray.
-	
-	self assert: gen class equals: BlChildrenArray.
-	self assert: (gen array) class equals: Array.
-	self assert: ((0 to: 10) includes: gen array size).
+	self testDecl: BlChildrenArray expects: (MateInstDecl new type: BlChildrenArray; instanceVariableDeclarations: {
+		MateInstArrayVarDecl new name: 'array'; elementType: BlElement; sizeBetween: 0 and: 10.
+	})
 ]
 
 { #category : 'tests' }
-MateBlocGrammarByLangTest >> testGrammarCanGenerateABlCustomVisuals [
-
-	| gen |
+MateBlocGrammarByLangTest >> testGrammarBlCustomVisualsDeclarationsMatch [
 	
-	gen := grammar gen: BlCustomVisuals.
-
-	self assert: gen class equals: BlCustomVisuals.
-	self assert: ({
-			 BlPaintBackground.
-			 BlTransparentBackground } includes: gen background class).
-	self assert: ({
-			 BlRectangleGeometry.
-			 BlEllipseGeometry.
-			 BlTriangleGeometry } includes: gen geometry class).
-	self deny: gen clipChildren class equals: Boolean
+	self testDecl: BlCustomVisuals expects: (MateInstDecl new type: BlCustomVisuals; instanceVariableDeclarations:{
+		MateInstVarDecl new name: 'background'; type: (BlPaintBackground | BlTransparentBackground).
+		MateInstVarDecl new name: 'geometry'; type: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry).
+		MateInstVarDecl new name: 'clipChildren'; type: Boolean.
+	})
 ]
 
 { #category : 'tests' }
-MateBlocGrammarByLangTest >> testGrammarCanGenerateABlElement [
-
-	| gen |
+MateBlocGrammarByLangTest >> testGrammarBlElementDeclarationsMatch [
 	
-	gen := grammar gen: BlElement.
-	self assert: (gen class) equals: BlElement.
-	self assert: (gen children class) equals: BlChildrenArray.
-	self assert: ({ BlCustomVisuals . BlDefaultVisuals } includes: gen visuals class).
-	self assert: (gen constraints class) equals: BlLayoutCommonConstraints.
+	self testDecl: BlElement expects: (MateInstDecl new type: BlElement; instanceVariableDeclarations: { 	
+		MateInstVarDecl new name: 'children'; type: BlChildrenArray.
+		MateInstVarDecl new name: 'visuals'; type: (BlCustomVisuals | BlDefaultVisuals).
+		MateInstVarDecl new name: 'constraints'; type: BlLayoutCommonConstraints.
+	})
 ]
 
 { #category : 'tests' }
-MateBlocGrammarByLangTest >> testGrammarCanGenerateABlLayoutCommonConstraints [
-
-	| gen |
+MateBlocGrammarByLangTest >> testGrammarBlLayoutCommonConstraintsAxisDeclarationsMatch [
 	
-	gen := grammar gen: BlLayoutCommonConstraints.
-
-	self assert: (gen class) equals: BlLayoutCommonConstraints.
-	self assert: (gen position class) equals: Point.
-	self deny: (gen position) equals: Point new.
-	self assert: (gen vertical class) equals: BlLayoutCommonConstraintsAxis.
-	self assert: (gen horizontal class) equals: BlLayoutCommonConstraintsAxis.
-	self deny: (gen horizontal) equals: gen vertical
+	self testDecl: BlLayoutCommonConstraintsAxis expects: (MateInstDecl new type: BlLayoutCommonConstraintsAxis; instanceVariableDeclarations: {
+		MateInstVarDecl new name: 'resizer'; type: BlLayoutExactResizer.
+	})
 ]
 
 { #category : 'tests' }
-MateBlocGrammarByLangTest >> testGrammarCanGenerateABlLayoutCommonConstraintsAxis [
-
-	| gen |
+MateBlocGrammarByLangTest >> testGrammarBlLayoutCommonConstraintsDeclarationsMatch [
 	
-	gen := grammar gen: BlLayoutCommonConstraintsAxis.
-
-	self assert: (gen class) equals: BlLayoutCommonConstraintsAxis.
-	self assert: (gen resizer class) equals: BlLayoutExactResizer.
+	self testDecl: BlLayoutCommonConstraints expects: (MateInstDecl new type: BlLayoutCommonConstraints; instanceVariableDeclarations: {
+		MateInstVarDecl new name: 'position'; type: Point.
+		MateInstVarDecl new name: 'vertical'; type: BlLayoutCommonConstraintsAxis.
+		MateInstVarDecl new name: 'horizontal'; type: BlLayoutCommonConstraintsAxis.
+	})
 ]
 
 { #category : 'tests' }
-MateBlocGrammarByLangTest >> testGrammarCanGenerateABlLayoutExactResizer [
-
-	| gen |
+MateBlocGrammarByLangTest >> testGrammarBlLayoutExactResizerDeclarationsMatch [
 	
-	gen := grammar gen: BlLayoutExactResizer.
-
-	self assert: (gen class) equals: BlLayoutExactResizer.
-	self assert: ({ SmallInteger . SmallFloat64 } includes: gen size class)
+	self testDecl: BlLayoutExactResizer expects: (MateInstDecl new type: BlLayoutExactResizer; instanceVariableDeclarations: {
+		MateInstVarDecl new name: 'size'; type: (SmallInteger | SmallFloat64).
+	})
 ]
 
 { #category : 'tests' }
-MateBlocGrammarByLangTest >> testGrammarCanGenerateABlPaintBackground [
-
-	| gen |
+MateBlocGrammarByLangTest >> testGrammarBlPaintBackgroundDeclarationsMatch [
 	
-	gen := grammar gen: BlPaintBackground.
-
-	self assert: (gen class) equals: BlPaintBackground.
-	self assert: (gen paint class) equals: Color.
-	self deny: gen paint equals: Color black
+	self testDecl: BlPaintBackground expects: (MateInstDecl new type: BlPaintBackground; instanceVariableDeclarations: {
+		MateInstVarDecl new name: 'paint'; type: Color.
+	})
 ]
 
 { #category : 'tests' }
-MateBlocGrammarByLangTest >> testGrammarCanGenerateABlTriangleGeometry [
-
-	| gen |
+MateBlocGrammarByLangTest >> testGrammarBlTriangleGeometryDeclarationsMatch [
 	
-	gen := grammar gen: BlTriangleGeometry.
-	
-	self assert: (gen class) equals: BlTriangleGeometry.
-	self assert: ({ #top . #right . #left . #bottom } includes: (gen orientation))
+	self testDecl: BlTriangleGeometry expects: (MateInstDecl new type: BlTriangleGeometry; instanceVariableDeclarations: {
+		MateInstOneOfVarDecl new name: 'orientation'; options: { #top . #right . #left . #bottom }.
+	})
 ]
