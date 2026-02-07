@@ -87,7 +87,7 @@ MateParser >> visitInstVarDecl: instVarDecl from: context [
 	instance ifNil: [ ^ self nilNode: instVarDecl from: context ].
 		
 	(instVarDecl acceptType: type) ifFalse: [
-		self error: 'Expected an instance of: ', instVarDecl types asString, ' in field: ', instVarDecl name, 'but it was:', type name
+		self error: 'Expected an instance of ', instVarDecl types asString, ' in field ', instVarDecl name, ' but it was ', type name
 	].
 	
 	declaration := grammar typeDeclarations at: type ifPresent: #yourself ifAbsent: [

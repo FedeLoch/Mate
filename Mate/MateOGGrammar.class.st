@@ -30,7 +30,7 @@ MateOGGrammar >> builtInTypeDeclarations [
 
 	| builtInTypes |
 
-	builtInTypes := { SmallInteger. Float . Boolean . ByteString . Color . Point }.
+	builtInTypes := { SmallInteger. Float . SmallFloat64 . Boolean . ByteString . Color . Point }.
 
 	^ builtInTypes inject: Dictionary new into: [ :dict :type |
 		dict at: type put: (MateBuiltInDecl new type: type; grammar: self).

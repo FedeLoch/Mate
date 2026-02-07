@@ -37,7 +37,7 @@ MateBlocGrammar >> defineGrammar [
 		}.
 		
 		BlLayoutExactResizer -> {
-			size: SmallInteger
+			size: (SmallInteger | Float)
 		}.
 		
 		BlPaintBackground -> {
@@ -59,7 +59,7 @@ MateBlocGrammar >> initialize [
 	
 	self addTypeDeclaration: (MateInstDecl new type: BlElement; instanceVariableDeclarations: { 	
 		MateInstVarDecl new name: 'children'; type: BlChildrenArray.
-		MateInstVarDecl new name: 'visuals'; type: BlCustomVisuals.
+		MateInstVarDecl new name: 'visuals'; type: (BlCustomVisuals | BlDefaultVisuals).
 		MateInstVarDecl new name: 'constraints'; type: BlLayoutCommonConstraints.
 	}).
 	
@@ -84,7 +84,7 @@ MateBlocGrammar >> initialize [
 	}).
 	
 	self addTypeDeclaration: (MateInstDecl new type: BlLayoutExactResizer; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'size'; type: SmallInteger.
+		MateInstVarDecl new name: 'size'; type: (SmallInteger | SmallFloat64).
 	}).
 	
 	self addTypeDeclaration: (MateInstDecl new type: BlPaintBackground; instanceVariableDeclarations: {

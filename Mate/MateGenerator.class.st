@@ -41,6 +41,7 @@ MateGenerator >> initialize [
 	builtInGenerators := {
 		SmallInteger -> MateSmallIntegerGenerator new.
 		Float -> MateFloatGenerator new.
+		SmallFloat64 -> MateFloatGenerator new.
 		Boolean -> MateBooleanGenerator new.
 		ByteString -> MateByteStringGenerator new.
 		Color -> MateColorGenerator new.
