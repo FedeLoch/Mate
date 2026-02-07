@@ -10,6 +10,20 @@ Class {
 	#tag : 'Grammar'
 }
 
+{ #category : 'comparing' }
+MateInstVarDecl >> = anObject [
+
+	super = anObject ifFalse: [ ^ false ].
+	
+	^ name = anObject name and: [ constraint = anObject constraint ]
+]
+
+{ #category : 'comparing' }
+MateInstVarDecl >> hash [
+
+	^ (super hash bitXor: name hash) bitXor: constraint hash
+]
+
 { #category : 'as yet unclassified' }
 MateInstVarDecl >> acceptType: aType [
 

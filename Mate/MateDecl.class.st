@@ -11,6 +11,21 @@ Class {
 	#tag : 'Grammar'
 }
 
+{ #category : 'comparing' }
+MateDecl >> = anObject [
+
+	self == anObject ifTrue: [ ^ true ].
+	self class = anObject class ifFalse: [ ^ false ].
+	
+	^ type = anObject type
+]
+
+{ #category : 'comparing' }
+MateDecl >> hash [
+
+	^ type hash
+]
+
 { #category : 'initialization' }
 MateDecl >> initialize [ 
 

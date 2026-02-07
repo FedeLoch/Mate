@@ -9,6 +9,20 @@ Class {
 	#tag : 'Grammar'
 }
 
+{ #category : 'comparing' }
+MateInstDecl >> = anObject [
+
+	super = anObject ifFalse: [ ^ false ].
+	
+	^ instanceVariableDeclarations asArray = anObject instanceVariableDeclarations asArray
+]
+
+{ #category : 'comparing' }
+MateInstDecl >> hash [
+
+	^ super hash bitXor: instanceVariableDeclarations hash
+]
+
 { #category : 'initialization' }
 MateInstDecl >> initialize [ 
 	

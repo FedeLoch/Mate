@@ -10,6 +10,20 @@ Class {
 	#tag : 'Grammar'
 }
 
+{ #category : 'comparing' }
+MateInstOneOfVarDecl >> = anObject [
+
+	super = anObject ifFalse: [ ^ false ].
+	
+	^ options asArray = anObject options asArray
+]
+
+{ #category : 'comparing' }
+MateInstOneOfVarDecl >> hash [
+
+	^ super hash bitXor: options hash
+]
+
 { #category : 'as yet unclassified' }
 MateInstOneOfVarDecl >> acceptOption: option [
 	

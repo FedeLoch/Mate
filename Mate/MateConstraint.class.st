@@ -10,6 +10,21 @@ Class {
 }
 
 { #category : 'comparing' }
+MateConstraint >> = anObject [
+
+	self == anObject ifTrue: [ ^ true ].
+	self class = anObject class ifFalse: [ ^ false ].
+	
+	^ universe = anObject universe
+]
+
+{ #category : 'comparing' }
+MateConstraint >> hash [
+
+	^ universe hash
+]
+
+{ #category : 'comparing' }
 MateConstraint class >> between: aValue and: otherValue [
 	
 	^ self new universe: (aValue to: otherValue)
