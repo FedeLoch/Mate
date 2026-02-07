@@ -50,7 +50,7 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlElement [
 	gen := grammar gen: BlElement.
 	self assert: (gen class) equals: BlElement.
 	self assert: (gen children class) equals: BlChildrenArray.
-	self assert: (gen visuals class) equals: BlCustomVisuals.
+	self assert: ({ BlCustomVisuals . BlDefaultVisuals } includes: gen visuals class).
 	self assert: (gen constraints class) equals: BlLayoutCommonConstraints.
 ]
 
@@ -88,7 +88,7 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlLayoutExactResizer [
 	gen := grammar gen: BlLayoutExactResizer.
 
 	self assert: (gen class) equals: BlLayoutExactResizer.
-	self assert: (gen size class) equals: SmallInteger.
+	self assert: ({ SmallInteger . SmallFloat64 } includes: gen size class)
 ]
 
 { #category : 'tests' }

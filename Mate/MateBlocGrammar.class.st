@@ -12,7 +12,7 @@ MateBlocGrammar >> defineGrammar [
 	^ '
 		BlElement -> {
 			children: BlChildrenArray,
-			visuals: BlCustomVisuals,
+			visuals: (BlCustomVisuals | BlDefaultVisuals),
 			constraints: BlLayoutCommonConstraints
 		}.
 		
@@ -37,7 +37,7 @@ MateBlocGrammar >> defineGrammar [
 		}.
 		
 		BlLayoutExactResizer -> {
-			size: (SmallInteger | Float)
+			size: (SmallInteger | SmallFloat64)
 		}.
 		
 		BlPaintBackground -> {
