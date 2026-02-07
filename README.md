@@ -21,6 +21,13 @@ Mate is built on a systematic grammar-driven framework that decouples structural
 
 ![Mate Architecture](images/architecture.png)
 
+With Mate you can:
+- Declare your own Object Graph Grammars
+- Generate valid object instances from a grammar
+- Propagate rewards through the derivation tree to improve future generations
+- Parse and validate object graphs against your Mate grammar
+- Generate Mate Object graph Grammar definitions from test object suites
+
 ## Quick Start
 
 ```Smalltalk
