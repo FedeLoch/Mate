@@ -13,6 +13,12 @@ PersonParserTest >> newGrammar [
 ]
 
 { #category : 'tests' }
+PersonParserTest >> testGivenAGeneratedPersonItCanGiveTheGrammarDerivation [
+
+	self doTest: (grammar gen: Person)
+]
+
+{ #category : 'tests' }
 PersonParserTest >> testGivenAPersonItCanGiveTheGrammarDerivation [
 
 	self doTest: (Person new age: (Age new value: 42))
