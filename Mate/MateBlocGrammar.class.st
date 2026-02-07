@@ -73,7 +73,7 @@ MateBlocGrammar >> initialize [
 		MateInstVarDecl new name: 'clipChildren'; type: Boolean.
 	}).
 	
-	self addTypeDeclaration: (MateInstDecl new type: BlLayoutCommonConstraints; instanceVariableDeclarations: { 	
+	self addTypeDeclaration: (MateInstDecl new type: BlLayoutCommonConstraints; instanceVariableDeclarations: {
 		MateInstVarDecl new name: 'position'; type: Point.
 		MateInstVarDecl new name: 'vertical'; type: BlLayoutCommonConstraintsAxis.
 		MateInstVarDecl new name: 'horizontal'; type: BlLayoutCommonConstraintsAxis.
