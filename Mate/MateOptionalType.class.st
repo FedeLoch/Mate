@@ -12,6 +12,12 @@ Class {
 	#tag : 'Custom Types'
 }
 
+{ #category : 'accessing' }
+MateOptionalType class >> options: classes [
+
+	^ self new options: classes
+]
+
 { #category : 'comparing' }
 MateOptionalType >> = anObject [
 
@@ -19,18 +25,6 @@ MateOptionalType >> = anObject [
 	self class = anObject class ifFalse: [ ^ false ].
 	
 	^ optionTypes = anObject types
-]
-
-{ #category : 'comparing' }
-MateOptionalType >> hash [
-
-	^ optionTypes hash
-]
-
-{ #category : 'accessing' }
-MateOptionalType class >> options: classes [
-
-	^ self new options: classes
 ]
 
 { #category : 'visiting' }
@@ -81,6 +75,12 @@ MateOptionalType >> getOneFrom: context [
 	self updateVisits: context selecting: selected.
 	
 	^ selected
+]
+
+{ #category : 'comparing' }
+MateOptionalType >> hash [
+
+	^ optionTypes hash
 ]
 
 { #category : 'initialization' }

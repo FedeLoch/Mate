@@ -9,11 +9,5 @@ Class {
 { #category : 'tests' }
 MateGrammarByLangTest >> testDecl: type expects: expectedDecl [
 
-	| decl |
-	
-	decl := grammar typeDeclarations at: type.
-	decl grammar: nil.
-	expectedDecl grammar: nil.
-
-	self assert: (STON toString: decl) equals: (STON toString: expectedDecl)
+	self assert: (grammar typeDeclarations at: type) equals: expectedDecl.
 ]
