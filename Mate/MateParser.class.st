@@ -79,9 +79,17 @@ MateParser >> visitBuiltinDeclaration: decl from: context constraint: aConstrain
 { #category : 'visiting' }
 MateParser >> visitInstRefDecl: decl from: context [ 
 
-	" TODO: Not sure"
-	^ self visitBuiltinDeclaration: decl from: context constraint: nil
-
+	| instance |
+	
+	instance := context object.
+	
+	instance ifNil: [ ^ self nilNode: decl from: context ].
+	
+	(instance isKindOf: decl type) ifFalse: [
+		self error: 'Expected reference to ', decl type name, ' but got ', instance class name.
+	].
+	
+	^ MateOGInstanceNode new declaration: decl; instance: instance; context: context
 ]
 
 { #category : 'visiting' }
@@ -132,7 +140,7 @@ MateParser >> visitInstanceDeclaration: decl from: context [
 		node addEdge: edge at: instVarDecl name.
 	].
 
-	"TODO: update derivation references by self references"
+	decl selfReferences do: [ :reference | reference insertReference: instance ].
 	
 	^ node
 ]
