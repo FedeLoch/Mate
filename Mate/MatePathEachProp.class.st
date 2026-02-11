@@ -5,3 +5,9 @@ Class {
 	#package : 'Mate',
 	#tag : 'Grammar'
 }
+
+{ #category : 'instance creation' }
+MatePathEachProp >> from: object [ 
+	
+	1 halt.
+]

@@ -52,6 +52,12 @@ MateGrammarVisitor >> visitClassDeclaration: decl from: context [
 ]
 
 { #category : 'visiting' }
+MateGrammarVisitor >> visitInstRefDecl: decl from: context [
+
+	self subclassResponsibility 
+]
+
+{ #category : 'visiting' }
 MateGrammarVisitor >> visitInstVarDecl: instVarDecl from: context [
 
 	self subclassResponsibility 

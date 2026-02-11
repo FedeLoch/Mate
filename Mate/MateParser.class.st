@@ -77,6 +77,14 @@ MateParser >> visitBuiltinDeclaration: decl from: context constraint: aConstrain
 ]
 
 { #category : 'visiting' }
+MateParser >> visitInstRefDecl: decl from: context [ 
+
+	" TODO: Not sure"
+	^ self visitBuiltinDeclaration: decl from: context constraint: nil
+
+]
+
+{ #category : 'visiting' }
 MateParser >> visitInstVarDecl: instVarDecl from: context [
 
 	| instance declaration node type |
@@ -103,7 +111,7 @@ MateParser >> visitInstVarDecl: instVarDecl from: context [
 MateParser >> visitInstanceDeclaration: decl from: context [
 
 	| instance childContext node |
-	
+
 	instance := context object.
 	
 	(instance isKindOf: decl type) ifFalse: [
@@ -123,6 +131,8 @@ MateParser >> visitInstanceDeclaration: decl from: context [
 		edge := instVarDecl visit: self from: specificContext constraint: nil.
 		node addEdge: edge at: instVarDecl name.
 	].
+
+	"TODO: update derivation references by self references"
 	
 	^ node
 ]

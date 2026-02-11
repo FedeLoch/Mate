@@ -15,6 +15,16 @@ MateReferencePath class >> new: path [
 	^ self new path: path
 ]
 
+{ #category : 'as yet unclassified' }
+MateReferencePath >> insertReference: instance [ 
+
+	| current |
+
+	current := path allButLast inject: instance into: [ :inst :prop | prop from: inst ].
+	
+	path last insert: instance at: current.
+]
+
 { #category : 'accessing' }
 MateReferencePath >> path: aPath [ 
 

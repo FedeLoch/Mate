@@ -9,5 +9,5 @@ Class {
 { #category : 'visiting' }
 MateInstRefVarDecl >> visiting: aVisitor from: context constraint: aConstraint [
 
-	^ aVisitor visitRefDecl: self from: context
+	^ aVisitor visitInstRefDecl: self from: context
 ]

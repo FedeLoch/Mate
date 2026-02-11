@@ -29,6 +29,7 @@ MateInstDecl >> initialize [
 	
 	super initialize.
 	instanceVariableDeclarations := OrderedCollection new.
+	selfReferences := OrderedCollection new.
 ]
 
 { #category : 'accessing' }
