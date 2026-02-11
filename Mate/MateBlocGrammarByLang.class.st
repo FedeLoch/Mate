@@ -13,7 +13,10 @@ MateBlocGrammarByLang >> defineObjectGraph [
 	 	BlElement -> {
 			children: BlChildrenArray,
 			visuals: (BlCustomVisuals | BlDefaultVisuals),
-			constraints: BlLayoutCommonConstraints
+			constraints: BlLayoutCommonConstraints,
+			withSelfReferences: {
+				children.array[ .parent ]: self
+			}
 		}
 		
 		BlChildrenArray -> { 

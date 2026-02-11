@@ -45,13 +45,14 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlCustomVisuals [
 { #category : 'tests' }
 MateBlocGrammarTest >> testGrammarCanGenerateABlElement [
 
-	| gen |
+	| element |
 	
-	gen := grammar gen: BlElement.
-	self assert: (gen class) equals: BlElement.
-	self assert: (gen children class) equals: BlChildrenArray.
-	self assert: ({ BlCustomVisuals . BlDefaultVisuals } includes: gen visuals class).
-	self assert: (gen constraints class) equals: BlLayoutCommonConstraints.
+	element := grammar gen: BlElement.
+	self assert: (element class) equals: BlElement.
+	self assert: (element children class) equals: BlChildrenArray.
+	element children array do: [ :child | self assert: child parent equals: element ].
+	self assert: ({ BlCustomVisuals . BlDefaultVisuals } includes: element visuals class).
+	self assert: (element constraints class) equals: BlLayoutCommonConstraints.
 ]
 
 { #category : 'tests' }
