@@ -49,6 +49,12 @@ MateGenerator >> initialize [
 	} asDictionary.
 ]
 
+{ #category : 'as yet unclassified' }
+MateGenerator >> insert: node path: path [
+
+	path insertReference: node instance
+]
+
 { #category : 'accessing' }
 MateGenerator >> maxDerivationHeight [
 
@@ -96,7 +102,7 @@ MateGenerator >> visitArrayDecl: decl from: context [
 { #category : 'visiting' }
 MateGenerator >> visitBuiltinDeclaration: decl from: context [
 	
-	" TODO: delete it"
+	" TODO: Not sure"
 	^ self visitBuiltinDeclaration: decl from: context constraint: nil
 
 ]
@@ -119,6 +125,14 @@ MateGenerator >> visitClassDeclaration: decl from: context [
 ]
 
 { #category : 'visiting' }
+MateGenerator >> visitInstRefDecl: decl from: context [ 
+	
+	"TODO: check me later"
+	
+	^ MateOGBuiltInNode new declaration: decl; instance: nil; context: context
+]
+
+{ #category : 'visiting' }
 MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 
 	| type declaration derivation |
@@ -138,7 +152,7 @@ MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 MateGenerator >> visitInstanceDeclaration: decl from: context [
 
 	| childContext node |
-	
+
 	"Create a new context with this declaration in the path"
 	childContext := context copy.
 	childContext push: decl.
@@ -155,6 +169,8 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 	].
 
 	node instance: (self objectInstance: node constraint: nil).
+	
+	decl selfReferences do: [ :reference | self insert: node path: reference ].
 
 	^ node
 ]

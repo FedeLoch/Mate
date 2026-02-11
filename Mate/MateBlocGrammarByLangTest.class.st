@@ -35,9 +35,10 @@ MateBlocGrammarByLangTest >> testGrammarBlElementDeclarationsMatch [
 	
 	self testDecl: BlElement expects: (MateInstDecl new type: BlElement; instanceVariableDeclarations: { 	
 		MateInstVarDecl new name: 'children'; type: BlChildrenArray.
+		MateInstRefVarDecl new name: 'parent'; type: BlElement.
 		MateInstVarDecl new name: 'visuals'; type: (BlCustomVisuals | BlDefaultVisuals).
 		MateInstVarDecl new name: 'constraints'; type: BlLayoutCommonConstraints.
-	})
+	}; selfReferences: { MateReferencePath new: { MatePathProp from: 'children' . MatePathProp from: 'array' . MatePathEachProp from: 'parent' }})
 ]
 
 { #category : 'tests' }

@@ -85,8 +85,10 @@ player level.           "=> 47 (always 0-99)"
 ```smalltalk
 BlElement -> {
   children: BlChildrenArray,
+  parent: { refType: BlElement },
   visuals: (BlCustomVisuals | BlDefaultVisuals),
-  constraints: BlLayoutCommonConstraints
+  constraints: BlLayoutCommonConstraints,
+  selfReferences: { children.array[ .parent ] }
 }
 
 BlChildrenArray -> { 

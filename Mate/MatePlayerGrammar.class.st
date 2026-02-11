@@ -7,19 +7,6 @@ Class {
 }
 
 { #category : 'accessing' }
-MatePlayerGrammar >> defineGrammar [ 
-
-	^ '
-		Player -> {
-			name: ByteString,
-			characterClass: Warrior | Rogue | Mage,
-			level: { type: SmallInteger, between: 0 and: 99 },
-			missingExperienceForNextLevel: { type: SmallInteger, greaterThan: 0 }
-		}
-	'
-]
-
-{ #category : 'accessing' }
 MatePlayerGrammar >> initialize [ 
 
 	super initialize.

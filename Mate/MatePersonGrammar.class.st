@@ -7,15 +7,6 @@ Class {
 }
 
 { #category : 'accessing' }
-MatePersonGrammar >> defineGrammar [ 
-
-	^ '
-	 	Person -> { age: Age }.
-	 	Age -> { value: SmallInteger }.
-	'
-]
-
-{ #category : 'accessing' }
 MatePersonGrammar >> initialize [ 
 	
 	super initialize.
