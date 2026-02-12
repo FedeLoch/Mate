@@ -36,3 +36,19 @@ MatePathProp >> prop: propName [
 
 	prop := propName
 ]
+
+{ #category : 'derivation' }
+MatePathProp >> fromDerivation: aNode [ 
+
+	^ aNode edges at: prop
+]
+
+{ #category : 'derivation' }
+MatePathProp >> insertDerivation: instance atDerivation: aNode [ 
+
+	| nodes |
+	
+	nodes := aNode isCollection ifTrue: [ aNode ] ifFalse: [ { aNode } ].
+	
+	nodes do: [ :n | (n edges at: prop) instance: instance ]
+]

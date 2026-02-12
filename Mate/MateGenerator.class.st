@@ -170,7 +170,10 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 
 	node instance: (self objectInstance: node constraint: nil).
 	
-	decl selfReferences do: [ :reference | self insert: node path: reference ].
+	decl selfReferences do: [ :reference | 
+		self insert: node path: reference.
+		reference updateDerivation: node withInstance: node instance.
+	].
 
 	^ node
 ]
