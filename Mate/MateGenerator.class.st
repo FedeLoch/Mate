@@ -170,7 +170,10 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 
 	node instance: (self objectInstance: node constraint: nil).
 	
-	decl selfReferences do: [ :reference | self insert: node path: reference ].
+	decl selfReferences do: [ :path | "I could be done in one path traversal instead of two"
+		self insert: node path: path.
+		path updateDerivation: node withInstance: node instance.
+	].
 
 	^ node
 ]
