@@ -21,6 +21,14 @@ MateBlocGrammarByLangTest >> testGrammarBlChildrenArrayDeclarationsMatch [
 ]
 
 { #category : 'tests' }
+MateBlocGrammarByLangTest >> testGrammarBlColorPaintDeclarationsMatch [
+	
+	self testDecl: BlColorPaint expects: (MateInstDecl new type: BlColorPaint; instanceVariableDeclarations: {
+		MateInstVarDecl new name: 'color'; type: Color.
+	})
+]
+
+{ #category : 'tests' }
 MateBlocGrammarByLangTest >> testGrammarBlCustomVisualsDeclarationsMatch [
 	
 	self testDecl: BlCustomVisuals expects: (MateInstDecl new type: BlCustomVisuals; instanceVariableDeclarations:{
@@ -71,7 +79,7 @@ MateBlocGrammarByLangTest >> testGrammarBlLayoutExactResizerDeclarationsMatch [
 MateBlocGrammarByLangTest >> testGrammarBlPaintBackgroundDeclarationsMatch [
 	
 	self testDecl: BlPaintBackground expects: (MateInstDecl new type: BlPaintBackground; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'paint'; type: Color.
+		MateInstVarDecl new name: 'paint'; type: BlColorPaint.
 	})
 ]
 

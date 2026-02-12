@@ -25,6 +25,18 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlChildrenArray [
 ]
 
 { #category : 'tests' }
+MateBlocGrammarTest >> testGrammarCanGenerateABlColorPaint [
+
+	| gen |
+	
+	gen := grammar gen: BlColorPaint.
+
+	self assert: (gen class) equals: BlColorPaint.
+	self assert: (gen color class) equals: Color.
+	self deny: gen color equals: Color black
+]
+
+{ #category : 'tests' }
 MateBlocGrammarTest >> testGrammarCanGenerateABlCustomVisuals [
 
 	| gen |
@@ -100,8 +112,7 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlPaintBackground [
 	gen := grammar gen: BlPaintBackground.
 
 	self assert: (gen class) equals: BlPaintBackground.
-	self assert: (gen paint class) equals: Color.
-	self deny: gen paint equals: Color black
+	self assert: (gen paint class) equals: BlColorPaint
 ]
 
 { #category : 'tests' }

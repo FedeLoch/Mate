@@ -43,7 +43,11 @@ MateBlocGrammar >> initialize [
 	}).
 	
 	self addTypeDeclaration: (MateInstDecl new type: BlPaintBackground; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'paint'; type: Color.
+		MateInstVarDecl new name: 'paint'; type: BlColorPaint.
+	}).
+	
+	self addTypeDeclaration: (MateInstDecl new type: BlColorPaint; instanceVariableDeclarations: {
+		MateInstVarDecl new name: 'color'; type: Color.
 	}).
 	
 	self addTypeDeclaration: (MateInstDecl new type: BlTriangleGeometry; instanceVariableDeclarations: {

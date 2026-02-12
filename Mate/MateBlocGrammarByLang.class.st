@@ -43,8 +43,13 @@ MateBlocGrammarByLang >> defineObjectGraph [
 		}
 		
 		BlPaintBackground -> {
-			paint: Color
+			paint: BlColorPaint
 		}
+		
+		BlColorPaint -> {
+			color: Color
+		}
+		
 		BlTriangleGeometry -> {
 			orientation: { oneOf: { #top . #right . #left . #bottom } }
 		}
