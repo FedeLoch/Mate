@@ -134,6 +134,12 @@ MateOGDerivationNode >> render [
 	^ canvas
 ]
 
+{ #category : 'as yet unclassified' }
+MateOGDerivationNode >> replaceRefDeclarationsFrom: source [ 
+	
+	1 halt.
+]
+
 { #category : 'accessing' }
 MateOGDerivationNode >> shape [
 	
