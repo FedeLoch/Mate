@@ -111,8 +111,10 @@ MateOGGrammar >> parser [
 MateOGGrammar >> replace: node by: variant [
 
 	node context parentNode ifNotNil: [
-		node context parentNode replaceChild: node by: variant ].
-	variant replaceRefDeclarationsFrom: node
+		node context parentNode replaceChild: node by: variant
+	].
+	
+	variant replaceRefDeclarationsFrom: node.
 ]
 
 { #category : 'accessing' }
