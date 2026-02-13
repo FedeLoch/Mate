@@ -71,7 +71,7 @@ MateBlocGrammarByLangTest >> testGrammarBlLayoutCommonConstraintsDeclarationsMat
 MateBlocGrammarByLangTest >> testGrammarBlLayoutExactResizerDeclarationsMatch [
 	
 	self testDecl: BlLayoutExactResizer expects: (MateInstDecl new type: BlLayoutExactResizer; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'size'; type: SmallInteger; constraint: (MateConstraint between: 100 and: 1000).
+		MateInstVarDecl new name: 'size'; type: SmallFloat64; constraint: (MateConstraint between: 100 and: 1000).
 	})
 ]
 
