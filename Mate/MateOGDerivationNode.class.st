@@ -137,7 +137,16 @@ MateOGDerivationNode >> render [
 { #category : 'as yet unclassified' }
 MateOGDerivationNode >> replaceRefDeclarationsFrom: source [ 
 	
-	1 halt.
+	(declaration isRef and: [ instance isNil ]) ifTrue: [
+		self instance: source instance
+	] ifFalse: [
+		"Propagate to edges"
+		edges keys do: [ :key | | edge nextSource |
+			source edges at: key ifPresent: [
+				(edges at: key) replaceRefDeclarationsFrom: (source edges at: key)
+			]
+		]
+	]
 ]
 
 { #category : 'accessing' }

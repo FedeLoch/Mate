@@ -6,6 +6,12 @@ Class {
 	#tag : 'Grammar'
 }
 
+{ #category : 'testing' }
+MateInstRefVarDecl >> isRef [
+
+	^ true
+]
+
 { #category : 'visiting' }
 MateInstRefVarDecl >> visiting: aVisitor from: context constraint: aConstraint [
 

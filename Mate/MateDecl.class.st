@@ -34,6 +34,12 @@ MateDecl >> initialize [
 	visits := Dictionary new.
 ]
 
+{ #category : 'testing' }
+MateDecl >> isRef [
+
+	^ false
+]
+
 { #category : 'as yet unclassified' }
 MateDecl >> reward: context [
 
