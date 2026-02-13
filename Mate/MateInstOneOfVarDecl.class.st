@@ -93,6 +93,16 @@ MateInstOneOfVarDecl >> options: someOptions [
 ]
 
 { #category : 'as yet unclassified' }
+MateInstOneOfVarDecl >> rewardAt: context [
+
+	rewards at: (context key) ifAbsentPut: [ Dictionary new ].
+	(rewards at: (context key)) at: context object ifAbsent: [ ^ 1 ].
+
+	^ (rewards at: (context key)) at: context object
+
+]
+
+{ #category : 'as yet unclassified' }
 MateInstOneOfVarDecl >> selectAnOption: context [
 	
 	| contextVisits differenceAtLevel |

@@ -43,7 +43,7 @@ MateDecl >> isRef [
 { #category : 'as yet unclassified' }
 MateDecl >> rewardAt: context [
 
-	rewards at: (context key) ifAbsentPut: [ 1 ].
+	rewards at: (context key) ifAbsent: [ ^ 1 ].
 
 	^ rewards at: (context key)
 
