@@ -68,9 +68,9 @@ MateOGGrammar >> gen: type [
 ]
 
 { #category : 'as yet unclassified' }
-MateOGGrammar >> gen: declarationObject from: context [
+MateOGGrammar >> gen: type from: context [
 
-	^ generator gen: declarationObject from: context
+	^ generator gen: type from: context
 ]
 
 { #category : 'as yet unclassified' }
