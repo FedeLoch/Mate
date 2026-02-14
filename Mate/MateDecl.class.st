@@ -80,8 +80,11 @@ MateDecl >> updateReward: improvement context: context [
 	rewards at: key ifAbsentPut: [ 1 ].
 
 	rewards at: key update: [ :reward | (reward + improvement) max: 1 ].
+	
 	"Propagate the feedback to the type ( in case it is an union type )"
-	type updateReward: improvement context: context from: self.
+	type ifNotNil: [
+		type updateReward: improvement context: context from: self.
+	].
 ]
 
 { #category : 'as yet unclassified' }

@@ -71,7 +71,6 @@ MateOptionalType >> getOneFrom: context [
 	| selected |
 	
 	selected := self selectAtype: context.
-
 	self updateVisits: context selecting: selected.
 	
 	^ selected
@@ -109,7 +108,7 @@ MateOptionalType >> rewards [
 MateOptionalType >> selectAtype: context [
 	
 	| contextVisits differenceAtLevel |
-	
+
 	"Case where the context was not explored before"
 	visits at: context key ifAbsent: [ ^ self getOne ].
 	
@@ -136,7 +135,7 @@ MateOptionalType >> types [
 MateOptionalType >> updateReward: improvement context: context from: decl [
 	
 	| key optionToReward |
-	
+
 	key := context key.
 	optionToReward := (context parentNode edges at: decl name) instance class.
 	
