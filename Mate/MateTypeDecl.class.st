@@ -20,3 +20,9 @@ MateTypeDecl >> name [
 
 	^ type name 
 ]
+
+{ #category : 'rendering' }
+MateTypeDecl >> renderShapes [
+
+	1 halt.
+]

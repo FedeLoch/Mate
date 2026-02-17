@@ -107,6 +107,36 @@ MateOGGrammar >> parser [
 	 ^ parser
 ]
 
+{ #category : 'rendering' }
+MateOGGrammar >> render [
+
+	| canvas |
+	
+	canvas := RSCanvas new.
+	canvas addAll: self renderShapes.
+
+	RSLineBuilder arrowedLine
+		withBorderAttachPoint;
+		canvas: canvas;
+		connectFrom: [ :e | 1 halt ].
+
+	RSRadialTreeLayout new
+		horizontalGap: 50;
+		verticalGap: 30;
+		on: canvas nodes.
+
+	canvas @ RSCanvasController.
+	canvas @ RSZoomToFitCanvasInteraction.
+
+	^ canvas
+]
+
+{ #category : 'rendering' }
+MateOGGrammar >> renderShapes [
+
+	^ typeDeclarations flatCollect: #renderShapes
+]
+
 { #category : 'as yet unclassified' }
 MateOGGrammar >> replace: node by: variant [
 
