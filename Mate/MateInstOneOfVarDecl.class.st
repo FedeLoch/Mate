@@ -125,11 +125,12 @@ MateInstOneOfVarDecl >> renderShapes: totalVisits parent: parentNode [
 	optionShapes := options collect: [ :option | | node label box color composite visitsForOption |
 		visitsForOption := myVisits at: option ifAbsent: [ 0 ].
 		
-		node := MateGrammarRenderNode new.
-		node declaration: self.
-		node label: option asString.
-		node totalVisits: visitsForOption.
-		node parent: myNode.
+		node := MateGrammarRenderNode new
+			declaration: self;
+			label: option asString;
+			totalVisits: visitsForOption;
+			parent: myNode.
+
 		myNode children add: node.
 		
 		label := RSLabel new text: option asString; color: Color black.

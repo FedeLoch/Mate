@@ -112,7 +112,7 @@ MateInstVarDecl >> renderShapes: totalVisits parent: parentNode [
 	
 	type ifNil: [ ^ { myShape } ].
 	
-	typeShapes := type renderShapes: totalVisits parent: myNode.
+	typeShapes := (type renderShapes: totalVisits parent: myNode) asOrderedCollection.
 	
 	^ { myShape } , typeShapes
 ]

@@ -107,12 +107,12 @@ MateInstArrayVarDecl >> renderShapes: totalVisits parent: parentNode [
 		parentNode children add: myNode
 	].
 	
-	"Child node for element type"
-	elementNode := MateGrammarRenderNode new.
-	elementNode declaration: nil.
-	elementNode label: elementType name.
-	elementNode totalVisits: self totalVisits.
-	elementNode parent: myNode.
+	elementNode := MateGrammarRenderNode new
+		declaration: nil;
+		label: elementType name;
+		totalVisits: self totalVisits;
+		parent: myNode.
+
 	myNode children add: elementNode.
 	
 	elementLabel := RSLabel new text: elementType name; color: Color black.
