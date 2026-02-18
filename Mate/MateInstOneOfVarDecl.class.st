@@ -126,7 +126,13 @@ MateInstOneOfVarDecl >> selectAnOption: context [
 { #category : 'reward' }
 MateInstOneOfVarDecl >> totalVisits [
 
-	^ (visits keys collect: [ :key | (visits at: key) values sum ]) sum
+	| total |
+	
+	total := (visits keys collect: [ :key | (visits at: key) values sum ]).
+	
+	total ifEmpty: [ ^ 0 ].
+
+	^ total sum
 ]
 
 { #category : 'as yet unclassified' }
