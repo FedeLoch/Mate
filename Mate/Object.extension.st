@@ -19,28 +19,34 @@ Object class >> getOneFrom: context [
 ]
 
 { #category : '*Mate' }
-Object class >> renderShapes [
+Object class >> renderShapes: totalVisits parent: parentNode [
 
-	| box label composite color |
+	| node label box composite |
 	
-	label := RSLabel new text: self name; color: Color black.
-	color := Color veryLightGray.
+	node := MateGrammarNode new.
+	node declaration: nil.
+	node label: self name.
+	node totalVisits: 0.
+	parentNode ifNotNil: [ 
+		node parent: parentNode.
+		parentNode children add: node 
+	].
+
+	label := RSLabel new text: self name; color: Color gray.
 	
 	box := RSBox new 
-		extent: (label extent + (20@10));
-		cornerRadius: 5;
-		color: color;
-		border: (RSBorder new color: Color black; width: 1).
+		extent: (label extent + (16@8));
+		cornerRadius: 4;
+		color: (Color veryLightGray);
+		border: (RSBorder new color: (Color gray: 0.7); width: 1; dashArray: #(2 2)).
 		
-	composite := RSComposite new model: self; shapes: { box . label }; yourself.
+	composite := RSComposite new model: node; shapes: { box . label }; yourself.
 		
 	composite @ (RSPopup new text: [ :n | 
-		String streamContents: [ :s |
-			s nextPutAll: n class name; cr
-		]
+		'Leaf type: ', n label
 	]).
 
-	^ {composite}
+	^ { composite }
 ]
 
 { #category : '*Mate' }

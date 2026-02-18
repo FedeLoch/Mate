@@ -53,12 +53,6 @@ MateDecl >> isRef [
 	^ false
 ]
 
-{ #category : 'accessing' }
-MateDecl >> renderShape [
-
-	self subclassResponsibility 
-]
-
 { #category : 'as yet unclassified' }
 MateDecl >> rewardAt: context [
 

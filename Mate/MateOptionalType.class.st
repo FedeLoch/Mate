@@ -121,44 +121,45 @@ MateOptionalType >> options: options [
 ]
 
 { #category : 'rendering' }
-MateOptionalType >> renderShapes [
+MateOptionalType >> renderShapes: totalVisits parent: parentNode [
 
-	^ (optionTypes collect: [ :type | self renderType: type ]) asOrderedCollection 
-]
-
-{ #category : 'rendering' }
-MateOptionalType >> renderType: type [
-
-	| label color box composite |
-	label := RSLabel new
-		         text: type name;
-		         color: Color black.
-	color := self heatColorFor: type.
-
-	box := RSBox new
-		       extent: label extent + (20 @ 10);
-		       cornerRadius: 5;
-		       color: color;
-		       border: (RSBorder new
-				        color: Color black;
-				        width: 1).
-
-	composite := RSComposite new
-		             model: type;
-		             shapes: {
-				             box.
-				             label };
-		             yourself.
-
-	composite @ (RSPopup new text: [ :n |
-			 String streamContents: [ :s |
-					 s
-						 nextPutAll: n class name;
-						 cr.
-					 s
-						 nextPutAll: 'Visits: ';
-						 print: (self totalVisitsFor: n) ] ]).
-	^ composite
+	^ optionTypes collect: [ :type | | node label box color composite visitsForType |
+		visitsForType := self totalVisitsFor: type.
+		
+		node := MateGrammarNode new.
+		node declaration: self.
+		node label: type name.
+		node totalVisits: visitsForType.
+		parentNode ifNotNil: [ 
+			node parent: parentNode.
+			parentNode children add: node 
+		].
+		
+		label := RSLabel new text: type name; color: Color black.
+		color := self heatColorFor: type.
+		
+		box := RSBox new 
+			extent: (label extent + (16@8));
+			cornerRadius: 4;
+			color: color;
+			border: (visitsForType = 0
+				ifTrue: [ RSBorder new color: (Color red alpha: 0.5); width: 1; dashArray: #(4 3) ]
+				ifFalse: [ RSBorder new color: (Color gray: 0.6); width: 1; dashArray: #(2 2) ]).
+			
+		composite := RSComposite new model: node; shapes: { box . label }; yourself.
+			
+		composite @ (RSPopup new text: [ :n | 
+			String streamContents: [ :s |
+				s nextPutAll: 'Option: '; nextPutAll: n label; cr.
+				s nextPutAll: 'Visits: '; print: n totalVisits.
+				self totalVisits > 0 ifTrue: [
+					s cr; nextPutAll: 'Share: '; 
+					  print: ((n totalVisits / self totalVisits * 100) asFloat round: 1); nextPutAll: '%'
+				]
+			]
+		]).
+		composite
+	]
 ]
 
 { #category : 'accessing' }

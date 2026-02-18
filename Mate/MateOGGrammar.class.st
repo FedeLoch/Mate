@@ -110,19 +110,23 @@ MateOGGrammar >> parser [
 { #category : 'rendering' }
 MateOGGrammar >> render [
 
-	| canvas |
+	| canvas shapes totalVisits |
+	
+	totalVisits := self totalVisitsAcrossDeclarations.
+	shapes := self renderShapes: totalVisits.
 	
 	canvas := RSCanvas new.
-	canvas addAll: self renderShapes.
+	canvas addAll: shapes.
 
 	RSLineBuilder arrowedLine
 		withBorderAttachPoint;
+		color: (Color gray alpha: 0.5);
 		canvas: canvas;
-		connectFrom: [ :e | 1 halt.].
+		connectFrom: [ :node | node parent ].
 
-	RSRadialTreeLayout new
-		horizontalGap: 50;
-		verticalGap: 30;
+	RSTreeLayout new
+		horizontalGap: 30;
+		verticalGap: 50;
 		on: canvas nodes.
 
 	canvas @ RSCanvasController.
@@ -132,9 +136,15 @@ MateOGGrammar >> render [
 ]
 
 { #category : 'rendering' }
-MateOGGrammar >> renderShapes [
+MateOGGrammar >> renderShapes: totalVisits [
 
-	^ typeDeclarations flatCollect: #renderShapes
+	^ typeDeclarations values flatCollect: [ :decl | decl renderShapes: totalVisits parent: nil ]
+]
+
+{ #category : 'rendering' }
+MateOGGrammar >> totalVisitsAcrossDeclarations [
+
+	^ typeDeclarations values sum: [ :decl | decl totalVisits ]
 ]
 
 { #category : 'as yet unclassified' }

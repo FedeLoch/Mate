@@ -93,6 +93,80 @@ MateInstOneOfVarDecl >> options: someOptions [
 ]
 
 { #category : 'as yet unclassified' }
+MateInstOneOfVarDecl >> optionVisits [
+
+	| optionVisits |
+	
+	optionVisits := Dictionary new.
+	
+	visits valuesDo: [ :optionsDict |
+		optionsDict keysAndValuesDo: [ :option :count |
+			optionVisits at: option update: [ :v | v + count ] initial: count
+		].
+	].
+
+	^ optionVisits
+]
+
+{ #category : 'rendering' }
+MateInstOneOfVarDecl >> renderShapes: totalVisits parent: parentNode [
+
+	| myShape myNode myVisits optionShapes |
+	
+	myShape := self renderShape: totalVisits.
+	myNode := myShape model.
+	parentNode ifNotNil: [
+		myNode parent: parentNode.
+		parentNode children add: myNode
+	].
+	
+	myVisits := self optionVisits.
+	
+	optionShapes := options collect: [ :option | | node label box color composite visitsForOption |
+		visitsForOption := myVisits at: option ifAbsent: [ 0 ].
+		
+		node := MateGrammarNode new.
+		node declaration: self.
+		node label: option asString.
+		node totalVisits: visitsForOption.
+		node parent: myNode.
+		myNode children add: node.
+		
+		label := RSLabel new text: option asString; color: Color black.
+		
+		color := (self totalVisits > 0 and: [ visitsForOption > 0 ])
+			ifTrue: [ | ratio | 
+				ratio := visitsForOption / self totalVisits.
+				Color r: 1 g: (1 - ratio) b: (1 - ratio) ]
+			ifFalse: [ Color white ].
+		
+		box := RSBox new 
+			extent: (label extent + (16@8));
+			cornerRadius: 4;
+			color: color;
+			border: (visitsForOption = 0
+				ifTrue: [ RSBorder new color: (Color red alpha: 0.5); width: 1; dashArray: #(4 3) ]
+				ifFalse: [ RSBorder new color: (Color gray: 0.6); width: 1; dashArray: #(2 2) ]).
+			
+		composite := RSComposite new model: node; shapes: { box . label }; yourself.
+			
+		composite @ (RSPopup new text: [ :n | 
+			String streamContents: [ :s |
+				s nextPutAll: 'Option: '; nextPutAll: n label; cr.
+				s nextPutAll: 'Visits: '; print: n totalVisits.
+				self totalVisits > 0 ifTrue: [
+					s cr; nextPutAll: 'Share: '; 
+					  print: ((n totalVisits / self totalVisits * 100) asFloat round: 1); nextPutAll: '%'
+				]
+			]
+		]).
+		composite
+	].
+
+	^ { myShape } , optionShapes
+]
+
+{ #category : 'as yet unclassified' }
 MateInstOneOfVarDecl >> rewardAt: context [
 
 	rewards at: (context key) ifAbsentPut: [ Dictionary new ].
