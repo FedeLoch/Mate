@@ -60,43 +60,61 @@ MateInstVarDecl >> name: instanceVariableName [
 	name := instanceVariableName 
 ]
 
-{ #category : 'accessing' }
-MateInstVarDecl >> renderShape [
+{ #category : 'rendering' }
+MateInstVarDecl >> renderShape: totalVisits [
 
-	| label box color composite |
-	label := RSLabel new
-		         text: self name , ': ' , (self type ifNil: [ 'nil' ] ifNotNil: [ self type name ]);
-		         color: Color black.
-	color := self heatColor: self totalVisits.
-
-	box := RSBox new
-		       extent: label extent + (20 @ 10);
-		       cornerRadius: 5;
-		       color: color;
-		       border: (RSBorder new
-				        color: Color black;
-				        width: 1).
-
-	composite := RSComposite new
-		             model: self;
-		             shapes: { box . label };
-		             yourself.
-
-	composite @ (RSPopup new text: [ :n |
-			 String streamContents: [ :s |
-					 s nextPutAll: n class name; cr.
-					 s nextPutAll: 'Visits: ';
-						 print: n totalVisits ] ]).
+	| label box color composite node typeName |
+	
+	node := MateGrammarRenderNode new.
+	node declaration: self.
+	node label: self name.
+	node totalVisits: self totalVisits.
+	
+	typeName := type ifNil: [ 'nil' ] ifNotNil: [ type name ].
+	label := RSLabel new text: (self name , ': ' , typeName); color: Color black.
+	color := self heatColor: totalVisits.
+	
+	box := RSBox new 
+		extent: (label extent + (20@10));
+		cornerRadius: 5;
+		color: color;
+		border: (self totalVisits = 0
+			ifTrue: [ RSBorder new color: (Color red alpha: 0.5); width: 1; dashArray: #(4 3) ]
+			ifFalse: [ RSBorder new color: (Color gray: 0.5); width: 1 ]).
+		
+	composite := RSComposite new model: node; shapes: { box . label }; yourself.
+		
+	composite @ (RSPopup new text: [ :n | 
+		String streamContents: [ :s |
+			s nextPutAll: 'Var: '; nextPutAll: n label; cr.
+			s nextPutAll: 'Visits: '; print: n totalVisits.
+			totalVisits > 0 ifTrue: [
+				s cr; nextPutAll: 'Coverage: '; 
+				  print: ((n totalVisits / totalVisits * 100) asFloat round: 1); nextPutAll: '%'
+			]
+		]
+	]).
 
 	^ composite
 ]
 
-{ #category : 'accessing' }
-MateInstVarDecl >> renderShapes [
+{ #category : 'rendering' }
+MateInstVarDecl >> renderShapes: totalVisits parent: parentNode [
 
-	type ifNil: [ ^ { self renderShape } ].
+	| myShape myNode typeShapes |
 	
-	^ { self renderShape },  type renderShapes
+	myShape := self renderShape: totalVisits.
+	myNode := myShape model.
+	parentNode ifNotNil: [
+		myNode parent: parentNode.
+		parentNode children add: myNode
+	].
+	
+	type ifNil: [ ^ { myShape } ].
+	
+	typeShapes := (type renderShapes: totalVisits parent: myNode) asOrderedCollection.
+	
+	^ { myShape } , typeShapes
 ]
 
 { #category : 'accessing' }

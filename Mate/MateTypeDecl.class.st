@@ -22,25 +22,34 @@ MateTypeDecl >> name [
 ]
 
 { #category : 'rendering' }
-MateTypeDecl >> renderShape [
+MateTypeDecl >> renderShape: totalVisits [
 
-	| label box color composite |
+	| label box color composite node |
+	
+	node := MateGrammarRenderNode new.
+	node declaration: self.
+	node label: self name.
+	node totalVisits: self totalVisits.
 
 	label := RSLabel new text: self name; color: Color black.
-	color := self heatColor: self totalVisits.
+	color := self heatColor: totalVisits.
 	
 	box := RSBox new 
-		extent: (label extent + (20@10));
-		cornerRadius: 5;
+		extent: (label extent + (24@14));
+		cornerRadius: 8;
 		color: color;
-		border: (RSBorder new color: Color black; width: 1).
+		border: (RSBorder new color: (Color gray: 0.3); width: 2).
 		
-	composite := RSComposite new model: self; shapes: { box . label }; yourself.
+	composite := RSComposite new model: node; shapes: { box . label }; yourself.
 		
 	composite @ (RSPopup new text: [ :n | 
 		String streamContents: [ :s |
-			s nextPutAll: n class name; cr.
+			s nextPutAll: 'Type: '; nextPutAll: n label; cr.
 			s nextPutAll: 'Visits: '; print: n totalVisits.
+			totalVisits > 0 ifTrue: [
+				s cr; nextPutAll: 'Coverage: '; 
+				  print: ((n totalVisits / totalVisits * 100) asFloat round: 1); nextPutAll: '%'
+			]
 		]
 	]).
 
@@ -48,7 +57,13 @@ MateTypeDecl >> renderShape [
 ]
 
 { #category : 'rendering' }
-MateTypeDecl >> renderShapes [
+MateTypeDecl >> renderShapes: totalVisits parent: parentNode [
 
-	^ { self renderShape }
+	| shape |
+	shape := self renderShape: totalVisits.
+	parentNode ifNotNil: [ 
+		shape model parent: parentNode.
+		parentNode children add: shape model 
+	].
+	^ { shape }
 ]

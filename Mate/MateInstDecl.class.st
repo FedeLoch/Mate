@@ -45,9 +45,23 @@ MateInstDecl >> instanceVariableDeclarations: decls [
 ]
 
 { #category : 'rendering' }
-MateInstDecl >> renderShapes [
+MateInstDecl >> renderShapes: totalVisits parent: parentNode [
 
-	^ { self renderShape } , (self instanceVariableDeclarations flatCollect: #renderShapes)
+	| myShape myNode childrenShapes |
+	
+	myShape := self renderShape: totalVisits.
+	myNode := myShape model.
+	
+	parentNode ifNotNil: [ 
+		myNode parent: parentNode.
+		parentNode children add: myNode 
+	].
+	
+	childrenShapes := instanceVariableDeclarations flatCollect: [ :decl |
+		decl renderShapes: totalVisits parent: myNode
+	].
+
+	^ { myShape } , childrenShapes
 ]
 
 { #category : 'accessing' }
