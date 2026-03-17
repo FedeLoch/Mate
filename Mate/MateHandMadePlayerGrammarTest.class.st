@@ -1,5 +1,5 @@
 Class {
-	#name : 'MatePlayerGrammarTest',
+	#name : 'MateHandMadePlayerGrammarTest',
 	#superclass : 'MateHandMadeGrammarTest',
 	#category : 'Mate-Generation Tests',
 	#package : 'Mate',
@@ -7,13 +7,13 @@ Class {
 }
 
 { #category : 'running' }
-MatePlayerGrammarTest >> newGrammar [
+MateHandMadePlayerGrammarTest >> newGrammar [
 
 	^ MatePlayerGrammar new.
 ]
 
 { #category : 'tests' }
-MatePlayerGrammarTest >> testGrammarCanGenerateAPlayer [
+MateHandMadePlayerGrammarTest >> testGrammarCanGenerateAPlayer [
 
 	"Generalize test with a doTest grammar -> obj -> derivation -> obj"
 	| player |
@@ -25,7 +25,7 @@ MatePlayerGrammarTest >> testGrammarCanGenerateAPlayer [
 ]
 
 { #category : 'tests' }
-MatePlayerGrammarTest >> testGrammarCanGenerateAPlayerAndValidatesItsConstraints [
+MateHandMadePlayerGrammarTest >> testGrammarCanGenerateAPlayerAndValidatesItsConstraints [
 
 	"Generalize test with a doTest grammar -> obj -> derivation -> obj"
 	| player |
@@ -40,7 +40,7 @@ MatePlayerGrammarTest >> testGrammarCanGenerateAPlayerAndValidatesItsConstraints
 ]
 
 { #category : 'tests' }
-MatePlayerGrammarTest >> testGrammarSaveRewardOnCharacterClassProduction [
+MateHandMadePlayerGrammarTest >> testGrammarSaveRewardOnCharacterClassProduction [
 
 	| playerDerivation |
 	

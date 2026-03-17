@@ -1,5 +1,5 @@
 Class {
-	#name : 'MatePersonGrammarTest',
+	#name : 'MateHandMadePersonGrammarTest',
 	#superclass : 'MateHandMadeGrammarTest',
 	#category : 'Mate-Generation Tests',
 	#package : 'Mate',
@@ -7,20 +7,20 @@ Class {
 }
 
 { #category : 'running' }
-MatePersonGrammarTest >> newGrammar [
+MateHandMadePersonGrammarTest >> newGrammar [
 
 	^ MatePersonGrammar new.
 ]
 
 { #category : 'tests' }
-MatePersonGrammarTest >> testGrammarCanGenerateAPerson [
+MateHandMadePersonGrammarTest >> testGrammarCanGenerateAPerson [
 
 	self assert: (grammar gen: MatePerson) class equals: MatePerson.
 	self assert: (grammar gen: MatePerson) age class equals: SmallInteger
 ]
 
 { #category : 'tests' }
-MatePersonGrammarTest >> testGrammarCanGenerateAnAge [
+MateHandMadePersonGrammarTest >> testGrammarCanGenerateAnAge [
 
 	self assert: (grammar gen: MateAge) class equals: MateAge.
 	self assert: (grammar gen: MateAge) value class equals: SmallInteger

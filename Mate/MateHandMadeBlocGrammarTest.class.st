@@ -1,5 +1,5 @@
 Class {
-	#name : 'MateBlocGrammarTest',
+	#name : 'MateHandMadeBlocGrammarTest',
 	#superclass : 'MateHandMadeGrammarTest',
 	#category : 'Mate-Generation Tests',
 	#package : 'Mate',
@@ -7,13 +7,13 @@ Class {
 }
 
 { #category : 'running' }
-MateBlocGrammarTest >> newGrammar [
+MateHandMadeBlocGrammarTest >> newGrammar [
 
 	^ MateBlocGrammar new.
 ]
 
 { #category : 'tests' }
-MateBlocGrammarTest >> testGrammarCanGenerateABlChildrenArray [
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlChildrenArray [
 
 	| gen |
 	
@@ -25,7 +25,7 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlChildrenArray [
 ]
 
 { #category : 'tests' }
-MateBlocGrammarTest >> testGrammarCanGenerateABlColorPaint [
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlColorPaint [
 
 	| gen |
 	
@@ -37,7 +37,7 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlColorPaint [
 ]
 
 { #category : 'tests' }
-MateBlocGrammarTest >> testGrammarCanGenerateABlCustomVisuals [
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlCustomVisuals [
 
 	| gen |
 	
@@ -55,7 +55,7 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlCustomVisuals [
 ]
 
 { #category : 'tests' }
-MateBlocGrammarTest >> testGrammarCanGenerateABlElement [
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlElement [
 
 	| element |
 	
@@ -68,7 +68,7 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlElement [
 ]
 
 { #category : 'tests' }
-MateBlocGrammarTest >> testGrammarCanGenerateABlLayoutCommonConstraints [
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlLayoutCommonConstraints [
 
 	| gen |
 	
@@ -83,7 +83,7 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlLayoutCommonConstraints [
 ]
 
 { #category : 'tests' }
-MateBlocGrammarTest >> testGrammarCanGenerateABlLayoutCommonConstraintsAxis [
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlLayoutCommonConstraintsAxis [
 
 	| gen |
 	
@@ -94,7 +94,7 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlLayoutCommonConstraintsAxis [
 ]
 
 { #category : 'tests' }
-MateBlocGrammarTest >> testGrammarCanGenerateABlLayoutExactResizer [
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlLayoutExactResizer [
 
 	| gen |
 	
@@ -105,7 +105,7 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlLayoutExactResizer [
 ]
 
 { #category : 'tests' }
-MateBlocGrammarTest >> testGrammarCanGenerateABlPaintBackground [
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlPaintBackground [
 
 	| gen |
 	
@@ -116,7 +116,7 @@ MateBlocGrammarTest >> testGrammarCanGenerateABlPaintBackground [
 ]
 
 { #category : 'tests' }
-MateBlocGrammarTest >> testGrammarCanGenerateABlTriangleGeometry [
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlTriangleGeometry [
 
 	| gen |
 	
