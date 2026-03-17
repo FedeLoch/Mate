@@ -96,6 +96,12 @@ MateOGGrammar >> initialize [
 ]
 
 { #category : 'as yet unclassified' }
+MateOGGrammar >> mateDefinition [
+
+	1 halt.
+]
+
+{ #category : 'as yet unclassified' }
 MateOGGrammar >> parse: object [
 
 	^ parser parse: object
