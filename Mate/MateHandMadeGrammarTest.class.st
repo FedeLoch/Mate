@@ -1,6 +1,6 @@
 Class {
 	#name : 'MateHandMadeGrammarTest',
-	#superclass : 'MateGrammarTest',
+	#superclass : 'MateGrammarGenerationTest',
 	#category : 'Mate-Generation Tests',
 	#package : 'Mate',
 	#tag : 'Generation Tests'

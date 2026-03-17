@@ -1,5 +1,5 @@
 Class {
-	#name : 'MateGrammarTest',
+	#name : 'MateGrammarGenerationTest',
 	#superclass : 'TestCase',
 	#instVars : [
 		'grammar'
@@ -10,13 +10,13 @@ Class {
 }
 
 { #category : 'running' }
-MateGrammarTest >> newGrammar [
+MateGrammarGenerationTest >> newGrammar [
 
 	self subclassResponsibility 
 ]
 
 { #category : 'running' }
-MateGrammarTest >> setUp [
+MateGrammarGenerationTest >> setUp [
 	super setUp.
 	grammar := self newGrammar
 ]
