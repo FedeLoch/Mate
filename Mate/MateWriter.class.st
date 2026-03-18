@@ -13,6 +13,16 @@ MateWriter >> definition: type decl: decl [
 ]
 
 { #category : 'writing' }
+MateWriter >> eachProp: prop [
+
+	^ String streamContents: [ :s |
+		s nextPutAll: '[ .'.
+		s nextPutAll: prop.
+		s nextPutAll: ' ]'
+	]
+]
+
+{ #category : 'writing' }
 MateWriter >> mateDefinition [
 
 	| definitions |
@@ -30,6 +40,15 @@ MateWriter >> mateDefinition [
 MateWriter >> mateDefinition: type [
 
 	^ self definition: type decl: (grammar typeDeclarations at: type)
+]
+
+{ #category : 'writing' }
+MateWriter >> prop: prop index: index [
+
+	^ String streamContents: [ :s |
+		index > 1 ifTrue: [ s nextPutAll: '.' ].
+		s nextPutAll: prop
+	]
 ]
 
 { #category : 'visiting' }
@@ -128,14 +147,9 @@ MateWriter >> writeReferencePath: path [
 
 	^ String streamContents: [ :s |
 		path path doWithIndex: [ :segment :index |
-			(segment isEach) ifTrue: [
-				s nextPutAll: '[ .'.
-				s nextPutAll: segment prop.
-				s nextPutAll: ' ]'
-			] ifFalse: [
-				index > 1 ifTrue: [ s nextPutAll: '.' ].
-				s nextPutAll: segment prop
-			]
+			s nextPutAll: (segment isEach ifTrue: [
+				self eachProp: segment prop
+			] ifFalse: [ self prop: segment prop index: index ])
 		]
 	]
 ]
