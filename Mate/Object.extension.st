@@ -62,7 +62,9 @@ Object class >> updateReward: improvement context: context from: decl [
 ]
 
 { #category : '*Mate' }
-Object class >> | aClass [ 
+Object class >> | aClass [
+
+	(aClass = self) ifTrue: [ ^ self ].
 	
 	^ MateOptionalType options: { self . aClass }
 ]

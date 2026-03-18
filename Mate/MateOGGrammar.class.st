@@ -13,11 +13,35 @@ Class {
 	#tag : 'Grammar'
 }
 
+{ #category : 'instance creation' }
+MateOGGrammar class >> from: instance [
+	
+	^ self new feedByObjectInstance: instance
+	
+
+	
+]
+
+{ #category : 'instance creation' }
+MateOGGrammar class >> fromObjects: collection [
+	
+	^ collection inject: self new into: [ :grammar :instance |
+		grammar feedByObjectInstance: instance
+	]
+	
+
+	
+]
+
 { #category : 'accessing' }
 MateOGGrammar >> addTypeDeclaration: decl [
 
-	decl grammar: self.
-	typeDeclarations at: decl type put: decl
+	typeDeclarations at: decl type ifPresent: [
+		(typeDeclarations at: decl type) feed: decl
+	] ifAbsent: [
+		decl grammar: self.
+		typeDeclarations at: decl type put: decl
+	]
 ]
 
 { #category : 'accessing' }
@@ -60,6 +84,17 @@ MateOGGrammar >> feedByGraphDescription [
 	description ifNil: [ ^ nil ].
 	
 	self addTypeDeclarations: (MateLanguageParser parse: description)
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> feedByObjectInstance: instance [
+
+	self addTypeDeclaration: (self typeDeclarationBy: instance).
+	
+	instance class allInstVarNames do: [ :name |
+		self feedByObjectInstance: (instance instVarNamed: name)
+	]
+	
 ]
 
 { #category : 'as yet unclassified' }
@@ -173,6 +208,18 @@ MateOGGrammar >> replace: node by: variant [
 MateOGGrammar >> totalVisitsAcrossDeclarations [
 
 	^ typeDeclarations values sum: [ :decl | decl totalVisits ]
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> typeDeclarationBy: instance [
+
+	| instanceVarDecls |
+	
+	instanceVarDecls := instance class allInstVarNames collect: [ :name |
+		MateInstVarDecl new name: name; type: (instance instVarNamed: name) class
+	].
+
+	 ^ MateInstDecl new type: instance class; instanceVariableDeclarations: instanceVarDecls
 ]
 
 { #category : 'accessing' }

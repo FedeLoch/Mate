@@ -10,6 +10,12 @@ Class {
 }
 
 { #category : 'accessing' }
+MateTypeDecl >> feed: decl [
+
+	self subclassResponsibility 
+]
+
+{ #category : 'accessing' }
 MateTypeDecl >> grammar: aGrammar [
 
 	grammar := aGrammar 

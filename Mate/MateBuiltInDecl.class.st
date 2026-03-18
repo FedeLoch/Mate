@@ -6,6 +6,12 @@ Class {
 	#tag : 'Grammar'
 }
 
+{ #category : 'accessing' }
+MateBuiltInDecl >> feed: decl [
+
+	^ self
+]
+
 { #category : 'testing' }
 MateBuiltInDecl >> isBuiltIn [
 

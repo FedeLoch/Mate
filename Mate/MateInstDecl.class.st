@@ -18,6 +18,14 @@ MateInstDecl >> = anObject [
 	^ instanceVariableDeclarations asArray = anObject instanceVariableDeclarations asArray
 ]
 
+{ #category : 'accessing' }
+MateInstDecl >> feed: decl [
+
+	instanceVariableDeclarations withIndexDo: [ :instVarDecl :index |
+		instVarDecl merge: (decl instanceVariableDeclarations at: index)
+	]
+]
+
 { #category : 'comparing' }
 MateInstDecl >> hash [
 
