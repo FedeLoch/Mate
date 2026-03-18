@@ -16,21 +16,20 @@ Class {
 { #category : 'instance creation' }
 MateOGGrammar class >> from: instance [
 	
-	^ self new feedByObjectInstance: instance
-	
-
+	^ self new feedByObjectInstance: instance seen: Set new
 	
 ]
 
 { #category : 'instance creation' }
 MateOGGrammar class >> fromObjects: collection [
 	
+	| seen |
+	
+	seen := Set new.
+	
 	^ collection inject: self new into: [ :grammar :instance |
-		grammar feedByObjectInstance: instance
+		grammar feedByObjectInstance: instance seen: seen
 	]
-	
-
-	
 ]
 
 { #category : 'accessing' }
@@ -87,12 +86,16 @@ MateOGGrammar >> feedByGraphDescription [
 ]
 
 { #category : 'as yet unclassified' }
-MateOGGrammar >> feedByObjectInstance: instance [
+MateOGGrammar >> feedByObjectInstance: instance seen: seen [
+
+	(seen includes: instance) ifTrue: [ ^ nil ].
 
 	self addTypeDeclaration: (self typeDeclarationBy: instance).
 	
+	seen add: instance.
+	
 	instance class allInstVarNames do: [ :name |
-		self feedByObjectInstance: (instance instVarNamed: name)
+		self feedByObjectInstance: (instance instVarNamed: name) seen: seen
 	]
 	
 ]
