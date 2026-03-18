@@ -158,10 +158,20 @@ MateOGGrammar >> instArrayVar: name by: array [
 ]
 
 { #category : 'as yet unclassified' }
+MateOGGrammar >> instanceVarDeclaration: name by: var [
+
+	| type |
+	
+	type := (Boolean acceptType: var class) ifTrue: [ Boolean ] ifFalse: [ var class ].
+
+	^ MateInstVarDecl new name: name; type: type
+]
+
+{ #category : 'as yet unclassified' }
 MateOGGrammar >> instanceVariable: name by: var [
 
 	^ (var isArray) ifTrue: [ self instArrayVar: name by: var ] ifFalse: [
-		MateInstVarDecl new name: name; type: var class
+		self instanceVarDeclaration: name by: var
 	]
 ]
 

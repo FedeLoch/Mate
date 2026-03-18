@@ -80,9 +80,17 @@ MateBlocGrammarByObjectTest >> testGrammarBlLayoutCommonConstraintsAxisDeclarati
 MateBlocGrammarByObjectTest >> testGrammarBlLayoutCommonConstraintsDeclarationsMatch [
 	
 	self testDecl: BlLayoutCommonConstraints expects: (MateInstDecl new type: BlLayoutCommonConstraints; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'position'; type: Point.
 		MateInstVarDecl new name: 'vertical'; type: BlLayoutCommonConstraintsAxis.
 		MateInstVarDecl new name: 'horizontal'; type: BlLayoutCommonConstraintsAxis.
+		MateInstVarDecl new name: 'position'; type: Point.
+		MateInstVarDecl new name: 'margin'; type: BlInsets.
+		MateInstVarDecl new name: 'padding'; type: BlInsets.
+		MateInstVarDecl new name: 'minHeight'; type: SmallFloat64.
+		MateInstVarDecl new name: 'minWidth'; type: SmallFloat64.
+		MateInstVarDecl new name: 'maxHeight'; type: BoxedFloat64.
+		MateInstVarDecl new name: 'maxWidth'; type: BoxedFloat64.
+		MateInstVarDecl new name: 'ignoredByLayout'; type: Boolean.
+		MateInstVarDecl new name: 'accountTransformation'; type: Boolean.
 	})
 ]
 
