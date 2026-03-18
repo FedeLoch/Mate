@@ -50,6 +50,12 @@ MatePathProp >> insertDerivation: instance atDerivation: aNode [
 ]
 
 { #category : 'accessing' }
+MatePathProp >> prop [
+
+	^ prop
+]
+
+{ #category : 'accessing' }
 MatePathProp >> prop: propName [
 
 	prop := propName

@@ -26,6 +26,12 @@ MateReferencePath >> insertReference: instance [
 ]
 
 { #category : 'accessing' }
+MateReferencePath >> path [
+
+	^ path
+]
+
+{ #category : 'accessing' }
 MateReferencePath >> path: aPath [ 
 
 	path := aPath
