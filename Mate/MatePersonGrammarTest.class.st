@@ -15,5 +15,11 @@ MatePersonGrammarTest >> newGrammar [
 { #category : 'running' }
 MatePersonGrammarTest >> testPersonGrammarKnowHowToCalculateItLanguageDefinition [
 
-	self assert: grammar mateDefinition equals: (MatePersonGrammarByLang new defineObjectGraph)
+	self assert: (grammar mateDefinition: MateAge) equals: 'MateAge -> {
+	value: SmallInteger
+}'.
+	
+	self assert: (grammar mateDefinition: MatePerson) equals: 'MatePerson -> {
+	age: MateAge
+}'
 ]

@@ -15,6 +15,12 @@ MateTypeDecl >> grammar: aGrammar [
 	grammar := aGrammar 
 ]
 
+{ #category : 'testing' }
+MateTypeDecl >> isBuiltIn [
+
+	^ false
+]
+
 { #category : 'accessing' }
 MateTypeDecl >> name [
 

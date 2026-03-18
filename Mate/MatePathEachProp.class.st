@@ -19,3 +19,9 @@ MatePathEachProp >> insertDerivation: instance atDerivation: aNode [
 		edge edges at: prop ifPresent: [ (edge edges at: prop) instance: instance ]
 	]
 ]
+
+{ #category : 'testing' }
+MatePathEachProp >> isEach [
+
+	^ true
+]

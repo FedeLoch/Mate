@@ -104,6 +104,12 @@ MateOGGrammar >> mateDefinition [
 ]
 
 { #category : 'as yet unclassified' }
+MateOGGrammar >> mateDefinition: type [
+
+	^ writer mateDefinition: type
+]
+
+{ #category : 'as yet unclassified' }
 MateOGGrammar >> parse: object [
 
 	^ parser parse: object

@@ -49,6 +49,12 @@ MatePathProp >> insertDerivation: instance atDerivation: aNode [
 	nodes do: [ :node | (node edges at: prop) instance: instance ]
 ]
 
+{ #category : 'testing' }
+MatePathProp >> isEach [
+
+	^ false
+]
+
 { #category : 'accessing' }
 MatePathProp >> prop [
 

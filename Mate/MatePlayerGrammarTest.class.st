@@ -15,5 +15,10 @@ MatePlayerGrammarTest >> newGrammar [
 { #category : 'running' }
 MatePlayerGrammarTest >> testPersonGrammarKnowHowToCalculateItLanguageDefinition [
 
-	self assert: grammar mateDefinition equals: (MatePlayerGrammarByLang new defineObjectGraph)
+	self assert: (grammar mateDefinition: Player) equals: 'Player -> {
+	name: ByteString,
+	characterClass: Warrior | Mage | Rogue,
+	level: { type: SmallInteger, between: 0 and: 99 },
+	missingExperienceForNextLevel: { type: SmallInteger, greaterThan: 0 }
+}'
 ]

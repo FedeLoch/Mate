@@ -6,6 +6,12 @@ Class {
 	#tag : 'Grammar'
 }
 
+{ #category : 'testing' }
+MateBuiltInDecl >> isBuiltIn [
+
+	^ true
+]
+
 { #category : 'visiting' }
 MateBuiltInDecl >> visiting: aVisitor from: context constraint: aConstraint [
 
