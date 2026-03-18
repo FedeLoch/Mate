@@ -1,0 +1,127 @@
+Class {
+	#name : 'MateHandMadeBlocGrammarTest',
+	#superclass : 'MateHandMadeGrammarTest',
+	#category : 'Mate-Generation Tests',
+	#package : 'Mate',
+	#tag : 'Generation Tests'
+}
+
+{ #category : 'running' }
+MateHandMadeBlocGrammarTest >> newGrammar [
+
+	^ MateBlocGrammar new.
+]
+
+{ #category : 'tests' }
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlChildrenArray [
+
+	| gen |
+	
+	gen := grammar gen: BlChildrenArray.
+	
+	self assert: gen class equals: BlChildrenArray.
+	self assert: (gen array) class equals: Array.
+	self assert: ((0 to: 10) includes: gen array size).
+]
+
+{ #category : 'tests' }
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlColorPaint [
+
+	| gen |
+	
+	gen := grammar gen: BlColorPaint.
+
+	self assert: (gen class) equals: BlColorPaint.
+	self assert: (gen color class) equals: Color.
+	self deny: gen color equals: Color black
+]
+
+{ #category : 'tests' }
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlCustomVisuals [
+
+	| gen |
+	
+	gen := grammar gen: BlCustomVisuals.
+
+	self assert: gen class equals: BlCustomVisuals.
+	self assert: ({
+			 BlPaintBackground.
+			 BlTransparentBackground } includes: gen background class).
+	self assert: ({
+			 BlRectangleGeometry.
+			 BlEllipseGeometry.
+			 BlTriangleGeometry } includes: gen geometry class).
+	self deny: gen clipChildren class equals: Boolean
+]
+
+{ #category : 'tests' }
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlElement [
+
+	| element |
+	
+	element := grammar gen: BlElement.
+	self assert: (element class) equals: BlElement.
+	self assert: (element children class) equals: BlChildrenArray.
+	element children array do: [ :child | self assert: child parent equals: element ].
+	self assert: ({ BlCustomVisuals . BlDefaultVisuals } includes: element visuals class).
+	self assert: (element constraints class) equals: BlLayoutCommonConstraints.
+]
+
+{ #category : 'tests' }
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlLayoutCommonConstraints [
+
+	| gen |
+	
+	gen := grammar gen: BlLayoutCommonConstraints.
+
+	self assert: (gen class) equals: BlLayoutCommonConstraints.
+	self assert: (gen position class) equals: Point.
+	self deny: (gen position) equals: Point new.
+	self assert: (gen vertical class) equals: BlLayoutCommonConstraintsAxis.
+	self assert: (gen horizontal class) equals: BlLayoutCommonConstraintsAxis.
+	self deny: (gen horizontal) equals: gen vertical
+]
+
+{ #category : 'tests' }
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlLayoutCommonConstraintsAxis [
+
+	| gen |
+	
+	gen := grammar gen: BlLayoutCommonConstraintsAxis.
+
+	self assert: (gen class) equals: BlLayoutCommonConstraintsAxis.
+	self assert: (gen resizer class) equals: BlLayoutExactResizer.
+]
+
+{ #category : 'tests' }
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlLayoutExactResizer [
+
+	| gen |
+	
+	gen := grammar gen: BlLayoutExactResizer.
+
+	self assert: (gen class) equals: BlLayoutExactResizer.
+	self assert: ({ SmallInteger . SmallFloat64 } includes: gen size class)
+]
+
+{ #category : 'tests' }
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlPaintBackground [
+
+	| gen |
+	
+	gen := grammar gen: BlPaintBackground.
+
+	self assert: (gen class) equals: BlPaintBackground.
+	self assert: (gen paint class) equals: BlColorPaint
+]
+
+{ #category : 'tests' }
+MateHandMadeBlocGrammarTest >> testGrammarCanGenerateABlTriangleGeometry [
+
+	| gen |
+	
+	gen := grammar gen: BlTriangleGeometry.
+	
+	self assert: (gen class) equals: BlTriangleGeometry.
+	self assert: ({ #top . #right . #left . #bottom } includes: (gen orientation))
+]

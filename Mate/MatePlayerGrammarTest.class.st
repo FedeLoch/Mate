@@ -1,51 +1,24 @@
 Class {
 	#name : 'MatePlayerGrammarTest',
-	#superclass : 'MateHandMadeGrammarTest',
-	#category : 'Mate-Generation Tests',
+	#superclass : 'MateGrammarTest',
+	#category : 'Mate-Grammar Tests',
 	#package : 'Mate',
-	#tag : 'Generation Tests'
+	#tag : 'Grammar Tests'
 }
 
 { #category : 'running' }
 MatePlayerGrammarTest >> newGrammar [
 
-	^ MatePlayerGrammar new.
+	^ MatePlayerGrammar new
 ]
 
-{ #category : 'tests' }
-MatePlayerGrammarTest >> testGrammarCanGenerateAPlayer [
+{ #category : 'running' }
+MatePlayerGrammarTest >> testPersonGrammarKnowHowToCalculatePlayerLanguageDefinition [
 
-	"Generalize test with a doTest grammar -> obj -> derivation -> obj"
-	| player |
-	
-	player := grammar gen: Player.
-	
-	self assert: (player class) equals: Player.
-	self assert: ({ Rogue . Warrior . Mage } includes: player characterClass class).
-]
-
-{ #category : 'tests' }
-MatePlayerGrammarTest >> testGrammarCanGenerateAPlayerAndValidatesItsConstraints [
-
-	"Generalize test with a doTest grammar -> obj -> derivation -> obj"
-	| player |
-	
-	player := grammar gen: Player.
-
-	self assert: (player class) equals: Player.
-	self assert: player name class equals: ByteString.
-	self assert: ({ Rogue . Warrior . Mage } includes: player characterClass class).
-	self assert: ((0 to: 99) includes: player level).
-	self assert: (player missingExperienceForNextLevel >= 0).
-]
-
-{ #category : 'tests' }
-MatePlayerGrammarTest >> testGrammarSaveRewardOnCharacterClassProduction [
-
-	| playerDerivation |
-	
-	playerDerivation := grammar generator gen: Player from: MateContext new.
-	
-	grammar backpropagate: playerDerivation improvement: 42.
-
+	self assert: (grammar mateDefinition: Player) equals: 'Player -> {
+	name: ByteString,
+	characterClass: Warrior | Mage | Rogue,
+	level: { type: SmallInteger, between: 0 and: 99 },
+	missingExperienceForNextLevel: { type: SmallInteger, greaterThan: 0 }
+}'
 ]

@@ -1,27 +1,29 @@
 Class {
 	#name : 'MatePersonGrammarTest',
-	#superclass : 'MateHandMadeGrammarTest',
-	#category : 'Mate-Generation Tests',
+	#superclass : 'MateGrammarTest',
+	#category : 'Mate-Grammar Tests',
 	#package : 'Mate',
-	#tag : 'Generation Tests'
+	#tag : 'Grammar Tests'
 }
 
 { #category : 'running' }
 MatePersonGrammarTest >> newGrammar [
 
-	^ MatePersonGrammar new.
+	^ MatePersonGrammar new
 ]
 
-{ #category : 'tests' }
-MatePersonGrammarTest >> testGrammarCanGenerateAPerson [
+{ #category : 'running' }
+MatePersonGrammarTest >> testPersonGrammarKnowHowToCalculateAgeLanguageDefinition [
 
-	self assert: (grammar gen: MatePerson) class equals: MatePerson.
-	self assert: (grammar gen: MatePerson) age class equals: SmallInteger
+	self assert: (grammar mateDefinition: MateAge) equals: 'MateAge -> {
+	value: SmallInteger
+}'
 ]
 
-{ #category : 'tests' }
-MatePersonGrammarTest >> testGrammarCanGenerateAnAge [
-
-	self assert: (grammar gen: MateAge) class equals: MateAge.
-	self assert: (grammar gen: MateAge) value class equals: SmallInteger
+{ #category : 'running' }
+MatePersonGrammarTest >> testPersonGrammarKnowHowToCalculatePersonLanguageDefinition [
+	
+	self assert: (grammar mateDefinition: MatePerson) equals: 'MatePerson -> {
+	age: MateAge
+}'
 ]

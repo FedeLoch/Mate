@@ -18,6 +18,18 @@ MateInstDecl >> = anObject [
 	^ instanceVariableDeclarations asArray = anObject instanceVariableDeclarations asArray
 ]
 
+{ #category : 'accessing' }
+MateInstDecl >> feed: decl [
+
+	decl instanceVariableDeclarations do: [ :instVarDecl | | current |
+		current := self instanceVariableDeclarationNamed: instVarDecl name. 
+		current ifNil: [ instanceVariableDeclarations add: instVarDecl ]
+			ifNotNil: [ current merge: instVarDecl ]
+	].
+
+	
+]
+
 { #category : 'comparing' }
 MateInstDecl >> hash [
 
@@ -30,6 +42,17 @@ MateInstDecl >> initialize [
 	super initialize.
 	instanceVariableDeclarations := OrderedCollection new.
 	selfReferences := OrderedCollection new.
+]
+
+{ #category : 'accessing' }
+MateInstDecl >> instanceVariableDeclarationNamed: name [
+
+	| index |
+	
+	index := instanceVariableDeclarations asOrderedCollection findFirst: [ :elem | elem name = name ].
+	(index <= 0) ifTrue: [ ^ nil ].
+	
+	^ instanceVariableDeclarations at: index
 ]
 
 { #category : 'accessing' }

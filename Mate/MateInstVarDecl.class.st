@@ -48,6 +48,12 @@ MateInstVarDecl >> hash [
 	^ (super hash bitXor: name hash) bitXor: constraint hash
 ]
 
+{ #category : 'actions' }
+MateInstVarDecl >> merge: decl [
+	
+	type := type | decl type
+]
+
 { #category : 'accessing' }
 MateInstVarDecl >> name [
 

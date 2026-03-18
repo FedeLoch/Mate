@@ -5,18 +5,42 @@ Class {
 		'typeDeclarations',
 		'builtInTypeDeclarations',
 		'generator',
-		'parser'
+		'parser',
+		'writer'
 	],
 	#category : 'Mate-Grammar',
 	#package : 'Mate',
 	#tag : 'Grammar'
 }
 
+{ #category : 'instance creation' }
+MateOGGrammar class >> from: instance [
+	
+	^ self new feedByObjectInstance: instance seen: Set new
+	
+]
+
+{ #category : 'instance creation' }
+MateOGGrammar class >> fromObjects: collection [
+	
+	| seen |
+	
+	seen := Set new.
+	
+	^ collection inject: self new into: [ :grammar :instance |
+		grammar feedByObjectInstance: instance seen: seen
+	]
+]
+
 { #category : 'accessing' }
 MateOGGrammar >> addTypeDeclaration: decl [
 
-	decl grammar: self.
-	typeDeclarations at: decl type put: decl
+	typeDeclarations at: decl type ifPresent: [
+		(typeDeclarations at: decl type) feed: decl
+	] ifAbsent: [
+		decl grammar: self.
+		typeDeclarations at: decl type put: decl
+	]
 ]
 
 { #category : 'accessing' }
@@ -62,6 +86,31 @@ MateOGGrammar >> feedByGraphDescription [
 ]
 
 { #category : 'as yet unclassified' }
+MateOGGrammar >> feedByObjectInstance: instance [ 
+
+	^ self feedByObjectInstance: instance seen: Set new
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> feedByObjectInstance: instance seen: seen [
+
+	| decl |
+
+	(seen includes: instance) ifTrue: [ ^ nil ].
+	
+	decl := self typeDeclarationBy: instance.
+
+	self addTypeDeclaration: decl.
+	
+	seen add: instance.
+	
+	decl instanceVariableDeclarations do: [ :instDecl |
+		self feedByObjectInstance: (instance instVarNamed: instDecl name) seen: seen
+	]
+	
+]
+
+{ #category : 'as yet unclassified' }
 MateOGGrammar >> gen: type [
 
 	^ generator gen: type
@@ -91,8 +140,51 @@ MateOGGrammar >> initialize [
 	super initialize.
 	typeDeclarations := self builtInTypeDeclarations.
 	generator := MateGenerator new grammar: self.
+	writer := MateWriter new grammar: self.
 	parser := MateParser new grammar: self.
 	self feedByGraphDescription.
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> instArrayVar: name by: array [
+
+	| elementType |
+	
+	elementType :=  array ifEmpty: [ Object ] ifNotEmpty: [
+		array allButFirst inject: array first class into: [ :class :element | class | element class ]
+	].
+
+	^ MateInstArrayVarDecl new name: name; elementType: elementType
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> instanceVarDeclaration: name by: var [
+
+	| type |
+	
+	type := (Boolean acceptType: var class) ifTrue: [ Boolean ] ifFalse: [ var class ].
+
+	^ MateInstVarDecl new name: name; type: type
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> instanceVariable: name by: var [
+
+	^ (var isArray) ifTrue: [ self instArrayVar: name by: var ] ifFalse: [
+		self instanceVarDeclaration: name by: var
+	]
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> mateDefinition [
+
+	^ writer mateDefinition
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> mateDefinition: type [
+
+	^ writer mateDefinition: type
 ]
 
 { #category : 'as yet unclassified' }
@@ -159,6 +251,25 @@ MateOGGrammar >> replace: node by: variant [
 MateOGGrammar >> totalVisitsAcrossDeclarations [
 
 	^ typeDeclarations values sum: [ :decl | decl totalVisits ]
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> typeDeclarationBy: instance [
+
+	| instanceVarDecls |
+	
+	instanceVarDecls := instance class allInstVarNames inject: OrderedCollection new into: [ :acc :name | | var |
+		var := instance instVarNamed: name.
+		(var class = UndefinedObject) ifFalse: [
+			acc add: (self instanceVariable: name by: var)
+		].
+	
+		acc
+	].
+
+	
+
+	 ^ MateInstDecl new type: instance class; instanceVariableDeclarations: instanceVarDecls asArray
 ]
 
 { #category : 'accessing' }

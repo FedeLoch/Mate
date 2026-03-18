@@ -6,6 +6,18 @@ Class {
 	#tag : 'Grammar'
 }
 
+{ #category : 'accessing' }
+MateBuiltInDecl >> feed: decl [
+
+	^ self
+]
+
+{ #category : 'testing' }
+MateBuiltInDecl >> isBuiltIn [
+
+	^ true
+]
+
 { #category : 'visiting' }
 MateBuiltInDecl >> visiting: aVisitor from: context constraint: aConstraint [
 
