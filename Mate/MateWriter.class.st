@@ -29,11 +29,11 @@ MateWriter >> mateDefinition [
 	
 	definitions := grammar typeDeclarations keys inject: OrderedCollection new into: [ :defs :type | | decl |
 		decl := grammar typeDeclarations at: type.
-		decl isBuiltIn ifFalse: [ defs add: (self definition: type decl: decl) ].
+		(self shouldHandle: decl) ifTrue: [ defs add: (self definition: type decl: decl) ].
 		defs
 	].
 
-	^ String cr join: definitions
+	^ (String cr join: definitions) trim
 ]
 
 { #category : 'writing' }
@@ -49,6 +49,12 @@ MateWriter >> prop: prop index: index [
 		index > 1 ifTrue: [ s nextPutAll: '.' ].
 		s nextPutAll: prop
 	]
+]
+
+{ #category : 'writing' }
+MateWriter >> shouldHandle: decl [
+
+	^ decl isBuiltIn not
 ]
 
 { #category : 'visiting' }
@@ -101,6 +107,8 @@ MateWriter >> visitInstVarDecl: decl from: context [
 
 { #category : 'visiting' }
 MateWriter >> visitInstanceDeclaration: decl from: context [
+
+	decl instanceVariableDeclarations ifEmpty: [ ^ '' ].
 
 	^ String streamContents: [ :s |
 		s nextPutAll: decl name.
