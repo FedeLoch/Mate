@@ -94,14 +94,18 @@ MateOGGrammar >> feedByObjectInstance: instance [
 { #category : 'as yet unclassified' }
 MateOGGrammar >> feedByObjectInstance: instance seen: seen [
 
-	(seen includes: instance) ifTrue: [ ^ nil ].
+	| decl |
 
-	self addTypeDeclaration: (self typeDeclarationBy: instance).
+	(seen includes: instance) ifTrue: [ ^ nil ].
+	
+	decl := self typeDeclarationBy: instance.
+
+	self addTypeDeclaration: decl.
 	
 	seen add: instance.
 	
-	instance class allInstVarNames do: [ :name |
-		self feedByObjectInstance: (instance instVarNamed: name) seen: seen
+	decl instanceVariableDeclarations do: [ :instDecl |
+		self feedByObjectInstance: (instance instVarNamed: instDecl name) seen: seen
 	]
 	
 ]
@@ -142,9 +146,23 @@ MateOGGrammar >> initialize [
 ]
 
 { #category : 'as yet unclassified' }
-MateOGGrammar >> instArrayVar: name by: var [
+MateOGGrammar >> instArrayVar: name by: array [
 
-	^ MateInstArrayVarDecl new name: name; elementType: var class
+	| elementType |
+	
+	elementType :=  array ifEmpty: [ Object ] ifNotEmpty: [
+		array allButFirst inject: array first class into: [ :class :element | class | element class ]
+	].
+
+	^ MateInstArrayVarDecl new name: name; elementType: elementType
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> instanceVariable: name by: var [
+
+	^ (var isArray) ifTrue: [ self instArrayVar: name by: var ] ifFalse: [
+		MateInstVarDecl new name: name; type: var class
+	]
 ]
 
 { #category : 'as yet unclassified' }
@@ -230,14 +248,18 @@ MateOGGrammar >> typeDeclarationBy: instance [
 
 	| instanceVarDecls |
 	
-	instanceVarDecls := instance class allInstVarNames collect: [ :name | | var |
+	instanceVarDecls := instance class allInstVarNames inject: OrderedCollection new into: [ :acc :name | | var |
 		var := instance instVarNamed: name.
-		(var isArray) ifTrue: [ self instArrayVar: name by: var ] ifFalse: [
-			MateInstVarDecl new name: name; type: var class
-		]
+		(var class = UndefinedObject) ifFalse: [
+			acc add: (self instanceVariable: name by: var)
+		].
+	
+		acc
 	].
 
-	 ^ MateInstDecl new type: instance class; instanceVariableDeclarations: instanceVarDecls
+	
+
+	 ^ MateInstDecl new type: instance class; instanceVariableDeclarations: instanceVarDecls asArray
 ]
 
 { #category : 'accessing' }

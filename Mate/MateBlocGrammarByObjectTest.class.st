@@ -9,7 +9,17 @@ Class {
 { #category : 'running' }
 MateBlocGrammarByObjectTest >> objectInstance [
 
-	^ MateBlocGrammar new gen: BlElement
+	^ BlElement new
+		  id: #B;
+		  position: 100 @ 0;
+		  extent: 100 @ 100;
+		  background: Color green;
+		  border: (BlBorder paint: Color blue width: 2);
+		  addChild: (BlElement new
+				   id: #BA;
+				   extent: 50 @ 50;
+				   background: Color blue;
+				   yourself)
 ]
 
 { #category : 'tests' }
@@ -32,21 +42,30 @@ MateBlocGrammarByObjectTest >> testGrammarBlColorPaintDeclarationsMatch [
 MateBlocGrammarByObjectTest >> testGrammarBlCustomVisualsDeclarationsMatch [
 	
 	self testDecl: BlCustomVisuals expects: (MateInstDecl new type: BlCustomVisuals; instanceVariableDeclarations:{
-		MateInstVarDecl new name: 'background'; type: (BlPaintBackground | BlTransparentBackground).
-		MateInstVarDecl new name: 'geometry'; type: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry).
-		MateInstVarDecl new name: 'clipChildren'; type: Boolean.
+		MateInstVarDecl new name: 'border'; type: BlBorder.
+		MateInstVarDecl new name: 'background'; type: BlPaintBackground.
 	})
 ]
 
 { #category : 'tests' }
 MateBlocGrammarByObjectTest >> testGrammarBlElementDeclarationsMatch [
 	
-	self testDecl: BlElement expects: (MateInstDecl new type: BlElement; instanceVariableDeclarations: { 	
+	self testDecl: BlElement expects: (MateInstDecl new type: BlElement; instanceVariableDeclarations: {
+		MateInstVarDecl new name: 'spaceReference'; type: BlNullSpaceReference.
 		MateInstVarDecl new name: 'children'; type: BlChildrenArray.
-		MateInstRefVarDecl new name: 'parent'; type: BlElement.
-		MateInstVarDecl new name: 'visuals'; type: (BlCustomVisuals | BlDefaultVisuals).
+		MateInstVarDecl new name: 'bounds'; type: BlElementLocalBounds.
+		MateInstVarDecl new name: 'measuredBounds'; type: BlElementLocalBounds.
+		MateInstVarDecl new name: 'boundsCache'; type: BlBoundsCache.
+		MateInstVarDecl new name: 'eventDispatcher'; type: BlElementEventDispatcher.
 		MateInstVarDecl new name: 'constraints'; type: BlLayoutCommonConstraints.
-	}; selfReferences: { MateReferencePath new: { MatePathProp from: 'children' . MatePathProp from: 'array' . MatePathEachProp from: 'parent' }})
+		MateInstVarDecl new name: 'layout'; type: BlBasicLayout.
+		MateInstVarDecl new name: 'transformation'; type: BlElementCachedIdentityTransformation.
+		MateInstVarDecl new name: 'taskQueue'; type: BlTaskQueue.
+		MateInstVarDecl new name: 'errorHandler'; type: BlCompositeErrorHandler.
+		MateInstVarDecl new name: 'userData'; type: IdentityDictionary.
+		MateInstVarDecl new name: 'visuals'; type: BlCustomVisuals.
+		MateInstVarDecl new name: 'flags'; type: BlElementFlags.
+	}; selfReferences: {})
 ]
 
 { #category : 'tests' }
@@ -71,7 +90,7 @@ MateBlocGrammarByObjectTest >> testGrammarBlLayoutCommonConstraintsDeclarationsM
 MateBlocGrammarByObjectTest >> testGrammarBlLayoutExactResizerDeclarationsMatch [
 	
 	self testDecl: BlLayoutExactResizer expects: (MateInstDecl new type: BlLayoutExactResizer; instanceVariableDeclarations: {
-		MateInstVarDecl new name: 'size'; type: SmallFloat64; constraint: (MateConstraint between: 100 and: 1000).
+		MateInstVarDecl new name: 'size'; type: SmallFloat64.
 	})
 ]
 
@@ -80,13 +99,5 @@ MateBlocGrammarByObjectTest >> testGrammarBlPaintBackgroundDeclarationsMatch [
 	
 	self testDecl: BlPaintBackground expects: (MateInstDecl new type: BlPaintBackground; instanceVariableDeclarations: {
 		MateInstVarDecl new name: 'paint'; type: BlColorPaint.
-	})
-]
-
-{ #category : 'tests' }
-MateBlocGrammarByObjectTest >> testGrammarBlTriangleGeometryDeclarationsMatch [
-	
-	self testDecl: BlTriangleGeometry expects: (MateInstDecl new type: BlTriangleGeometry; instanceVariableDeclarations: {
-		MateInstOneOfVarDecl new name: 'orientation'; options: { #top . #right . #left . #bottom }
 	})
 ]
