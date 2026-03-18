@@ -86,6 +86,12 @@ MateOGGrammar >> feedByGraphDescription [
 ]
 
 { #category : 'as yet unclassified' }
+MateOGGrammar >> feedByObjectInstance: instance [ 
+
+	^ self feedByObjectInstance: instance seen: Set new
+]
+
+{ #category : 'as yet unclassified' }
 MateOGGrammar >> feedByObjectInstance: instance seen: seen [
 
 	(seen includes: instance) ifTrue: [ ^ nil ].
@@ -133,6 +139,12 @@ MateOGGrammar >> initialize [
 	writer := MateWriter new grammar: self.
 	parser := MateParser new grammar: self.
 	self feedByGraphDescription.
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> instArrayVar: name by: var [
+
+	^ MateInstArrayVarDecl new name: name; elementType: var class
 ]
 
 { #category : 'as yet unclassified' }
@@ -218,8 +230,11 @@ MateOGGrammar >> typeDeclarationBy: instance [
 
 	| instanceVarDecls |
 	
-	instanceVarDecls := instance class allInstVarNames collect: [ :name |
-		MateInstVarDecl new name: name; type: (instance instVarNamed: name) class
+	instanceVarDecls := instance class allInstVarNames collect: [ :name | | var |
+		var := instance instVarNamed: name.
+		(var isArray) ifTrue: [ self instArrayVar: name by: var ] ifFalse: [
+			MateInstVarDecl new name: name; type: var class
+		]
 	].
 
 	 ^ MateInstDecl new type: instance class; instanceVariableDeclarations: instanceVarDecls
