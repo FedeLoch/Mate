@@ -5,7 +5,8 @@ Class {
 		'typeDeclarations',
 		'builtInTypeDeclarations',
 		'generator',
-		'parser'
+		'parser',
+		'writer'
 	],
 	#category : 'Mate-Grammar',
 	#package : 'Mate',
@@ -91,6 +92,7 @@ MateOGGrammar >> initialize [
 	super initialize.
 	typeDeclarations := self builtInTypeDeclarations.
 	generator := MateGenerator new grammar: self.
+	writer := MateWriter new grammar: self.
 	parser := MateParser new grammar: self.
 	self feedByGraphDescription.
 ]
@@ -98,7 +100,7 @@ MateOGGrammar >> initialize [
 { #category : 'as yet unclassified' }
 MateOGGrammar >> mateDefinition [
 
-	1 halt.
+	^ writer mateDefinition
 ]
 
 { #category : 'as yet unclassified' }
