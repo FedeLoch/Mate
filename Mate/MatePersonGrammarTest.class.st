@@ -13,11 +13,15 @@ MatePersonGrammarTest >> newGrammar [
 ]
 
 { #category : 'running' }
-MatePersonGrammarTest >> testPersonGrammarKnowHowToCalculateItLanguageDefinition [
+MatePersonGrammarTest >> testPersonGrammarKnowHowToCalculateAgeLanguageDefinition [
 
 	self assert: (grammar mateDefinition: MateAge) equals: 'MateAge -> {
 	value: SmallInteger
-}'.
+}'
+]
+
+{ #category : 'running' }
+MatePersonGrammarTest >> testPersonGrammarKnowHowToCalculatePersonLanguageDefinition [
 	
 	self assert: (grammar mateDefinition: MatePerson) equals: 'MatePerson -> {
 	age: MateAge

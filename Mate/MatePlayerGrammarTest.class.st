@@ -13,7 +13,7 @@ MatePlayerGrammarTest >> newGrammar [
 ]
 
 { #category : 'running' }
-MatePlayerGrammarTest >> testPersonGrammarKnowHowToCalculateItLanguageDefinition [
+MatePlayerGrammarTest >> testPersonGrammarKnowHowToCalculatePlayerLanguageDefinition [
 
 	self assert: (grammar mateDefinition: Player) equals: 'Player -> {
 	name: ByteString,

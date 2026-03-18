@@ -37,26 +37,19 @@ MateWriter >> visitArrayDecl: decl from: context [
 
 	^ String streamContents: [ :s |
 		s nextPutAll: decl name.
-		s nextPutAll: ': { array: { type: [ '.
+		s nextPutAll: ': { type: [ '.
 		s nextPutAll: decl elementType name.
 		s nextPutAll: ' ], sizeBetween: '.
 		s nextPutAll: decl minSize asString.
 		s nextPutAll: ' and: '.
 		s nextPutAll: decl maxSize asString.
-		s nextPutAll: ' } }'
+		s nextPutAll: ' }'
 	]
 ]
 
 { #category : 'visiting' }
 MateWriter >> visitBuiltinDeclaration: decl from: context [
 
-	^ decl type name
-]
-
-{ #category : 'visiting' }
-MateWriter >> visitBuiltinDeclaration: decl from: context constraint: _ [
-
-	1 halt.
 	^ decl type name
 ]
 
@@ -134,13 +127,13 @@ MateWriter >> visitOneOfDecl: decl from: context [
 MateWriter >> writeReferencePath: path [
 
 	^ String streamContents: [ :s |
-		path path do: [ :segment |
+		path path doWithIndex: [ :segment :index |
 			(segment isEach) ifTrue: [
 				s nextPutAll: '[ .'.
 				s nextPutAll: segment prop.
 				s nextPutAll: ' ]'
 			] ifFalse: [
-				s nextPutAll: '.'.
+				index > 1 ifTrue: [ s nextPutAll: '.' ].
 				s nextPutAll: segment prop
 			]
 		]
