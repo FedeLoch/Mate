@@ -27,7 +27,7 @@ With Mate, you can:
 - Mate Object Graphs derivations visualization
 - Propagate rewards through the derivation tree to improve future generations
 - Parse and validate object graphs against your Mate grammar
-- Generate Mate Object graph Grammar definitions from test object suites **(⚠️ Not implemented yet)**
+- Generate Mate Object graph Grammar definitions from test object suites
 
 ## Quick Start
 
