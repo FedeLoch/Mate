@@ -16,7 +16,7 @@ Class {
 { #category : 'instance creation' }
 MateOGGrammar class >> from: instance [
 	
-	^ self new feedByObjectInstance: instance seen: Set new
+	^ self new feedByObjectInstance: instance seen: IdentitySet new
 	
 ]
 
@@ -25,7 +25,7 @@ MateOGGrammar class >> fromObjects: collection [
 	
 	| seen |
 	
-	seen := Set new.
+	seen := IdentitySet new.
 	
 	^ collection inject: self new into: [ :grammar :instance |
 		grammar feedByObjectInstance: instance seen: seen
@@ -88,7 +88,7 @@ MateOGGrammar >> feedByGraphDescription [
 { #category : 'as yet unclassified' }
 MateOGGrammar >> feedByObjectInstance: instance [ 
 
-	^ self feedByObjectInstance: instance seen: Set new
+	^ self feedByObjectInstance: instance seen: IdentitySet new
 ]
 
 { #category : 'as yet unclassified' }
