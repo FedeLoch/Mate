@@ -156,7 +156,7 @@ MateOGGrammar >> instArrayVar: name by: array [
 		filteredArray allButFirst inject: filteredArray first class into: [ :class :element | class | element class ]
 	].
 
-	^ MateInstArrayVarDecl new name: name; elementType: elementType; sizeBetween: 0 and: 0.
+	^ MateInstArrayVarDecl new name: name; elementType: elementType; sizeBetween: 0 and: filteredArray size.
 ]
 
 { #category : 'as yet unclassified' }

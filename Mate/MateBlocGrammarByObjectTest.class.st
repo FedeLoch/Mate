@@ -26,7 +26,7 @@ MateBlocGrammarByObjectTest >> objectInstance [
 MateBlocGrammarByObjectTest >> testGrammarBlChildrenArrayDeclarationsMatch [
 	
 	self testDecl: BlChildrenArray expects: (MateInstDecl new type: BlChildrenArray; instanceVariableDeclarations: {
-		MateInstArrayVarDecl new name: 'array'; elementType: BlElement; sizeBetween: 0 and: 0.
+		MateInstArrayVarDecl new name: 'array'; elementType: BlElement; sizeBetween: 0 and: 1.
 	})
 ]
 
