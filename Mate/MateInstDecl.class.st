@@ -18,12 +18,18 @@ MateInstDecl >> = anObject [
 	^ instanceVariableDeclarations asArray = anObject instanceVariableDeclarations asArray
 ]
 
+{ #category : 'adding' }
+MateInstDecl >> addInstVariableDeclaration: decl [ 
+
+	instanceVariableDeclarations := instanceVariableDeclarations, { decl }
+]
+
 { #category : 'accessing' }
 MateInstDecl >> feed: decl [
 
 	decl instanceVariableDeclarations do: [ :instVarDecl | | current |
 		current := self instanceVariableDeclarationNamed: instVarDecl name. 
-		current ifNil: [ instanceVariableDeclarations add: instVarDecl ]
+		current ifNil: [ self addInstVariableDeclaration: instVarDecl ]
 			ifNotNil: [ current merge: instVarDecl ]
 	].
 

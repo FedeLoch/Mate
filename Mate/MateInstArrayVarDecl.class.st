@@ -51,6 +51,13 @@ MateInstArrayVarDecl >> maxSize [
 	^ maxSize
 ]
 
+{ #category : 'actions' }
+MateInstArrayVarDecl >> merge: decl [
+	
+	self mergeType: decl type.
+	maxSize := maxSize max: decl maxSize
+]
+
 { #category : 'accessing' }
 MateInstArrayVarDecl >> minSize [
 

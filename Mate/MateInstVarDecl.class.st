@@ -51,7 +51,15 @@ MateInstVarDecl >> hash [
 { #category : 'actions' }
 MateInstVarDecl >> merge: decl [
 	
-	type := type | decl type
+	self mergeType: decl type
+]
+
+{ #category : 'actions' }
+MateInstVarDecl >> mergeType: aType [
+
+	aType ifNil: [ ^ nil ].
+	
+	type := type | aType
 ]
 
 { #category : 'accessing' }
