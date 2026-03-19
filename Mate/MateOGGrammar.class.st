@@ -148,13 +148,15 @@ MateOGGrammar >> initialize [
 { #category : 'as yet unclassified' }
 MateOGGrammar >> instArrayVar: name by: array [
 
-	| elementType |
+	| elementType filteredArray |
 	
-	elementType :=  array ifEmpty: [ Object ] ifNotEmpty: [
-		array allButFirst inject: array first class into: [ :class :element | class | element class ]
+	filteredArray := array reject: #isNil.
+	
+	elementType :=  filteredArray ifEmpty: [ Object ] ifNotEmpty: [
+		filteredArray allButFirst inject: filteredArray first class into: [ :class :element | class | element class ]
 	].
 
-	^ MateInstArrayVarDecl new name: name; elementType: elementType
+	^ MateInstArrayVarDecl new name: name; elementType: elementType; sizeBetween: 0 and: 10.
 ]
 
 { #category : 'as yet unclassified' }
@@ -266,8 +268,6 @@ MateOGGrammar >> typeDeclarationBy: instance [
 	
 		acc
 	].
-
-	
 
 	 ^ MateInstDecl new type: instance class; instanceVariableDeclarations: instanceVarDecls asArray
 ]

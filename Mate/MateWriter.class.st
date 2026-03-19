@@ -33,7 +33,8 @@ MateWriter >> mateDefinition [
 		defs
 	].
 
-	^ (String cr join: definitions) trim
+^ (String streamContents: [ :stream | (definitions reject: #isEmpty) do: [ :each |
+		stream nextPutAll: each ] separatedBy: [ stream cr; cr ] ]) trim
 ]
 
 { #category : 'writing' }
