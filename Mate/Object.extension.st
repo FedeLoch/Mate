@@ -7,6 +7,12 @@ Object class >> acceptType: aType [
 ]
 
 { #category : '*Mate' }
+Object >> allInstanceVariables [
+
+	^ self class allInstVarNames collect: [ :name | self instVarNamed: name ]
+]
+
+{ #category : '*Mate' }
 Object class >> getOne [
 
 	^ self

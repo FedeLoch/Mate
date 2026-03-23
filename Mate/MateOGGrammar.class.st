@@ -14,6 +14,17 @@ Class {
 }
 
 { #category : 'instance creation' }
+MateOGGrammar class >> collectTestSuiteInstances: testSuite [
+
+	^ testSuite tests flatCollect: [ :test |
+		test setUp.
+		"TODO: Not sure, review me please"
+		test perform: test testSelector.
+		test allInstanceVariables reject: #isNil
+	].
+]
+
+{ #category : 'instance creation' }
 MateOGGrammar class >> from: instance [
 	
 	^ self new feedByObjectInstance: instance seen: IdentitySet new
@@ -30,6 +41,12 @@ MateOGGrammar class >> fromObjects: collection [
 	^ collection inject: self new into: [ :grammar :instance |
 		grammar feedByObjectInstance: instance seen: seen
 	]
+]
+
+{ #category : 'instance creation' }
+MateOGGrammar class >> fromTest: aTestClass [
+
+	^ self fromObjects: (self collectTestSuiteInstances: aTestClass suite)
 ]
 
 { #category : 'accessing' }
