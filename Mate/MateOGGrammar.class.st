@@ -16,11 +16,11 @@ Class {
 { #category : 'instance creation' }
 MateOGGrammar class >> collectTestSuiteInstances: testSuite [
 
-	^ testSuite tests flatCollect: [ :test |
+	^ testSuite tests flatCollect: [ :test | | result |
 		test setUp.
 		"TODO: Not sure, review me please"
-		test perform: test testSelector.
-		test allInstanceVariables reject: #isNil
+		result := test perform: test testSelector.
+		((test allInstanceVariables, { result }) reject: #isNil) asOrderedCollection
 	].
 ]
 
@@ -39,7 +39,8 @@ MateOGGrammar class >> fromObjects: collection [
 	seen := IdentitySet new.
 	
 	^ collection inject: self new into: [ :grammar :instance |
-		grammar feedByObjectInstance: instance seen: seen
+		grammar feedByObjectInstance: instance seen: seen.
+		grammar
 	]
 ]
 
