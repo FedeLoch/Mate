@@ -41,9 +41,9 @@ MateBlocGrammarByObjectTest >> testGrammarBlColorPaintDeclarationsMatch [
 { #category : 'tests' }
 MateBlocGrammarByObjectTest >> testGrammarBlCustomVisualsDeclarationsMatch [
 	
-	self testDecl: BlCustomVisuals expects: (MateInstDecl new type: BlCustomVisuals; instanceVariableDeclarations:{
-		MateInstVarDecl new name: 'border'; type: BlBorder.
+	self testDecl: BlCustomVisuals expects: (MateInstDecl new type: BlCustomVisuals; instanceVariableDeclarations: {
 		MateInstVarDecl new name: 'background'; type: BlPaintBackground.
+		MateInstVarDecl new name: 'border'; type: BlBorder.
 	})
 ]
 
@@ -65,6 +65,7 @@ MateBlocGrammarByObjectTest >> testGrammarBlElementDeclarationsMatch [
 		MateInstVarDecl new name: 'userData'; type: IdentityDictionary.
 		MateInstVarDecl new name: 'visuals'; type: BlCustomVisuals.
 		MateInstVarDecl new name: 'flags'; type: BlElementFlags.
+		MateInstVarDecl new name: 'parent'; type: BlElement.
 	}; selfReferences: {})
 ]
 

@@ -118,14 +118,20 @@ MateOGGrammar >> feedByObjectInstance: instance seen: seen [
 	
 	decl := self typeDeclarationBy: instance.
 
+	"Adding instance type declaration"
 	self addTypeDeclaration: decl.
 	
 	seen add: instance.
 	
+	"Creating definitions of instance variables"
 	decl instanceVariableDeclarations do: [ :instDecl |
 		self feedByObjectInstance: (instance instVarNamed: instDecl name) seen: seen
+	].
+
+	"Creating definitions of array elements"
+	instance isArray ifTrue: [
+		instance do: [ :element | self feedByObjectInstance: element seen: seen ]
 	]
-	
 ]
 
 { #category : 'as yet unclassified' }
