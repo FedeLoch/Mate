@@ -19,7 +19,7 @@ MateOGGrammar class >> collectTestSuiteInstances: testSuite [
 	^ testSuite tests flatCollect: [ :test | | result |
 		test setUp.
 		"TODO: Not sure, review me please"
-		result := test perform: test testSelector.
+		result := test perform: test selectorTest.
 		((test allInstanceVariables, { result }) reject: #isNil) asOrderedCollection
 	].
 ]
