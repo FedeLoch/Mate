@@ -15,14 +15,17 @@ MateLanguageParser class >> parse: aMateDescription [
 { #category : 'creation' }
 MateLanguageParser >> createArrayDeclFrom: dict [
 
-	| decl arrayDef typeList |
+	| decl arrayDef typeList elementType |
 	
 	decl := MateInstArrayVarDecl new.
 	arrayDef := dict at: 'array'. 
 	
 	typeList := arrayDef at: 'type'.
+	elementType := typeList first.
 	
-	decl elementType: (self resolveClass: typeList first).
+	decl elementType: (elementType isString 
+		ifTrue: [ self resolveClass: elementType ] 
+		ifFalse: [ elementType ]).
 	
 	(arrayDef includesKey: 'sizeBetween') ifTrue: [
 		decl sizeBetween: (arrayDef at: 'sizeBetween') and: (arrayDef at: 'and').
@@ -401,6 +404,41 @@ MateLanguageParser >> parseUnionType: stream [
 ]
 
 { #category : 'parsing' }
+MateLanguageParser >> parseUnionTypeValue: stream [
+	
+	| type |
+	
+	self match: '(' from: stream.
+	self skipWhitespace: stream.
+	
+	type := self parseTypeValue: stream.
+	
+	self skipWhitespace: stream.
+	self match: ')' from: stream.
+	
+	^ type
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> parseTypeValue: stream [
+	
+	| name type |
+	
+	name := self parseIdentifier: stream.
+	type := self resolveClass: name.
+	self skipWhitespace: stream.
+	
+	(self match: '|' from: stream) ifTrue: [
+		| otherType |
+		self skipWhitespace: stream.
+		otherType := self parseTypeValue: stream.
+		^ self getUnion: type with: otherType
+	].
+	
+	^ type
+]
+
+{ #category : 'parsing' }
 MateLanguageParser >> parseValue: stream [
 	
 	| char |
@@ -411,9 +449,29 @@ MateLanguageParser >> parseValue: stream [
 	char isDigit ifTrue: [ ^ self parseNumber: stream ].
 	char = $# ifTrue: [ ^ self parseSymbol: stream ].
 	char = $[ ifTrue: [ ^ self parseList: stream ].
-	char = ${ ifTrue: [ ^ self parseComplexContent: stream ]. 
+	char = ${ ifTrue: [ ^ self parseComplexContent: stream ].
+	char = $( ifTrue: [ ^ self parseUnionTypeValue: stream ].
 	
-	^ self parseIdentifier: stream
+	^ self parseSimpleValue: stream
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> parseSimpleValue: stream [
+	
+	| name |
+	
+	name := self parseIdentifier: stream.
+	self skipWhitespace: stream.
+	
+	(self match: '|' from: stream) ifTrue: [
+		| otherType type |
+		self skipWhitespace: stream.
+		otherType := self parseValue: stream.
+		type := self resolveClass: name.
+		^ self getUnion: type with: (otherType isString ifTrue: [ self resolveClass: otherType ] ifFalse: [ otherType ])
+	].
+	
+	^ name
 ]
 
 { #category : 'resolving' }
