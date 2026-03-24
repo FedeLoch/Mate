@@ -97,8 +97,9 @@ MateGenerator >> visitArrayDecl: decl from: context [
 	
 	node := MateOGDerivationNode new declaration: decl; context: childContext.
 
-	edges := (1 to: size) collect: [ :i | | edge |
-		edge := self gen: decl elementType from: childContext.
+	edges := (1 to: size) collect: [ :i | | type edge |
+		type := decl chooseOneElementTypeFrom: context.
+		edge := self gen: type from: childContext.
 		node addEdge: edge at: i.
 		edge
 	].

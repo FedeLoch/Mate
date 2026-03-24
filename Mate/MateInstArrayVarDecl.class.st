@@ -28,6 +28,12 @@ MateInstArrayVarDecl >> acceptSize: size [
 ]
 
 { #category : 'accessing' }
+MateInstArrayVarDecl >> chooseOneElementTypeFrom: context [
+
+	^ elementType getOneFrom: context
+]
+
+{ #category : 'accessing' }
 MateInstArrayVarDecl >> elementType [
 
 	^ elementType
