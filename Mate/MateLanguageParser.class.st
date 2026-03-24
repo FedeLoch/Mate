@@ -23,9 +23,7 @@ MateLanguageParser >> createArrayDeclFrom: dict [
 	typeList := arrayDef at: 'type'.
 	elementType := typeList first.
 	
-	decl elementType: (elementType isString 
-		ifTrue: [ self resolveClass: elementType ] 
-		ifFalse: [ elementType ]).
+	decl elementType: (self resolveType: elementType).
 	
 	(arrayDef includesKey: 'sizeBetween') ifTrue: [
 		decl sizeBetween: (arrayDef at: 'sizeBetween') and: (arrayDef at: 'and').
@@ -43,7 +41,7 @@ MateLanguageParser >> createConstrainedDeclFrom: dict [
 	
 	(typeSpec isCollection and: [ typeSpec isString not ]) ifTrue: [ 
 		decl := MateInstArrayVarDecl new.
-		decl elementType: (self resolveClass: typeSpec first).
+		decl elementType: (self resolveType: typeSpec first).
 		
 		(dict includesKey: 'sizeBetween') ifTrue: [
 			decl sizeBetween: (dict at: 'sizeBetween') and: (dict at: 'and').
@@ -51,7 +49,7 @@ MateLanguageParser >> createConstrainedDeclFrom: dict [
 		^ decl
 	].
 
-	decl := MateInstVarDecl new type: (self resolveClass: typeSpec).
+	decl := MateInstVarDecl new type: (self resolveType: typeSpec).
 	
 	(dict includesKey: 'between') ifTrue: [
 		decl constraint: (MateConstraint between: (dict at: 'between') and: (dict at: 'and')).
@@ -65,26 +63,9 @@ MateLanguageParser >> createConstrainedDeclFrom: dict [
 ]
 
 { #category : 'parsing' }
-MateLanguageParser >> createUnion: type1 with: type2 [
-	
-	"Assuming type2 is already a decl or union type object"
-	"If type2 is MateInstVarDecl, extract its type"
-	| t2 |
-	t2 := (type2 isKindOf: MateInstVarDecl) ifTrue: [ type2 type ] ifFalse: [ type2 ].
-	
-	^ MateInstVarDecl new type: (self getUnion: type1 with: t2)
-]
-
-{ #category : 'parsing' }
 MateLanguageParser >> expect: string from: stream [
 
 	^ self match: string from: stream
-]
-
-{ #category : 'parsing' }
-MateLanguageParser >> getUnion: t1 with: t2 [
-
-	^ t2 | t1
 ]
 
 { #category : 'parsing' }
@@ -341,27 +322,6 @@ MateLanguageParser >> parseSelfReferences: stream [
 ]
 
 { #category : 'parsing' }
-MateLanguageParser >> parseSimpleType: stream [
-	
-	| typeName type |
-	
-	typeName := self parseIdentifier: stream.
-	self skipWhitespace: stream.
-	
-	(self match: '|' from: stream) ifTrue: [
-		| otherType |
-		self skipWhitespace: stream.
-		otherType := self parseTypeDescription: stream.
-		type := self resolveClass: typeName.
-		^ (self createUnion: type with: otherType)
-	].
-
-	type := self resolveClass: typeName.
-
-	^ MateInstVarDecl new type: type
-]
-
-{ #category : 'parsing' }
 MateLanguageParser >> parseSymbol: stream [
 
 	stream next.
@@ -370,7 +330,54 @@ MateLanguageParser >> parseSymbol: stream [
 ]
 
 { #category : 'parsing' }
+MateLanguageParser >> parseType: stream [
+	"Parses a type expression and returns the resolved type (a Class or a union).
+	 Handles: simple identifiers, unions with |, and parenthesized types with ().
+	 This is the single entry point for type resolution."
+	
+	| char |
+	
+	char := stream peek.
+	
+	char = $( ifTrue: [
+		| type |
+		self match: '(' from: stream.
+		self skipWhitespace: stream.
+		type := self parseType: stream.
+		self skipWhitespace: stream.
+		self match: ')' from: stream.
+		^ type
+	].
+	
+	^ self parseSimpleTypeExpression: stream
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> parseSimpleTypeExpression: stream [
+	"Parses an identifier optionally followed by | and more types.
+	 Returns the resolved type (a Class or a union)."
+	
+	| typeName type |
+	
+	typeName := self parseIdentifier: stream.
+	type := self resolveClass: typeName.
+	self skipWhitespace: stream.
+	
+	(self match: '|' from: stream) ifTrue: [
+		| otherType |
+		self skipWhitespace: stream.
+		otherType := self parseType: stream.
+		^ otherType | type
+	].
+
+	^ type
+]
+
+{ #category : 'parsing' }
 MateLanguageParser >> parseTypeDescription: stream [
+	"Parses a type description for instance variable declarations.
+	 Returns a MateInstVarDecl (or subclass) wrapping the resolved type.
+	 Delegates to parseType: for type resolution and wraps the result."
 
 	| char |
 	
@@ -380,66 +387,13 @@ MateLanguageParser >> parseTypeDescription: stream [
 		^ self parseComplexType: stream 
 	].
 	
-	char = $( ifTrue: [ 
-		^ self parseUnionType: stream 
-	].
-	
-	^ self parseSimpleType: stream
-]
-
-{ #category : 'parsing' }
-MateLanguageParser >> parseUnionType: stream [
-	
-	| type |
-	
-	self match: '(' from: stream.
-	self skipWhitespace: stream.
-	
-	type := self parseTypeDescription: stream.
-	
-	self skipWhitespace: stream.
-	self match: ')' from: stream.
-	
-	^ type
-]
-
-{ #category : 'parsing' }
-MateLanguageParser >> parseUnionTypeValue: stream [
-	
-	| type |
-	
-	self match: '(' from: stream.
-	self skipWhitespace: stream.
-	
-	type := self parseTypeValue: stream.
-	
-	self skipWhitespace: stream.
-	self match: ')' from: stream.
-	
-	^ type
-]
-
-{ #category : 'parsing' }
-MateLanguageParser >> parseTypeValue: stream [
-	
-	| name type |
-	
-	name := self parseIdentifier: stream.
-	type := self resolveClass: name.
-	self skipWhitespace: stream.
-	
-	(self match: '|' from: stream) ifTrue: [
-		| otherType |
-		self skipWhitespace: stream.
-		otherType := self parseTypeValue: stream.
-		^ self getUnion: type with: otherType
-	].
-	
-	^ type
+	^ MateInstVarDecl new type: (self parseType: stream)
 ]
 
 { #category : 'parsing' }
 MateLanguageParser >> parseValue: stream [
+	"Parses a general value. Returns raw values: numbers, symbols, arrays, dicts,
+	 or resolved types (Class or union) when encountering type expressions."
 	
 	| char |
 	
@@ -450,13 +404,16 @@ MateLanguageParser >> parseValue: stream [
 	char = $# ifTrue: [ ^ self parseSymbol: stream ].
 	char = $[ ifTrue: [ ^ self parseList: stream ].
 	char = ${ ifTrue: [ ^ self parseComplexContent: stream ].
-	char = $( ifTrue: [ ^ self parseUnionTypeValue: stream ].
+	char = $( ifTrue: [ ^ self parseType: stream ].
 	
 	^ self parseSimpleValue: stream
 ]
 
 { #category : 'parsing' }
 MateLanguageParser >> parseSimpleValue: stream [
+	"Parses an identifier, checking for | to handle union types.
+	 If a union is found, resolves types and returns the union.
+	 Otherwise returns the raw string identifier."
 	
 	| name |
 	
@@ -468,18 +425,29 @@ MateLanguageParser >> parseSimpleValue: stream [
 		self skipWhitespace: stream.
 		otherType := self parseValue: stream.
 		type := self resolveClass: name.
-		^ self getUnion: type with: (otherType isString ifTrue: [ self resolveClass: otherType ] ifFalse: [ otherType ])
+		^ (self resolveType: otherType) | type
 	].
 	
 	^ name
 ]
 
 { #category : 'resolving' }
-MateLanguageParser >> resolveClass: aClass [
+MateLanguageParser >> resolveClass: aClassName [
+	"Resolves a class name string to the actual class object."
 
-	^ self class environment at: aClass asSymbol ifAbsent: [ 
-		self error: 'Class not found: ', aClass
+	^ self class environment at: aClassName asSymbol ifAbsent: [ 
+		self error: 'Class not found: ', aClassName
 	]
+]
+
+{ #category : 'resolving' }
+MateLanguageParser >> resolveType: aTypeOrString [
+	"Resolves a type that may be either a string (class name) or an already resolved type.
+	 If it is a string, resolves it to the class. Otherwise returns it as-is."
+
+	^ aTypeOrString isString 
+		ifTrue: [ self resolveClass: aTypeOrString ] 
+		ifFalse: [ aTypeOrString ]
 ]
 
 { #category : 'parsing' }
