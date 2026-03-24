@@ -94,7 +94,7 @@ MateLanguageParserTest >> testParseAsimpleDefinitionWithMultipleOptionalTypes [
 { #category : 'tests' }
 MateLanguageParserTest >> testParseAsimpleDefinitionWithOptionalTypes [
 
-	self parseTest: 'BlLayoutExactResizer -> { size: (SmallFloat64 | SmallInteger) }' expect: {
-		MateInstDecl new type: BlLayoutExactResizer; instanceVariableDeclarations: { MateInstVarDecl new name: 'size'; type: (SmallFloat64 | SmallInteger) }
+	self parseTest: 'BlLayoutExactResizer -> { size: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry) }' expect: {
+		MateInstDecl new type: BlLayoutExactResizer; instanceVariableDeclarations: { MateInstVarDecl new name: 'size'; type: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry) }
 	}
 ]
