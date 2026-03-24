@@ -200,7 +200,11 @@ MateOptionalType >> totalVisits [
 { #category : 'rendering' }
 MateOptionalType >> totalVisitsFor: type [
 
-	^ (visits collect: [ :dict | (dict at: type ifPresent: [ :t | t ] ifAbsent: [ 0 ])]) sum
+	| typeVisits |
+	
+	typeVisits := (visits collect: [ :dict | (dict at: type ifPresent: [ :t | t ] ifAbsent: [ 0 ])]).
+
+	^ typeVisits ifEmpty: [ 0 ] ifNotEmpty: [ typeVisits sum ]
 ]
 
 { #category : 'visiting' }
