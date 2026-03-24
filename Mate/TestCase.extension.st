@@ -1,7 +1,7 @@
 Extension { #name : 'TestCase' }
 
 { #category : '*Mate' }
-TestCase >> testSelector [
+TestCase >> selectorTest [
 
 	^ testSelector
 ]

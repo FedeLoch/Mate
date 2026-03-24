@@ -22,7 +22,7 @@ MateLanguageParser >> createArrayDeclFrom: dict [
 	
 	typeList := arrayDef at: 'type'.
 	
-	decl elementType: (self resolveClass: typeList first).
+	decl elementType: (self resolveType: typeList first).
 	
 	(arrayDef includesKey: 'sizeBetween') ifTrue: [
 		decl sizeBetween: (arrayDef at: 'sizeBetween') and: (arrayDef at: 'and').
@@ -38,17 +38,9 @@ MateLanguageParser >> createConstrainedDeclFrom: dict [
 	
 	typeSpec := dict at: 'type'.
 	
-	(typeSpec isCollection and: [ typeSpec isString not ]) ifTrue: [ 
-		decl := MateInstArrayVarDecl new.
-		decl elementType: (self resolveClass: typeSpec first).
-		
-		(dict includesKey: 'sizeBetween') ifTrue: [
-			decl sizeBetween: (dict at: 'sizeBetween') and: (dict at: 'and').
-		].
-		^ decl
-	].
+	(typeSpec isCollection and: [ typeSpec isString not ]) ifTrue: [ ^ self createInstArrayVarDecl: dict ].
 
-	decl := MateInstVarDecl new type: (self resolveClass: typeSpec).
+	decl := MateInstVarDecl new type: (self resolveType: typeSpec).
 	
 	(dict includesKey: 'between') ifTrue: [
 		decl constraint: (MateConstraint between: (dict at: 'between') and: (dict at: 'and')).
@@ -61,15 +53,20 @@ MateLanguageParser >> createConstrainedDeclFrom: dict [
 	^ decl
 ]
 
-{ #category : 'parsing' }
-MateLanguageParser >> createUnion: type1 with: type2 [
+{ #category : 'creation' }
+MateLanguageParser >> createInstArrayVarDecl: dict [
+
+	| decl typeSpec |
 	
-	"Assuming type2 is already a decl or union type object"
-	"If type2 is MateInstVarDecl, extract its type"
-	| t2 |
-	t2 := (type2 isKindOf: MateInstVarDecl) ifTrue: [ type2 type ] ifFalse: [ type2 ].
+	typeSpec := dict at: 'type'.
 	
-	^ MateInstVarDecl new type: (self getUnion: type1 with: t2)
+	decl := MateInstArrayVarDecl new.
+	decl elementType: (self resolveType: typeSpec first).
+
+	(dict includesKey: 'sizeBetween') ifTrue: [
+		decl sizeBetween: (dict at: 'sizeBetween') and: (dict at: 'and') ].
+
+	^ decl
 ]
 
 { #category : 'parsing' }
@@ -79,19 +76,16 @@ MateLanguageParser >> expect: string from: stream [
 ]
 
 { #category : 'parsing' }
-MateLanguageParser >> getUnion: t1 with: t2 [
-
-	^ t2 | t1
-]
-
-{ #category : 'parsing' }
 MateLanguageParser >> match: string from: stream [
 	| pos |
+	
 	pos := stream position.
+	
 	string do: [ :char | 
-		stream atEnd ifTrue: [ stream position: pos. ^ false ].
-		(stream next = char) ifFalse: [ stream position: pos. ^ false ]
+		stream atEnd ifTrue: [ stream position: pos . ^ false ].
+		(stream next = char) ifFalse: [ stream position: pos . ^ false ]
 	].
+
 	^ true
 ]
 
@@ -338,24 +332,41 @@ MateLanguageParser >> parseSelfReferences: stream [
 ]
 
 { #category : 'parsing' }
-MateLanguageParser >> parseSimpleType: stream [
+MateLanguageParser >> parseSimpleTypeExpression: stream [
 	
 	| typeName type |
 	
 	typeName := self parseIdentifier: stream.
+	type := self resolveClass: typeName.
 	self skipWhitespace: stream.
 	
-	(self match: '|' from: stream) ifTrue: [
-		| otherType |
+	(self match: '|' from: stream) ifTrue: [ | otherType |
 		self skipWhitespace: stream.
-		otherType := self parseTypeDescription: stream.
-		type := self resolveClass: typeName.
-		^ (self createUnion: type with: otherType)
+		otherType := self parseType: stream.
+		
+		^ otherType | type
 	].
 
-	type := self resolveClass: typeName.
+	^ type
+]
 
-	^ MateInstVarDecl new type: type
+{ #category : 'parsing' }
+MateLanguageParser >> parseSimpleValue: stream [
+
+	| name |
+	
+	name := self parseIdentifier: stream.
+	self skipWhitespace: stream.
+	
+	(self match: '|' from: stream) ifTrue: [ | otherType type |
+		self skipWhitespace: stream.
+		otherType := self parseValue: stream.
+		type := self resolveClass: name.
+		
+		^ (self resolveType: otherType) | type
+	].
+	
+	^ name
 ]
 
 { #category : 'parsing' }
@@ -367,42 +378,42 @@ MateLanguageParser >> parseSymbol: stream [
 ]
 
 { #category : 'parsing' }
+MateLanguageParser >> parseType: stream [
+	
+	| char |
+	
+	char := stream peek.
+	
+	char = $( ifTrue: [ | type |
+		self match: '(' from: stream.
+		self skipWhitespace: stream.
+		
+		type := self parseType: stream.
+		
+		self skipWhitespace: stream.
+		self match: ')' from: stream.
+		
+		^ type
+	].
+	
+	^ self parseSimpleTypeExpression: stream
+]
+
+{ #category : 'parsing' }
 MateLanguageParser >> parseTypeDescription: stream [
 
 	| char |
 	
 	char := stream peek.
 	
-	char = ${ ifTrue: [ 
-		^ self parseComplexType: stream 
-	].
+	char = ${ ifTrue: [ ^ self parseComplexType: stream ].
 	
-	char = $( ifTrue: [ 
-		^ self parseUnionType: stream 
-	].
-	
-	^ self parseSimpleType: stream
-]
-
-{ #category : 'parsing' }
-MateLanguageParser >> parseUnionType: stream [
-	
-	| type |
-	
-	self match: '(' from: stream.
-	self skipWhitespace: stream.
-	
-	type := self parseTypeDescription: stream.
-	
-	self skipWhitespace: stream.
-	self match: ')' from: stream.
-	
-	^ type
+	^ MateInstVarDecl new type: (self parseType: stream)
 ]
 
 { #category : 'parsing' }
 MateLanguageParser >> parseValue: stream [
-	
+
 	| char |
 	
 	self skipWhitespace: stream.
@@ -411,17 +422,26 @@ MateLanguageParser >> parseValue: stream [
 	char isDigit ifTrue: [ ^ self parseNumber: stream ].
 	char = $# ifTrue: [ ^ self parseSymbol: stream ].
 	char = $[ ifTrue: [ ^ self parseList: stream ].
-	char = ${ ifTrue: [ ^ self parseComplexContent: stream ]. 
+	char = ${ ifTrue: [ ^ self parseComplexContent: stream ].
+	char = $( ifTrue: [ ^ self parseType: stream ].
 	
-	^ self parseIdentifier: stream
+	^ self parseSimpleValue: stream
 ]
 
 { #category : 'resolving' }
-MateLanguageParser >> resolveClass: aClass [
+MateLanguageParser >> resolveClass: aClassName [
 
-	^ self class environment at: aClass asSymbol ifAbsent: [ 
-		self error: 'Class not found: ', aClass
+	^ self class environment at: aClassName asSymbol ifAbsent: [ 
+		self error: 'Class not found: ', aClassName
 	]
+]
+
+{ #category : 'resolving' }
+MateLanguageParser >> resolveType: typeOrIdentifier [
+
+	^ typeOrIdentifier isString 
+		ifTrue: [ self resolveClass: typeOrIdentifier ] 
+		ifFalse: [ typeOrIdentifier ]
 ]
 
 { #category : 'parsing' }
