@@ -90,3 +90,20 @@ MateBlocGrammarByLangTest >> testGrammarBlTriangleGeometryDeclarationsMatch [
 		MateInstOneOfVarDecl new name: 'orientation'; options: { #top . #right . #left . #bottom }.
 	})
 ]
+
+{ #category : 'tests' }
+MateBlocGrammarByLangTest >> testReplaceByGrammarShouldPreserveSelfReferences [
+
+	| derivation node variant newNode firstChild |
+	derivation := grammar generator gen: BlElement from: MateContext new.
+
+	firstChild := ((derivation edges at: 'children') edges at: 'array') edges at: 1.
+	
+	node := firstChild edges at: 'children'.
+
+	variant := grammar genVariant: node.
+	newNode := grammar replace: node by: variant.
+	derivation instance allChildrenDepthFirstDo: [ :child |
+		child children do: [ :cchild | self assert: cchild parent == child ]
+	]
+]
