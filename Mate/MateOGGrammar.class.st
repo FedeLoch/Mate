@@ -271,6 +271,13 @@ MateOGGrammar >> replace: node by: variant [
 	].
 	
 	variant replaceRefDeclarationsFrom: node.
+
+	parent ifNotNil: [
+		parent declaration selfReferences do: [ :refPath |
+			refPath insertReference: parent instance.
+			refPath updateDerivation: parent withInstance: parent instance
+		]
+	]
 ]
 
 { #category : 'rendering' }
