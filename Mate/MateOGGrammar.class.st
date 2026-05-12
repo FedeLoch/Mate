@@ -265,18 +265,12 @@ MateOGGrammar >> replace: node by: variant [
 	| parent |
 	
 	parent := node context parentNode.
-
-	parent ifNotNil: [
-		parent replaceChild: node by: variant
-	].
 	
 	variant replaceRefDeclarationsFrom: node.
 
 	parent ifNotNil: [
-		parent declaration selfReferences do: [ :refPath |
-			refPath insertReference: parent instance.
-			refPath updateDerivation: parent withInstance: parent instance
-		]
+		parent replaceChild: node by: variant
+		variant rootParent updateAllReferences
 	]
 ]
 

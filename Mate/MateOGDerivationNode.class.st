@@ -150,6 +150,35 @@ MateOGDerivationNode >> replaceRefDeclarationsFrom: source [
 ]
 
 { #category : 'accessing' }
+MateOGDerivationNode >> rootParent [
+
+	| current |
+	
+	current := self.
+	[ current context parentNode notNil ] whileTrue: [
+		current := current context parentNode
+	].
+
+	^ current
+]
+
+{ #category : 'as yet unclassified' }
+MateOGDerivationNode >> updateAllReferences [
+
+	| root |
+	
+	root := self.
+	root allNodes do: [ :node |
+		(node declaration respondsTo: #selfReferences) ifTrue: [
+			node declaration selfReferences do: [ :refPath |
+				refPath insertReference: node instance.
+				refPath updateDerivation: node withInstance: node instance
+			]
+		]
+	]
+]
+
+{ #category : 'accessing' }
 MateOGDerivationNode >> shape [
 	
 	| label box color composite |
