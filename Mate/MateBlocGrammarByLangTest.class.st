@@ -100,6 +100,10 @@ MateBlocGrammarByLangTest >> testReplaceByGrammarShouldPreserveSelfReferences [
 	firstChild := ((derivation edges at: 'children') edges at: 'array') edges at: 1.
 	
 	node := firstChild edges at: 'children'.
+	
+	derivation instance allChildrenDepthFirstDo: [ :child |
+		child children do: [ :cchild | self assert: cchild parent == child ]
+	].
 
 	variant := grammar genVariant: node.
 	newNode := grammar replace: node by: variant.

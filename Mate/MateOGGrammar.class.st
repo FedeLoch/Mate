@@ -269,7 +269,7 @@ MateOGGrammar >> replace: node by: variant [
 	variant replaceRefDeclarationsFrom: node.
 
 	parent ifNotNil: [
-		parent replaceChild: node by: variant
+		parent replaceChild: node by: variant.
 		variant rootParent updateAllReferences
 	]
 ]
