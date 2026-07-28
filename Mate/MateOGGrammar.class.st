@@ -6,7 +6,8 @@ Class {
 		'builtInTypeDeclarations',
 		'generator',
 		'parser',
-		'writer'
+		'writer',
+		'blackList'
 	],
 	#category : 'Mate-Grammar',
 	#package : 'Mate',
@@ -40,6 +41,19 @@ MateOGGrammar class >> fromObjects: collection [
 	
 	^ collection inject: self new into: [ :grammar :instance |
 		grammar feedByObjectInstance: instance seen: seen.
+		grammar
+	]
+]
+
+{ #category : 'instance creation' }
+MateOGGrammar class >> fromObjects: collection maxDepth: maxDepth [
+	
+	| seen |
+	
+	seen := IdentitySet new.
+	
+	^ collection inject: self new into: [ :grammar :instance |
+		grammar feedByObjectInstance: instance seen: seen maxDepth: maxDepth.
 		grammar
 	]
 ]
@@ -112,8 +126,21 @@ MateOGGrammar >> feedByObjectInstance: instance [
 { #category : 'as yet unclassified' }
 MateOGGrammar >> feedByObjectInstance: instance seen: seen [
 
-	| decl |
+	^ self feedByObjectInstance: instance seen: seen maxDepth: SmallInteger maxVal
+]
 
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> feedByObjectInstance: instance seen: seen maxDepth: maxDepth [
+
+	| decl |
+	
+	(maxDepth = 0) ifTrue: [ ^ nil ]. 
+	
+	"We are banning blackList object instances"
+	(blackList includes: instance class) ifTrue: [ ^ nil ].
+	
+	instance isClass ifTrue: [ ^ nil ].
+	
 	(seen includes: instance) ifTrue: [ ^ nil ].
 	
 	decl := self typeDeclarationBy: instance.
@@ -125,12 +152,12 @@ MateOGGrammar >> feedByObjectInstance: instance seen: seen [
 	
 	"Creating definitions of instance variables"
 	decl instanceVariableDeclarations do: [ :instDecl |
-		self feedByObjectInstance: (instance instVarNamed: instDecl name) seen: seen
+		self feedByObjectInstance: (instance instVarNamed: instDecl name) seen: seen maxDepth: (maxDepth -1)
 	].
 
 	"Creating definitions of array elements"
 	instance isArray ifTrue: [
-		instance do: [ :element | self feedByObjectInstance: element seen: seen ]
+		instance do: [ :element | self feedByObjectInstance: element seen: seen maxDepth: (maxDepth - 1) ]
 	]
 ]
 
@@ -166,7 +193,14 @@ MateOGGrammar >> initialize [
 	generator := MateGenerator new grammar: self.
 	writer := MateWriter new grammar: self.
 	parser := MateParser new grammar: self.
-	self feedByGraphDescription.
+	blackList := {
+		             CompiledMethod.
+		             SystemEnvironment.
+		             ConstantBlockClosure.
+		             FullBlockClosure.
+		             OCMethodSemanticScope.
+		             CompiledBlock } asSet.
+	self feedByGraphDescription
 ]
 
 { #category : 'as yet unclassified' }
