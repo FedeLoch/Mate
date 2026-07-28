@@ -48,6 +48,12 @@ MateInstVarDecl >> hash [
 	^ (super hash bitXor: name hash) bitXor: constraint hash
 ]
 
+{ #category : 'accessing' }
+MateInstVarDecl >> maxSize [
+
+	^ 0
+]
+
 { #category : 'actions' }
 MateInstVarDecl >> merge: decl [
 	
@@ -58,6 +64,8 @@ MateInstVarDecl >> merge: decl [
 MateInstVarDecl >> mergeType: aType [
 
 	aType ifNil: [ ^ nil ].
+	
+	type ifNil: [ type := aType. ^ nil ].
 	
 	type := type | aType
 ]
