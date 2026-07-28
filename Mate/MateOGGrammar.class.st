@@ -198,6 +198,7 @@ MateOGGrammar >> initialize [
 		             SystemEnvironment.
 		             ConstantBlockClosure.
 		             FullBlockClosure.
+		             CleanBlockClosure.
 		             OCMethodSemanticScope.
 		             CompiledBlock } asSet.
 	self feedByGraphDescription
