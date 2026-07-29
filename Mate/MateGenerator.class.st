@@ -53,6 +53,8 @@ MateGenerator >> initialize [
 		Color -> MateColorGenerator new.
 		Point -> MatePointGenerator new.
 		Object -> MateObjectGenerator new.
+		ByteSymbol -> MateByteSymbolGenerator new.
+		Character -> MateCharacterGenerator new.
 	} asDictionary.
 ]
 

@@ -33,6 +33,16 @@ MateOGGrammar class >> from: instance [
 ]
 
 { #category : 'instance creation' }
+MateOGGrammar class >> fromFile: aFilePath [
+
+	| grammarDef |
+
+	grammarDef := aFilePath asFileReference contents.
+	
+	^ self new addTypeDeclarations: (MateLanguageParser parse: grammarDef)
+]
+
+{ #category : 'instance creation' }
 MateOGGrammar class >> fromObjects: collection [
 	
 	| seen |
@@ -92,7 +102,17 @@ MateOGGrammar >> builtInTypeDeclarations [
 
 	| builtInTypes |
 
-	builtInTypes := { SmallInteger. Float . SmallFloat64 . Boolean . ByteString . Color . Point . Object }.
+	builtInTypes := {
+		SmallInteger.
+		Float.
+		SmallFloat64.
+		Boolean.
+		ByteString.
+		Color.
+		Point.
+		Object.
+		Character.
+		ByteSymbol }.
 
 	^ builtInTypes inject: Dictionary new into: [ :dict :type |
 		dict at: type put: (MateBuiltInDecl new type: type; grammar: self).
