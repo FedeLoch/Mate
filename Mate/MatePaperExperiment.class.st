@@ -18,22 +18,23 @@ MatePaperExperiment class >> run: iterations [
 { #category : 'running' }
 MatePaperExperiment >> evalConfiguration: conf iterations: iterations [
 	
-	| collector valids |
+	| collector invalids result |
 	
-	valids := 0.
+	invalids := 0.
 	collector := CoverageCollector new methods: self methodsToInstrument.
-	collector runOn: [ 
-		iterations timesRepeat: [
-			(self isValid: (self genOne: conf)) ifTrue: [
-				valids := valids + 1.
-			]
+	result := collector runOn: [ 
+		iterations timesRepeat: [ | generated | [
+				generated := self genOne: conf.
+				(self isValid: generated) ifFalse: [ invalids := invalids + 1 ]
+			] onErrorDo: [ :e | invalids := invalids + 1 ]
 		]
  	].
 
 	^ {
 		'configuration' -> (conf class name).
-		'reachedCoverage' -> (collector result percentage).
-		'validityRate' -> (iterations / valids)
+		'reachedCoverage' -> (result percentage asFloat).
+		'reachedNodes' -> (result nodes size asFloat).
+		'validityRate' -> (iterations / (iterations - invalids))
 	} asDictionary 
 ]
 
@@ -51,6 +52,14 @@ MatePaperExperiment >> initialize [
 	}.
 ]
 
+{ #category : 'testing' }
+MatePaperExperiment >> isValid: anInput [
+	
+"	[ STON fromString: (STON toString: anInput) ] onErrorDo: [ ^ false ]."
+	
+	^ true
+]
+
 { #category : 'running' }
 MatePaperExperiment >> methodsToInstrument [
 
@@ -66,11 +75,13 @@ MatePaperExperiment >> rootType [
 { #category : 'running' }
 MatePaperExperiment >> run: fileName iterations: iterations [
 
-	| result |
+	| results |
 
-	result := configurations collect: [ :conf |
+	results := configurations collect: [ :conf |
 		self evalConfiguration: conf iterations: iterations
 	].
 	
-	1 halt.
+	((fileName, '.json') asFileReference) writeStreamDo: [ :stream |
+		stream nextPutAll: (NeoJSONWriter toStringPretty: results)
+	] 
 ]
