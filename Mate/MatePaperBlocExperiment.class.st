@@ -13,6 +13,12 @@ MatePaperBlocExperiment >> mateGrammar [
 ]
 
 { #category : 'running' }
+MatePaperBlocExperiment >> methodsToInstrument [
+
+	^ BlElement package methods
+]
+
+{ #category : 'running' }
 MatePaperBlocExperiment >> rootType [
 
 	^ BlElement 

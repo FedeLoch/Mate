@@ -13,6 +13,12 @@ MatePaperMooseExperiment >> mateGrammar [
 ]
 
 { #category : 'running' }
+MatePaperMooseExperiment >> methodsToInstrument [
+
+	^ FamixStEntity package methods
+]
+
+{ #category : 'running' }
 MatePaperMooseExperiment >> rootType [
 
 	^ FamixStModel

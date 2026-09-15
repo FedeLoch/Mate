@@ -2,7 +2,8 @@ Class {
 	#name : 'MatePaperExperiment',
 	#superclass : 'Object',
 	#instVars : [
-		'configurations'
+		'configurations',
+		'timeout'
 	],
 	#category : 'Mate-Mate Paper Experimentation',
 	#package : 'Mate',
@@ -32,16 +33,24 @@ MatePaperExperiment >> evalConfiguration: conf iterations: iterations [
 
 	^ {
 		'configuration' -> (conf class name).
+		'totalIterations' -> iterations.
 		'reachedCoverage' -> (result percentage asFloat).
 		'reachedNodes' -> (result nodes size asFloat).
-		'validityRate' -> (iterations / (iterations - invalids))
+		'validityRate' -> (((iterations - invalids) / iterations) asFloat)
 	} asDictionary 
 ]
 
 { #category : 'running' }
 MatePaperExperiment >> genOne: conf [
+	
+	| result |
 
-	^ conf gen: self rootType
+result := nil.
+	[ result := conf gen: self rootType ] valueWithin: timeout onTimeout: [
+   	Error signal: 'Timeout!'
+].
+
+	^ result
 ]
 
 { #category : 'running' }
@@ -50,6 +59,7 @@ MatePaperExperiment >> initialize [
 	configurations := {
 		self mateGrammar
 	}.
+	timeout := 5 seconds
 ]
 
 { #category : 'testing' }
@@ -58,6 +68,12 @@ MatePaperExperiment >> isValid: anInput [
 "	[ STON fromString: (STON toString: anInput) ] onErrorDo: [ ^ false ]."
 	
 	^ true
+]
+
+{ #category : 'running' }
+MatePaperExperiment >> mateGrammar [
+
+	self subclassResponsibility 
 ]
 
 { #category : 'running' }

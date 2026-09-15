@@ -13,6 +13,12 @@ MatePaperASTExperiment >> mateGrammar [
 ]
 
 { #category : 'running' }
+MatePaperASTExperiment >> methodsToInstrument [
+
+	^ OCMethodNode package methods
+]
+
+{ #category : 'running' }
 MatePaperASTExperiment >> rootType [
 
 	^ OCMethodNode
