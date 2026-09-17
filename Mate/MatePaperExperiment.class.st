@@ -19,23 +19,25 @@ MatePaperExperiment class >> run: iterations [
 { #category : 'running' }
 MatePaperExperiment >> evalConfiguration: conf iterations: iterations [
 	
-	| collector invalids result |
+	| pathCollector invalids result |
 	
 	invalids := 0.
-	collector := CoverageCollector new methods: self methodsToInstrument.
-	result := collector runOn: [ 
-		iterations timesRepeat: [ | generated | [
-				generated := self genOne: conf.
-				(self isValid: generated) ifFalse: [ invalids := invalids + 1 ]
-			] onErrorDo: [ :e | invalids := invalids + 1 ]
-		]
- 	].
+	pathCollector := MateObjectPathCollector new grammar: self mateGrammar. 
+	iterations timesRepeat: [ | generated | [
+			generated := self genOne: conf.
+			(self isValid: generated) ifFalse: [ invalids := invalids + 1 ] ifTrue: [
+				pathCollector collect: generated
+			]
+		] onErrorDo: [ :e | invalids := invalids + 1 ]
+	].
+
+	result := pathCollector getResult.
 
 	^ {
 		'configuration' -> (conf class name).
 		'totalIterations' -> iterations.
 		'reachedCoverage' -> (result percentage asFloat).
-		'reachedNodes' -> (result nodes size asFloat).
+		'reachedPaths' -> (result reachedPaths size asFloat).
 		'validityRate' -> (((iterations - invalids) / iterations) asFloat)
 	} asDictionary 
 ]

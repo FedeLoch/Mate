@@ -5,7 +5,8 @@ Class {
 		'declaration',
 		'edges',
 		'context',
-		'instance'
+		'instance',
+		'derivationPath'
 	],
 	#category : 'Mate-Derivation Tree',
 	#package : 'Mate',
@@ -58,6 +59,14 @@ MateOGDerivationNode >> declaration [
 MateOGDerivationNode >> declaration: aMateInstanceDeclaration [ 
 
 	declaration := aMateInstanceDeclaration
+]
+
+{ #category : 'as yet unclassified' }
+MateOGDerivationNode >> derivationPath [
+
+	derivationPath ifNil: [ derivationPath := { instance className . edges collect: #derivationPath } ].
+	
+	^ derivationPath
 ]
 
 { #category : 'accessing' }
