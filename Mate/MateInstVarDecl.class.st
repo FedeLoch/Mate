@@ -42,6 +42,12 @@ MateInstVarDecl >> constraint: aConstraint [
 	constraint := aConstraint
 ]
 
+{ #category : 'as yet unclassified' }
+MateInstVarDecl >> explorationPercentage [
+
+	^ visits ifEmpty: [ 0 ] ifNotEmpty: [ 1 ]
+]
+
 { #category : 'comparing' }
 MateInstVarDecl >> hash [
 

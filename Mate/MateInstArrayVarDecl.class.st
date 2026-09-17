@@ -45,6 +45,15 @@ MateInstArrayVarDecl >> elementType: aType [
 	elementType := aType
 ]
 
+{ #category : 'as yet unclassified' }
+MateInstArrayVarDecl >> explorationPercentage [
+
+	^ visits ifEmpty: [ 0 ] ifNotEmpty: [
+		(visits size	> 1) ifTrue: [ 1 halt. ].
+		1
+	] 
+]
+
 { #category : 'comparing' }
 MateInstArrayVarDecl >> hash [
 

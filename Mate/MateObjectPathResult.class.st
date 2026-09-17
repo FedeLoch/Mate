@@ -32,8 +32,8 @@ MateObjectPathResult >> grammar: aGrammar [
 
 { #category : 'computation' }
 MateObjectPathResult >> percentage [
-	1 halt.
-	^ 0
+
+	^ grammar explorationPercentage
 ]
 
 { #category : 'accessing' }

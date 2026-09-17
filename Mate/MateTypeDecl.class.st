@@ -9,6 +9,12 @@ Class {
 	#tag : 'Grammar'
 }
 
+{ #category : 'as yet unclassified' }
+MateTypeDecl >> explorationPercentage [
+
+	^ visits ifEmpty: [ 0 ] ifNotEmpty: [ 1 ] 
+]
+
 { #category : 'accessing' }
 MateTypeDecl >> feed: decl [
 

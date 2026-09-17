@@ -126,6 +126,12 @@ MateOGGrammar >> defineObjectGraph [
 	^ nil
 ]
 
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> explorationPercentage [
+
+	^ (typeDeclarations collect: #explorationPercentage) sum / (typeDeclarations size)
+]
+
 { #category : 'accessing' }
 MateOGGrammar >> feedByGraphDescription [
 

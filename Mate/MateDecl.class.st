@@ -20,6 +20,12 @@ MateDecl >> = anObject [
 	^ type = anObject type
 ]
 
+{ #category : 'as yet unclassified' }
+MateDecl >> explorationPercentage [
+
+	self subclassResponsibility 
+]
+
 { #category : 'comparing' }
 MateDecl >> hash [
 

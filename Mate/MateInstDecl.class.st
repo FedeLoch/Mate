@@ -24,6 +24,12 @@ MateInstDecl >> addInstVariableDeclaration: decl [
 	instanceVariableDeclarations := instanceVariableDeclarations, { decl }
 ]
 
+{ #category : 'as yet unclassified' }
+MateInstDecl >> explorationPercentage [
+
+	^ (instanceVariableDeclarations collect: #explorationPercentage) sum / (instanceVariableDeclarations size)
+]
+
 { #category : 'accessing' }
 MateInstDecl >> feed: decl [
 
