@@ -2,6 +2,12 @@
   <img src="images/mate.png" alt="Logo" width="300"/>
 </p>
 
+<p align="center">
+  <a href="https://github.com/FedeLoch/Mate/actions/workflows/ci.yml"><img src="https://github.com/FedeLoch/Mate/actions/workflows/ci.yml/badge.svg" alt="CI Status"/></a>
+  <a href="https://github.com/FedeLoch/Mate"><img src="https://img.shields.io/github/last-commit/FedeLoch/Mate" alt="Last Commit"/></a>
+  <a href="https://github.com/FedeLoch/Mate"><img src="https://img.shields.io/github/license/FedeLoch/Mate" alt="License"/></a>
+</p>
+
 # Mate - Object Graph Language
 
 Mate is an object graph language implementation that allows you to define grammars representing software system structures and generate valid object instances from those grammars. To know more about Mate:

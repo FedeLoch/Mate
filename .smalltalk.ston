@@ -1,0 +1,15 @@
+SmalltalkCISpec {
+	#loading : [
+		SCIMetacelloLoadSpec {
+			#baseline : 'Mate',
+			#onConflict : #useIncoming,
+			#onUpgrade : #useIncoming
+		}
+	],
+	#testing : {
+		#include : {
+			#categories : [ 'Mate-Tests' ]
+		},
+		#defaultTimeout : 900
+	}
+}
