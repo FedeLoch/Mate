@@ -33,7 +33,7 @@ MateBlocGrammarTest >> testPersonGrammarKnowHowToCalculateBlCustomVisualsLanguag
 
 	self assert: (grammar mateDefinition: BlCustomVisuals) equals: 'BlCustomVisuals -> {
 	background: BlTransparentBackground | BlPaintBackground,
-	geometry: BlTriangleGeometry | BlRectangleGeometry | BlEllipseGeometry,
+	geometry: BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry,
 	clipChildren: Boolean
 }'
 ]
