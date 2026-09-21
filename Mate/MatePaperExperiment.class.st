@@ -44,7 +44,7 @@ MatePaperExperiment >> evalConfiguration: conf iterations: iterations [
 					self feed: conf input: generated with: result baseline: incrCoverageResult.
 
 					"add the new case with the current code coverage result for this new generated"
-					cases add: { result nodes collect: #asString }.
+					cases add: { result percentage asFloat . result nodes collect: #asString }.
 
 					"increment general code coverage"
 					incrCoverageResult incrementWith: result
