@@ -6,6 +6,14 @@ Class {
 	#tag : 'Mate Paper Experimentation'
 }
 
+{ #category : 'running' }
+MatePaperBlocExperiment >> bechmark: blElement [
+
+	UmeBlocRender render: blElement
+
+	
+]
+
 { #category : 'as yet unclassified' }
 MatePaperBlocExperiment >> mateGrammar [
 

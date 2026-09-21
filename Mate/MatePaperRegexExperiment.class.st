@@ -6,6 +6,12 @@ Class {
 	#tag : 'Mate Paper Experimentation'
 }
 
+{ #category : 'running' }
+MatePaperRegexExperiment >> bechmark: regex [
+	1 halt.
+	regex asRegex matches: (regex minimalStringMatching)
+]
+
 { #category : 'as yet unclassified' }
 MatePaperRegexExperiment >> mateGrammar [
 

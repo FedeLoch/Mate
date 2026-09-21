@@ -17,29 +17,58 @@ MatePaperExperiment class >> run: iterations [
 ]
 
 { #category : 'running' }
+MatePaperExperiment >> bechmark: generated [
+
+	self subclassResponsibility 
+]
+
+{ #category : 'running' }
 MatePaperExperiment >> evalConfiguration: conf iterations: iterations [
-	
-	| pathCollector invalids result |
-	
+
+	| collector invalids cases incrCoverageResult |
+
 	invalids := 0.
-	pathCollector := MateObjectPathCollector new grammar: self mateGrammar. 
-	iterations timesRepeat: [ | generated | [
-			generated := self genOne: conf.
-			(self isValid: generated) ifFalse: [ invalids := invalids + 1 ] ifTrue: [
-				pathCollector collect: generated
+	collector := C2CoverageCollector new methods: self methodsToInstrument.
+	incrCoverageResult := IncrementalCoverageResult for: {} from: collector.
+	cases := OrderedCollection new.
+
+	iterations timesRepeat: [ | generated result |
+		collector resetResult.
+		[
+			result := collector runOn: [
+				generated := self genOne: conf.
+				self bechmark: generated
+			]] onErrorDo: [ :e | invalids := invalids + 1 ].
+				result ifNotNil: [
+					"feed the generator"
+					self feed: conf input: generated with: result baseline: incrCoverageResult.
+
+					"add the new case with the current code coverage result for this new generated"
+					cases add: { result nodes collect: #asString }.
+
+					"increment general code coverage"
+					incrCoverageResult incrementWith: result
 			]
-		] onErrorDo: [ :e | invalids := invalids + 1 ]
 	].
 
-	result := pathCollector getResult.
-
 	^ {
-		'configuration' -> (conf class name).
-		'totalIterations' -> iterations.
-		'reachedCoverage' -> (result percentage asFloat).
-		'reachedPaths' -> (result reachedPaths size asFloat).
-		'validityRate' -> (((iterations - invalids) / iterations) asFloat)
-	} asDictionary 
+		  ('configuration' -> conf class name).
+		  ('totalIterations' -> iterations).
+		  ('reachedCoverage' -> (incrCoverageResult percentage asFloat)).
+		  ('reachedPaths' -> (incrCoverageResult nodes collect: #asString)).
+		  ('validityRate' -> (iterations - invalids / iterations) asFloat).
+		  ('cases' -> cases)
+	} asDictionary
+]
+
+{ #category : 'running' }
+MatePaperExperiment >> feed: conf input: generated with: result baseline: incrCoverageResult [
+	
+	| diff |
+	
+	diff := result nodes difference: incrCoverageResult nodes.
+	
+	conf backPropagate: diff size from: generated.
 ]
 
 { #category : 'running' }

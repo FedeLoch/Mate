@@ -6,6 +6,12 @@ Class {
 	#tag : 'Mate Paper Experimentation'
 }
 
+{ #category : 'running' }
+MatePaperMooseExperiment >> bechmark: mooseModel [
+
+	1 halt.
+]
+
 { #category : 'as yet unclassified' }
 MatePaperMooseExperiment >> mateGrammar [
 

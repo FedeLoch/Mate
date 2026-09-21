@@ -6,6 +6,12 @@ Class {
 	#tag : 'Mate Paper Experimentation'
 }
 
+{ #category : 'running' }
+MatePaperASTExperiment >> bechmark: blElement [
+
+	1 halt.
+]
+
 { #category : 'as yet unclassified' }
 MatePaperASTExperiment >> mateGrammar [
 

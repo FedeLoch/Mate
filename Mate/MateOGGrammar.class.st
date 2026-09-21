@@ -92,6 +92,16 @@ MateOGGrammar >> addTypeDeclarations: declarations [
 ]
 
 { #category : 'as yet unclassified' }
+MateOGGrammar >> backPropagate: improvement from: instance [
+	
+	| node |
+	
+	node := self parse: instance.
+
+	self backpropagate: node improvement: improvement
+]
+
+{ #category : 'as yet unclassified' }
 MateOGGrammar >> backpropagate: node improvement: improvement [
 
 	node recursiveBackPropagate: improvement seen: Set new
