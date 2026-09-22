@@ -39,12 +39,14 @@ MatePaperExperiment >> evalConfiguration: conf iterations: iterations [
 				generated := self genOne: conf.
 				self bechmark: generated
 			]] onErrorDo: [ :e | invalids := invalids + 1 ].
-				result ifNotNil: [
+				result ifNotNil: [ | diff |
+					diff := result nodes difference: incrCoverageResult nodes.
+					
 					"feed the generator"
-					self feed: conf input: generated with: result baseline: incrCoverageResult.
+					self feed: conf input: generated diff: diff.
 
-					"add the new case with the current code coverage result for this new generated"
-					cases add: { result percentage asFloat . result nodes collect: #asString }.
+					"add the new case with the current code coverage result for this new generated"					
+					cases add: { result percentage asFloat . diff }.
 
 					"increment general code coverage"
 					incrCoverageResult incrementWith: result
@@ -62,13 +64,9 @@ MatePaperExperiment >> evalConfiguration: conf iterations: iterations [
 ]
 
 { #category : 'running' }
-MatePaperExperiment >> feed: conf input: generated with: result baseline: incrCoverageResult [
+MatePaperExperiment >> feed: conf input: generated diff: diff [
 	
-	| diff |
-	
-	diff := result nodes difference: incrCoverageResult nodes.
-	
-	conf backPropagate: diff size from: generated.
+	conf backPropagate: diff size from: generated
 ]
 
 { #category : 'running' }

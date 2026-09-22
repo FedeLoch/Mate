@@ -8,8 +8,8 @@ Class {
 
 { #category : 'running' }
 MatePaperRegexExperiment >> bechmark: regex [
-	1 halt.
-	regex asRegex matches: (regex minimalStringMatching)
+
+	regex matches: ''
 ]
 
 { #category : 'as yet unclassified' }
