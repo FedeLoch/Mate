@@ -3,65 +3,98 @@ Class {
 	#superclass : 'MateGrammarVisitor',
 	#instVars : [
 		'builtInGenerators',
-		'maxDerivationHeight'
+		'maxDerivationHeight',
+		'random',
+		'nilProbability'
 	],
 	#category : 'Mate-Generation',
 	#package : 'Mate',
 	#tag : 'Generation'
 }
 
-{ #category : 'visiting' }
-MateGenerator >> builInInstance: decl constraint: aConstraint [
+{ #category : 'accessing' }
+MateGenerator class >> defaultBuiltInGenerators [
 
-	^ (builtInGenerators at: decl type) generateWithConstraint: aConstraint
+	^ {
+		SmallInteger -> (MateIntegerGenerator new type: SmallInteger).
+		LargePositiveInteger -> (MateIntegerGenerator new type: LargePositiveInteger).
+		LargeNegativeInteger -> (MateIntegerGenerator new type: LargeNegativeInteger).
+		Float -> (MateFloatGenerator new type: Float).
+		SmallFloat64 -> (MateFloatGenerator new type: SmallFloat64).
+		BoxedFloat64 -> (MateFloatGenerator new type: BoxedFloat64).
+		Boolean -> (MateBooleanGenerator new type: Boolean).
+		ByteString -> (MateByteStringGenerator new type: ByteString).
+		WideString -> (MateByteStringGenerator new type: WideString).
+		ByteSymbol -> (MateByteSymbolGenerator new type: ByteSymbol).
+		Character -> (MateCharacterGenerator new type: Character).
+		Color -> (MateColorGenerator new type: Color).
+		Point -> (MatePointGenerator new type: Point).
+		Object -> (MateObjectGenerator new type: Object).
+		UndefinedObject -> (MateNilGenerator new type: UndefinedObject).
+	} asDictionary
+]
+
+{ #category : 'visiting' }
+MateGenerator >> builtInInstance: decl constraint: aConstraint from: context [
+
+	^ (builtInGenerators at: decl type) generateWithConstraint: aConstraint random: context random
+]
+
+{ #category : 'visiting' }
+MateGenerator >> cutDerivation: instVarDecl from: context [
+
+	| terminals type |
+
+	terminals := instVarDecl types select: [ :each | (self declarationFor: each) isBuiltIn ].
+	terminals ifEmpty: [ ^ self nilNode: instVarDecl from: context ].
+
+	type := (terminals asSortedCollection: [ :a :b | a name <= b name ]) asArray atRandom: context random.
+
+	^ ((self declarationFor: type) visit: self from: context constraint: instVarDecl constraint) declaration: instVarDecl
 ]
 
 { #category : 'accessing' }
 MateGenerator >> gen: type [
 
-	^ (self gen: type from: MateContext new) instance
+	^ (self gen: type from: self newContext) instance
 ]
 
 { #category : 'accessing' }
 MateGenerator >> gen: type from: context [
 
-	| decl |
-	
-	decl := (grammar typeDeclarations at: type).
+	context ensureRandom: random.
 
-	^ decl visit: self from: context constraint: nil
-
-]
-
-{ #category : 'as yet unclassified' }
-MateGenerator >> genVariant: derivation [ 
-	
-	^ derivation declaration visit: self from: derivation context constraint: nil
+	^ (self declarationFor: type) visit: self from: context constraint: nil
 ]
 
 { #category : 'accessing' }
-MateGenerator >> initialize [ 
+MateGenerator >> genVariant: derivation [
+
+	derivation context ensureRandom: random.
+
+	^ derivation declaration visit: self from: derivation context constraint: nil
+]
+
+{ #category : 'initialization' }
+MateGenerator >> initialize [
 
 	super initialize.
 	maxDerivationHeight := 12.
-	builtInGenerators := {
-		SmallInteger -> MateSmallIntegerGenerator new.
-		Float -> MateFloatGenerator new.
-		SmallFloat64 -> MateFloatGenerator new.
-		Boolean -> MateBooleanGenerator new.
-		ByteString -> MateByteStringGenerator new.
-		Color -> MateColorGenerator new.
-		Point -> MatePointGenerator new.
-		Object -> MateObjectGenerator new.
-		ByteSymbol -> MateByteSymbolGenerator new.
-		Character -> MateCharacterGenerator new.
-	} asDictionary.
+	nilProbability := 0.1.
+	random := Random new.
+	builtInGenerators := self class defaultBuiltInGenerators
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'visiting' }
 MateGenerator >> insert: node path: path [
 
 	path insertReference: node instance
+]
+
+{ #category : 'testing' }
+MateGenerator >> isTerminal: aType [
+
+	^ (MateOptionalType typesOf: aType) allSatisfy: [ :each | (self declarationFor: each) isBuiltIn ]
 ]
 
 { #category : 'accessing' }
@@ -73,7 +106,31 @@ MateGenerator >> maxDerivationHeight [
 { #category : 'accessing' }
 MateGenerator >> maxDerivationHeight: height [
 
-	maxDerivationHeight := height 
+	maxDerivationHeight := height
+]
+
+{ #category : 'accessing' }
+MateGenerator >> newContext [
+
+	^ MateContext new random: random
+]
+
+{ #category : 'accessing' }
+MateGenerator >> nilNode: decl from: context [
+
+	^ MateOGBuiltInNode new declaration: decl; instance: nil; context: context
+]
+
+{ #category : 'accessing' }
+MateGenerator >> nilProbability [
+
+	^ nilProbability
+]
+
+{ #category : 'accessing' }
+MateGenerator >> nilProbability: aProbability [
+
+	nilProbability := aProbability
 ]
 
 { #category : 'visiting' }
@@ -85,75 +142,84 @@ MateGenerator >> objectInstance: node constraint: constraint [
 	]
 ]
 
+{ #category : 'accessing' }
+MateGenerator >> random [
+
+	^ random
+]
+
+{ #category : 'accessing' }
+MateGenerator >> seed: anInteger [
+
+	random := Random seed: anInteger
+]
+
 { #category : 'visiting' }
 MateGenerator >> visitArrayDecl: decl from: context [
 
 	| node size edges childContext |
-	
+
 	childContext := context copy.
 	childContext push: decl.
 
-	"Check if we've exceeded max derivation height"
-	size := (childContext level >= maxDerivationHeight) ifTrue: [ 0 ]
-		ifFalse: [ (decl minSize to: decl maxSize) atRandom ].
-	
+	size := ((childContext level >= maxDerivationHeight) and: [ (self isTerminal: decl elementType) not ])
+		ifTrue: [ 0 ]
+		ifFalse: [ (decl minSize to: decl maxSize) atRandom: context random ].
+
 	node := MateOGDerivationNode new declaration: decl; context: childContext.
 
 	edges := (1 to: size) collect: [ :i | | type edge |
-		type := decl chooseOneElementTypeFrom: context.
+		type := decl chooseOneElementTypeFrom: childContext.
 		edge := self gen: type from: childContext.
 		node addEdge: edge at: i.
 		edge
 	].
 
-	^ node instance: (edges collect: #instance)
+	^ node instance: (edges collect: #instance) asArray
 ]
 
 { #category : 'visiting' }
 MateGenerator >> visitBuiltinDeclaration: decl from: context [
-	
-	" TODO: Not sure"
-	^ self visitBuiltinDeclaration: decl from: context constraint: nil
 
+	^ self visitBuiltinDeclaration: decl from: context constraint: nil
 ]
 
 { #category : 'visiting' }
 MateGenerator >> visitBuiltinDeclaration: decl from: context constraint: aConstraint [
 
 	| instance |
-	
-	instance := self builInInstance: decl constraint: aConstraint.
+
+	instance := self builtInInstance: decl constraint: aConstraint from: context.
 
 	^ MateOGBuiltInNode new declaration: decl; instance: instance; context: context
-
 ]
 
 { #category : 'visiting' }
-MateGenerator >> visitClassDeclaration: decl from: context [ 
+MateGenerator >> visitClassDeclaration: decl from: context [
 
 	self error: 'Class declarations not yet implemented'.
 ]
 
 { #category : 'visiting' }
-MateGenerator >> visitInstRefDecl: decl from: context [ 
-	
-	"TODO: check me later"
-	
+MateGenerator >> visitInstRefDecl: decl from: context [
+
 	^ MateOGBuiltInNode new declaration: decl; instance: nil; context: context
 ]
 
 { #category : 'visiting' }
 MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 
-	| type declaration derivation |
-	
-	type := instVarDecl chooseOneTypeFrom: context.
-	
-	declaration := grammar typeDeclarations at: type ifPresent: #yourself ifAbsent: [
-		self emptyInstanceDeclaration: type
-	].
+	| type derivation |
 
-	derivation := declaration visit: self from: context constraint: instVarDecl constraint.
+	(instVarDecl nullable and: [ context random next < nilProbability ])
+		ifTrue: [ ^ self nilNode: instVarDecl from: context ].
+
+	context level >= maxDerivationHeight
+		ifTrue: [ ^ self cutDerivation: instVarDecl from: context ].
+
+	type := instVarDecl chooseOneTypeFrom: context.
+
+	derivation := (self declarationFor: type) visit: self from: context constraint: instVarDecl constraint.
 
 	^ derivation declaration: instVarDecl
 ]
@@ -163,22 +229,20 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 
 	| childContext node |
 
-	"Create a new context with this declaration in the path"
 	childContext := context copy.
 	childContext push: decl.
-	
+
 	node := MateOGInstanceNode new declaration: decl; context: context.
 	childContext parentNode: node.
-	
-	"Check if we've exceeded max derivation height"
+
 	decl instanceVariableDeclarations do: [ :instVarDecl | | edge |
 		edge := instVarDecl visit: self from: childContext constraint: nil.
 		node addEdge: edge at: instVarDecl name.
 	].
 
 	node instance: (self objectInstance: node constraint: nil).
-	
-	decl selfReferences do: [ :path | "I could be done in one path traversal instead of two"
+
+	decl selfReferences do: [ :path |
 		self insert: node path: path.
 		path updateDerivation: node withInstance: node instance.
 	].
@@ -190,7 +254,7 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 MateGenerator >> visitOneOfDecl: decl from: context [
 
 	| instance |
-	
+
 	instance := decl getOne: context.
 
 	^ MateOGBuiltInNode new declaration: decl; instance: instance; context: context

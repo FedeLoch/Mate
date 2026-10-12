@@ -20,17 +20,3 @@ MatePerson >> age: aNumber [
 
 	age := aNumber 
 ]
-
-{ #category : 'accessing' }
-MatePerson >> model [
-	
-	"	Person -> { age: Age }.
-		Age -> { value: SmallInteger }
-	"
-]
-
-{ #category : 'accessing' }
-MatePerson >> name: aName [
-
-	name := aName 
-]

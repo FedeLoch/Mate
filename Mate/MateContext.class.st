@@ -4,7 +4,8 @@ Class {
 	#instVars : [
 		'path',
 		'parentNode',
-		'level'
+		'level',
+		'random'
 	],
 	#category : 'Mate-Derivation Tree',
 	#package : 'Mate',
@@ -14,10 +15,11 @@ Class {
 { #category : 'copying' }
 MateContext >> copy [
 
-	^ self class new 
+	^ self class new
 		path: path copy;
 		parentNode: parentNode;
-		level: level + 1
+		level: level + 1;
+		random: random
 ]
 
 { #category : 'accessing' }
@@ -38,6 +40,12 @@ MateContext >> initialize [
 	super initialize.
 	path := OrderedCollection new.
 	level := 0.
+]
+
+{ #category : 'accessing' }
+MateContext >> ensureRandom: aRandom [
+
+	random ifNil: [ random := aRandom ]
 ]
 
 { #category : 'accessing' }
@@ -92,4 +100,16 @@ MateContext >> pop [
 MateContext >> push: aDeclaration [
 
 	path add: aDeclaration.
+]
+
+{ #category : 'accessing' }
+MateContext >> random [
+
+	^ random ifNil: [ SharedRandom globalGenerator ]
+]
+
+{ #category : 'accessing' }
+MateContext >> random: aRandom [
+
+	random := aRandom
 ]

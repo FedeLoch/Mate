@@ -15,14 +15,37 @@ MateReferencePath class >> new: path [
 	^ self new path: path
 ]
 
+{ #category : 'comparing' }
+MateReferencePath >> = anObject [
+
+	self == anObject ifTrue: [ ^ true ].
+	self class = anObject class ifFalse: [ ^ false ].
+
+	^ path asArray = anObject path asArray
+]
+
+{ #category : 'comparing' }
+MateReferencePath >> hash [
+
+	^ path asArray hash
+]
+
 { #category : 'as yet unclassified' }
 MateReferencePath >> insertReference: instance [ 
 
-	| current |
+	path last insert: instance into: (self targetsFrom: instance)
+]
 
-	current := path allButLast inject: instance into: [ :inst :prop | prop from: inst ].
-	
-	path last insert: instance at: current.
+{ #category : 'testing' }
+MateReferencePath >> isSatisfiedBy: instance [
+
+	^ path last holds: instance in: (self targetsFrom: instance)
+]
+
+{ #category : 'accessing' }
+MateReferencePath >> targetsFrom: instance [
+
+	^ path allButLast inject: { instance } into: [ :objects :prop | prop valuesFrom: objects ]
 ]
 
 { #category : 'accessing' }

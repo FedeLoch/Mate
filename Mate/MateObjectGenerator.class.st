@@ -7,7 +7,7 @@ Class {
 }
 
 { #category : 'translating' }
-MateObjectGenerator >> generate [
+MateObjectGenerator >> generate: aRandom [
 
-	^ 	Object new
+	^ Object new
 ]

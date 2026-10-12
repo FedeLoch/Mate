@@ -1,9 +1,37 @@
 Extension { #name : 'Metaclass' }
 
 { #category : '*Mate' }
-Metaclass >> | aClass [
+Metaclass >> acceptType: aType [
 
-	(aClass = self) ifTrue: [ ^ self ].
-	
-	^ MateOptionalType options: { self . aClass }
+	^ aType includesBehavior: self
+]
+
+{ #category : '*Mate' }
+Metaclass >> getOne [
+
+	^ self
+]
+
+{ #category : '*Mate' }
+Metaclass >> getOneFrom: context [
+
+	^ self
+]
+
+{ #category : '*Mate' }
+Metaclass >> types [
+
+	^ { self }
+]
+
+{ #category : '*Mate' }
+Metaclass >> updateReward: improvement context: context from: decl [
+
+	^ nil
+]
+
+{ #category : '*Mate' }
+Metaclass >> | aType [
+
+	^ MateOptionalType union: self with: aType
 ]

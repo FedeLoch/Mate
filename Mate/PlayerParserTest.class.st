@@ -25,5 +25,5 @@ PlayerParserTest >> testGivenAPersonItCanGiveTheGrammarDerivation [
 		name: 'Fede';
 		level: 42;
 		characterClass: (Rogue new);
-		missingExperienceForNextLevel: 0)
+		missingExperienceForNextLevel: 1)
 ]

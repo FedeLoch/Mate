@@ -3,7 +3,8 @@ Class {
 	#superclass : 'MateDecl',
 	#instVars : [
 		'name',
-		'constraint'
+		'constraint',
+		'nullable'
 	],
 	#category : 'Mate-Grammar',
 	#package : 'Mate',
@@ -15,7 +16,7 @@ MateInstVarDecl >> = anObject [
 
 	super = anObject ifFalse: [ ^ false ].
 	
-	^ name = anObject name and: [ constraint = anObject constraint ]
+	^ name = anObject name and: [ constraint = anObject constraint and: [ self nullable = anObject nullable ] ]
 ]
 
 { #category : 'as yet unclassified' }
@@ -51,7 +52,7 @@ MateInstVarDecl >> explorationPercentage [
 { #category : 'comparing' }
 MateInstVarDecl >> hash [
 
-	^ (super hash bitXor: name hash) bitXor: constraint hash
+	^ self class hash bitXor: name hash
 ]
 
 { #category : 'accessing' }
@@ -63,7 +64,8 @@ MateInstVarDecl >> maxSize [
 { #category : 'actions' }
 MateInstVarDecl >> merge: decl [
 	
-	self mergeType: decl type
+	self mergeType: decl type.
+	nullable := self nullable or: [ decl nullable ]
 ]
 
 { #category : 'actions' }
@@ -71,9 +73,7 @@ MateInstVarDecl >> mergeType: aType [
 
 	aType ifNil: [ ^ nil ].
 	
-	type ifNil: [ type := aType. ^ nil ].
-	
-	type := type | aType
+	type := MateOptionalType union: type with: aType
 ]
 
 { #category : 'accessing' }
@@ -86,6 +86,24 @@ MateInstVarDecl >> name [
 MateInstVarDecl >> name: instanceVariableName [
 
 	name := instanceVariableName 
+]
+
+{ #category : 'accessing' }
+MateInstVarDecl >> nullable [
+
+	^ nullable ifNil: [ false ]
+]
+
+{ #category : 'accessing' }
+MateInstVarDecl >> nullable: aBoolean [
+
+	nullable := aBoolean
+]
+
+{ #category : 'accessing' }
+MateInstVarDecl >> reachableTypes [
+
+	^ self types
 ]
 
 { #category : 'rendering' }
@@ -148,7 +166,7 @@ MateInstVarDecl >> renderShapes: totalVisits parent: parentNode [
 { #category : 'accessing' }
 MateInstVarDecl >> types [
 
-	^ type types
+	^ MateOptionalType typesOf: type
 ]
 
 { #category : 'visiting' }

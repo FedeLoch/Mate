@@ -12,6 +12,12 @@ MateInstRefVarDecl >> isRef [
 	^ true
 ]
 
+{ #category : 'accessing' }
+MateInstRefVarDecl >> reachableTypes [
+
+	^ #()
+]
+
 { #category : 'visiting' }
 MateInstRefVarDecl >> visiting: aVisitor from: context constraint: aConstraint [
 

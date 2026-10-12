@@ -39,6 +39,12 @@ MateTypeDecl >> name [
 	^ type name 
 ]
 
+{ #category : 'accessing' }
+MateTypeDecl >> reachableTypes [
+
+	^ #()
+]
+
 { #category : 'rendering' }
 MateTypeDecl >> renderShape: totalVisits [
 

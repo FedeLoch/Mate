@@ -3,7 +3,7 @@ Extension { #name : 'Object' }
 { #category : '*Mate' }
 Object class >> acceptType: aType [
 	
-	^ self = aType
+	^ aType includesBehavior: self
 ]
 
 { #category : '*Mate' }
@@ -20,7 +20,7 @@ Object class >> getOne [
 
 { #category : '*Mate' }
 Object class >> getOneFrom: context [
-	"For single types (not MateOptionalType), just return self ignoring context"
+
 	^ self
 ]
 
@@ -68,9 +68,7 @@ Object class >> updateReward: improvement context: context from: decl [
 ]
 
 { #category : '*Mate' }
-Object class >> | aClass [
+Object class >> | aType [
 
-	(aClass = self) ifTrue: [ ^ self ].
-	
-	^ MateOptionalType options: { self . aClass }
+	^ MateOptionalType union: self with: aType
 ]

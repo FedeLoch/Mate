@@ -32,8 +32,8 @@ MateBlocGrammarTest >> testPersonGrammarKnowHowToCalculateBlColorPaintLanguageDe
 MateBlocGrammarTest >> testPersonGrammarKnowHowToCalculateBlCustomVisualsLanguageDefinition [
 
 	self assert: (grammar mateDefinition: BlCustomVisuals) equals: 'BlCustomVisuals -> {
-	background: BlTransparentBackground | BlPaintBackground,
-	geometry: BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry,
+	background: BlPaintBackground | BlTransparentBackground,
+	geometry: BlEllipseGeometry | BlRectangleGeometry | BlTriangleGeometry,
 	clipChildren: Boolean
 }'
 ]
@@ -44,7 +44,7 @@ MateBlocGrammarTest >> testPersonGrammarKnowHowToCalculateBlElementLanguageDefin
 	self assert: (grammar mateDefinition: BlElement) equals: 'BlElement -> {
 	children: BlChildrenArray,
 	parent: { refType: BlElement },
-	visuals: BlDefaultVisuals | BlCustomVisuals,
+	visuals: BlCustomVisuals | BlDefaultVisuals,
 	constraints: BlLayoutCommonConstraints,
 	selfReferences: { children.array[ .parent ] }
 }'
@@ -72,7 +72,7 @@ MateBlocGrammarTest >> testPersonGrammarKnowHowToCalculateBlLayoutCommonConstrai
 MateBlocGrammarTest >> testPersonGrammarKnowHowToCalculateBlLayoutExactResizerLanguageDefinition [
 
 	self assert: (grammar mateDefinition: BlLayoutExactResizer) equals: 'BlLayoutExactResizer -> {
-	size: SmallInteger | SmallFloat64
+	size: SmallFloat64 | SmallInteger
 }'
 ]
 

@@ -17,8 +17,8 @@ MatePlayerGrammarTest >> testPersonGrammarKnowHowToCalculatePlayerLanguageDefini
 
 	self assert: (grammar mateDefinition: Player) equals: 'Player -> {
 	name: ByteString,
-	characterClass: Warrior | Mage | Rogue,
+	characterClass: Mage | Rogue | Warrior,
 	level: { type: SmallInteger, between: 0 and: 99 },
-	missingExperienceForNextLevel: { type: SmallInteger, greaterThan: 0 }
+	missingExperienceForNextLevel: { type: SmallInteger, atLeast: 1 }
 }'
 ]

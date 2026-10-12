@@ -36,16 +36,21 @@ MateHandMadePlayerGrammarTest >> testGrammarCanGenerateAPlayerAndValidatesItsCon
 	self assert: player name class equals: ByteString.
 	self assert: ({ Rogue . Warrior . Mage } includes: player characterClass class).
 	self assert: ((0 to: 99) includes: player level).
-	self assert: (player missingExperienceForNextLevel >= 0).
+	self assert: player missingExperienceForNextLevel > 0.
 ]
 
 { #category : 'tests' }
 MateHandMadePlayerGrammarTest >> testGrammarSaveRewardOnCharacterClassProduction [
 
-	| playerDerivation |
+	| playerDerivation characterClassNode characterClassType |
 	
 	playerDerivation := grammar generator gen: Player from: MateContext new.
+	characterClassNode := playerDerivation edges at: 'characterClass'.
+	characterClassType := characterClassNode declaration type.
 	
 	grammar backpropagate: playerDerivation improvement: 42.
-
+	
+	self
+		assert: ((characterClassType rewards at: characterClassNode context key) at: characterClassNode instance class)
+		equals: 43
 ]

@@ -9,7 +9,7 @@ Class {
 { #category : 'instance creation' }
 MatePathEachProp >> from: object [ 
 	
-	1 halt.
+	^ object asArray collect: [ :each | each instVarNamed: prop ]
 ]
 
 { #category : 'derivation' }
@@ -24,4 +24,10 @@ MatePathEachProp >> insertDerivation: instance atDerivation: aNode [
 MatePathEachProp >> isEach [
 
 	^ true
+]
+
+{ #category : 'accessing' }
+MatePathEachProp >> ownersIn: targets [
+
+	^ ((targets reject: #isNil) flatCollect: [ :collection | collection asArray ]) reject: #isNil
 ]

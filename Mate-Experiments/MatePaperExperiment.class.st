@@ -5,9 +5,8 @@ Class {
 		'configurations',
 		'timeout'
 	],
-	#category : 'Mate-Mate Paper Experimentation',
-	#package : 'Mate',
-	#tag : 'Mate Paper Experimentation'
+	#category : 'Mate-Experiments',
+	#package : 'Mate-Experiments'
 }
 
 { #category : 'running' }
@@ -19,16 +18,19 @@ MatePaperExperiment class >> run: iterations [
 { #category : 'running' }
 MatePaperExperiment >> evalConfiguration: conf iterations: iterations [
 	
-	| pathCollector invalids result |
+	| pathCollector invalids generationErrors result |
 	
 	invalids := 0.
+	generationErrors := 0.
 	pathCollector := MateObjectPathCollector new grammar: self mateGrammar. 
-	iterations timesRepeat: [ | generated | [
-			generated := self genOne: conf.
-			(self isValid: generated) ifFalse: [ invalids := invalids + 1 ] ifTrue: [
-				pathCollector collect: generated
-			]
-		] onErrorDo: [ :e | invalids := invalids + 1 ]
+	iterations timesRepeat: [ | generated |
+		generated := [ self genOne: conf ] on: Error do: [ :e |
+			generationErrors := generationErrors + 1.
+			e return: nil ].
+		generated ifNotNil: [
+			[ (self isValid: generated)
+				ifTrue: [ pathCollector collect: generated ]
+				ifFalse: [ invalids := invalids + 1 ] ] on: Error do: [ :e | invalids := invalids + 1 ] ]
 	].
 
 	result := pathCollector getResult.
@@ -38,7 +40,8 @@ MatePaperExperiment >> evalConfiguration: conf iterations: iterations [
 		'totalIterations' -> iterations.
 		'reachedCoverage' -> (result percentage asFloat).
 		'reachedPaths' -> (result reachedPaths size asFloat).
-		'validityRate' -> (((iterations - invalids) / iterations) asFloat)
+		'generationErrors' -> generationErrors.
+		'validityRate' -> (((iterations - invalids - generationErrors) / iterations) asFloat)
 	} asDictionary 
 ]
 
@@ -66,8 +69,6 @@ MatePaperExperiment >> initialize [
 
 { #category : 'testing' }
 MatePaperExperiment >> isValid: anInput [
-	
-"	[ STON fromString: (STON toString: anInput) ] onErrorDo: [ ^ false ]."
 	
 	^ true
 ]
@@ -99,7 +100,7 @@ MatePaperExperiment >> run: fileName iterations: iterations [
 		self evalConfiguration: conf iterations: iterations
 	].
 	
-	((fileName, '.json') asFileReference) writeStreamDo: [ :stream |
+	((fileName, '.json') asFileReference) ensureDelete; writeStreamDo: [ :stream |
 		stream nextPutAll: (NeoJSONWriter toStringPretty: results)
 	] 
 ]

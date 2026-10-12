@@ -9,7 +9,13 @@ Class {
 	#tag : 'Grammar'
 }
 
-{ #category : 'as yet unclassified' }
+{ #category : 'accessing' }
+MateGrammarVisitor >> declarationFor: aType [
+
+	^ grammar typeDeclarations at: aType ifAbsent: [ self emptyInstanceDeclaration: aType ]
+]
+
+{ #category : 'accessing' }
 MateGrammarVisitor >> emptyInstanceDeclaration: aClass [
 
 	^ MateInstDecl new type: aClass

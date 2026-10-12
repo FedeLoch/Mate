@@ -9,15 +9,20 @@ Class {
 	#tag : 'Generation'
 }
 
-{ #category : 'initialization' }
-MateByteSymbolGenerator >> generate [
+{ #category : 'translating' }
+MateByteSymbolGenerator >> generate: aRandom [
 
-	^ (stringGenerator gen: nil) createSymbol
+	| string |
+	
+	[ string := stringGenerator generate: aRandom.
+	  string isEmpty ] whileTrue.
+
+	^ string asSymbol
 ]
 
 { #category : 'initialization' }
 MateByteSymbolGenerator >> initialize [ 
 	
 	super initialize.
-	stringGenerator := GncBPGrammarGenerator new grammar: MateStringGrammar new.
+	stringGenerator := MateByteStringGenerator new type: ByteString
 ]

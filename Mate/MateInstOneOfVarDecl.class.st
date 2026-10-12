@@ -27,14 +27,17 @@ MateInstOneOfVarDecl >> acceptOption: option [
 { #category : 'as yet unclassified' }
 MateInstOneOfVarDecl >> explorationPercentage [
 
-	1 halt.
-	self totalVisits
+	| visited |
+	
+	options ifEmpty: [ ^ 0 ].
+	visited := self optionVisits keys.
+
+	^ (options count: [ :option | visited includes: option ]) / options size
 ]
 
 { #category : 'as yet unclassified' }
 MateInstOneOfVarDecl >> getBestRewardedOption: context [ 
 
-	"TODO: I am doing the same in MateOptionalType, maybe a can find an abstraction here"
 	| bestOption bestScore totalVisits contextRewards contextVisits |
 	
 	bestOption := nil.
@@ -48,19 +51,24 @@ MateInstOneOfVarDecl >> getBestRewardedOption: context [
 		typeVisits := contextVisits at: option.
 		typeReward := contextRewards at: option ifAbsent: [ 1 ].
 		
-		"UCT = (reward(rule) / visits(rule)) + C * sqrt(log(total_visits) / visits(rule)))"
 		score := (typeReward / typeVisits) + (explorationConstant * ((totalVisits ln / typeVisits) sqrt)).
 		
 		score > bestScore ifTrue: [ bestScore := score. bestOption := option ].
 	].
 
-	^ bestOption ifNil: [ self getOne ]
+	^ bestOption ifNil: [ self getOne: context random ]
 ]
 
 { #category : 'as yet unclassified' }
 MateInstOneOfVarDecl >> getOne [
 	
 	^ options atRandom
+]
+
+{ #category : 'as yet unclassified' }
+MateInstOneOfVarDecl >> getOneRandomly: aRandom [
+	
+	^ options atRandom: aRandom
 ]
 
 { #category : 'as yet unclassified' }
@@ -75,16 +83,26 @@ MateInstOneOfVarDecl >> getOne: context [
 ]
 
 { #category : 'comparing' }
-MateInstOneOfVarDecl >> hash [
-
-	^ super hash bitXor: options hash
-]
-
 { #category : 'initialization' }
 MateInstOneOfVarDecl >> initialize [ 
 
 	super initialize.
 	explorationConstant := 2.
+]
+
+{ #category : 'actions' }
+MateInstOneOfVarDecl >> merge: decl [
+
+	(decl isKindOf: MateInstOneOfVarDecl) ifFalse: [ ^ super merge: decl ].
+	
+	decl options do: [ :option |
+		(options includes: option) ifFalse: [ options := options asArray copyWith: option ] ]
+]
+
+{ #category : 'as yet unclassified' }
+MateInstOneOfVarDecl >> optionFrom: context [
+
+	^ (context parentNode edges at: self name) instance
 ]
 
 { #category : 'as yet unclassified' }
@@ -112,7 +130,7 @@ MateInstOneOfVarDecl >> options [
 { #category : 'accessing' }
 MateInstOneOfVarDecl >> options: someOptions [
 
-	options := someOptions
+	options := someOptions asArray
 ]
 
 { #category : 'rendering' }
@@ -175,13 +193,15 @@ MateInstOneOfVarDecl >> renderShapes: totalVisits parent: parentNode [
 ]
 
 { #category : 'as yet unclassified' }
+MateInstOneOfVarDecl >> reachableTypes [
+
+	^ #()
+]
+
+{ #category : 'as yet unclassified' }
 MateInstOneOfVarDecl >> rewardAt: context [
 
-	rewards at: (context key) ifAbsentPut: [ Dictionary new ].
-	(rewards at: (context key)) at: context object ifAbsent: [ ^ 1 ].
-
-	^ (rewards at: (context key)) at: context object
-
+	^ (rewards at: context key ifAbsent: [ ^ 1 ]) at: (self optionFrom: context) ifAbsent: [ 1 ]
 ]
 
 { #category : 'as yet unclassified' }
@@ -189,19 +209,15 @@ MateInstOneOfVarDecl >> selectAnOption: context [
 	
 	| contextVisits differenceAtLevel |
 	
-	"Case where the context was not explored before"
-	visits at: context key ifAbsent: [ ^ self getOne ].
+	visits at: context key ifAbsent: [ ^ self getOneRandomly: context random ].
 	
 	contextVisits := visits at: context key.
 	
-	"Case where in the context, there are options unexplored yet"
-	differenceAtLevel := (options difference: contextVisits keys).
-	differenceAtLevel ifNotEmpty: [ ^ differenceAtLevel asArray first ].
+	differenceAtLevel := options reject: [ :each | contextVisits includesKey: each ].
+	differenceAtLevel ifNotEmpty: [ ^ differenceAtLevel first ].
 	
-	"Case where there is no reward, so, random"
-	rewards at: context key ifAbsent: [ ^ self getOne ].
+	rewards at: context key ifAbsent: [ ^ self getOneRandomly: context random ].
 
-	"Case where we can choose an option by using previous reward information"
 	^ self getBestRewardedOption: context
 ]
 
@@ -223,7 +239,7 @@ MateInstOneOfVarDecl >> updateReward: improvement context: context [
 	| key option |
 
 	key := context key.
-	option := (context parentNode edges at: self name) instance.
+	option := self optionFrom: context.
 
 	rewards at: key ifAbsentPut: [ Dictionary new ].
 	(rewards at: key) at: option ifAbsentPut: [ 1 ].
@@ -233,8 +249,6 @@ MateInstOneOfVarDecl >> updateReward: improvement context: context [
 
 { #category : 'as yet unclassified' }
 MateInstOneOfVarDecl >> updateVisits: context [
-
-	"Do nothing"
 ]
 
 { #category : 'reward' }
