@@ -45,7 +45,7 @@ Metacello new
     load.
 ```
 
-The default group loads the `Mate` package only. The paper experiments (including the Moose grammar, which needs Moose loaded in the image) live in the `Mate-Experiments` package:
+The default group loads the `Mate` package only. The paper experiments live in the `Mate-Experiments` package, and loading the `experiments` group also loads [Moose](https://github.com/moosetechnology/Moose) and [Ume](https://github.com/FedeLoch/Ume):
 
 ```Smalltalk
 Metacello new

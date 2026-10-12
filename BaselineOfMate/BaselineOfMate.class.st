@@ -12,9 +12,11 @@ BaselineOfMate >> baseline: spec [
 	spec for: #common do: [
 		spec baseline: 'BlocBenchs' with: [ spec repository: 'github://pharo-graphics/BlocBenchs:master/src' ].
 		spec baseline: 'Gnocco' with: [ spec repository: 'github://Alamvic/gnocco:release/src' ].
+		spec baseline: 'Moose' with: [ spec repository: 'github://moosetechnology/Moose:development/src' ].
+		spec baseline: 'Ume' with: [ spec repository: 'github://FedeLoch/Ume:main' ].
 
 		spec package: 'Mate' with: [ spec requires: #( 'BlocBenchs' 'Gnocco' ) ].
-		spec package: 'Mate-Experiments' with: [ spec requires: #( 'Mate' ) ].
+		spec package: 'Mate-Experiments' with: [ spec requires: #( 'Mate' 'Moose' 'Ume' ) ].
 
 		spec group: 'default' with: #( 'Mate' ).
 		spec group: 'experiments' with: #( 'Mate-Experiments' ).
