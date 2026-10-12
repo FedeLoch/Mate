@@ -5,6 +5,12 @@ Class {
 	#package : 'Mate-Experiments'
 }
 
+{ #category : 'running' }
+MatePaperRegexExperiment >> bechmark: regex [
+
+	regex matches: ''
+]
+
 { #category : 'as yet unclassified' }
 MatePaperRegexExperiment >> mateGrammar [
 

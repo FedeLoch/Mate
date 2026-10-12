@@ -5,6 +5,14 @@ Class {
 	#package : 'Mate-Experiments'
 }
 
+{ #category : 'running' }
+MatePaperBlocExperiment >> bechmark: blElement [
+
+	UmeBlocRender render: blElement
+
+	
+]
+
 { #category : 'as yet unclassified' }
 MatePaperBlocExperiment >> mateGrammar [
 
