@@ -7,8 +7,7 @@ Class {
 }
 
 { #category : 'translating' }
-MateColorGenerator >> generate [
+MateColorGenerator >> generate: aRandom [
 
-	^ Color random
-	 
+	^ Color r: aRandom next g: aRandom next b: aRandom next
 ]

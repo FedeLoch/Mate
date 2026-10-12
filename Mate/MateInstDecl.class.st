@@ -27,7 +27,9 @@ MateInstDecl >> addInstVariableDeclaration: decl [
 { #category : 'as yet unclassified' }
 MateInstDecl >> explorationPercentage [
 
-	^ (instanceVariableDeclarations collect: #explorationPercentage) sum / (instanceVariableDeclarations size)
+	instanceVariableDeclarations ifEmpty: [ ^ visits ifEmpty: [ 0 ] ifNotEmpty: [ 1 ] ].
+
+	^ (instanceVariableDeclarations collect: #explorationPercentage) sum / instanceVariableDeclarations size
 ]
 
 { #category : 'accessing' }
@@ -39,13 +41,14 @@ MateInstDecl >> feed: decl [
 			ifNotNil: [ current merge: instVarDecl ]
 	].
 
-	
+	decl selfReferences do: [ :reference |
+		(selfReferences includes: reference) ifFalse: [ selfReferences := selfReferences asOrderedCollection copyWith: reference ] ]
 ]
 
 { #category : 'comparing' }
 MateInstDecl >> hash [
 
-	^ super hash bitXor: instanceVariableDeclarations hash
+	^ type hash
 ]
 
 { #category : 'initialization' }
@@ -77,6 +80,12 @@ MateInstDecl >> instanceVariableDeclarations [
 MateInstDecl >> instanceVariableDeclarations: decls [ 
 
 	instanceVariableDeclarations := decls
+]
+
+{ #category : 'accessing' }
+MateInstDecl >> reachableTypes [
+
+	^ instanceVariableDeclarations flatCollect: #reachableTypes
 ]
 
 { #category : 'rendering' }

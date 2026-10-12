@@ -15,14 +15,21 @@ Class {
 }
 
 { #category : 'instance creation' }
+MateOGGrammar class >> collectInstancesFrom: test [
+
+	^ [
+		test setUp.
+		[ | result |
+			result := test perform: test selectorTest.
+			((test allInstanceVariables, { result }) reject: #isNil) asOrderedCollection
+		] ensure: [ test tearDown ]
+	] on: Error, TestFailure do: [ :e | e return: OrderedCollection new ]
+]
+
+{ #category : 'instance creation' }
 MateOGGrammar class >> collectTestSuiteInstances: testSuite [
 
-	^ testSuite tests flatCollect: [ :test | | result |
-		test setUp.
-		"TODO: Not sure, review me please"
-		result := test perform: test selectorTest.
-		((test allInstanceVariables, { result }) reject: #isNil) asOrderedCollection
-	].
+	^ testSuite tests flatCollect: [ :test | self collectInstancesFrom: test ]
 ]
 
 { #category : 'instance creation' }
@@ -110,21 +117,7 @@ MateOGGrammar >> backpropagate: node improvement: improvement [
 { #category : 'accessing' }
 MateOGGrammar >> builtInTypeDeclarations [
 
-	| builtInTypes |
-
-	builtInTypes := {
-		SmallInteger.
-		Float.
-		SmallFloat64.
-		Boolean.
-		ByteString.
-		Color.
-		Point.
-		Object.
-		Character.
-		ByteSymbol }.
-
-	^ builtInTypes inject: Dictionary new into: [ :dict :type |
+	^ MateGenerator defaultBuiltInGenerators keys inject: Dictionary new into: [ :dict :type |
 		dict at: type put: (MateBuiltInDecl new type: type; grammar: self).
 		dict
 	]
@@ -139,7 +132,21 @@ MateOGGrammar >> defineObjectGraph [
 { #category : 'as yet unclassified' }
 MateOGGrammar >> explorationPercentage [
 
-	^ (typeDeclarations collect: #explorationPercentage) sum / (typeDeclarations size)
+	^ self explorationPercentageOf: (self reachableDeclarationsFrom: (typeDeclarations values reject: #isBuiltIn))
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> explorationPercentageFrom: aType [
+
+	^ self explorationPercentageOf: (self reachableDeclarationsFrom: { typeDeclarations at: aType })
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> explorationPercentageOf: declarations [
+
+	declarations ifEmpty: [ ^ 0 ].
+
+	^ (declarations collect: #explorationPercentage) sum / declarations size
 ]
 
 { #category : 'accessing' }
@@ -172,7 +179,8 @@ MateOGGrammar >> feedByObjectInstance: instance seen: seen maxDepth: maxDepth [
 	
 	(maxDepth = 0) ifTrue: [ ^ nil ]. 
 	
-	"We are banning blackList object instances"
+	instance ifNil: [ ^ nil ].
+	
 	(blackList includes: instance class) ifTrue: [ ^ nil ].
 	
 	instance isClass ifTrue: [ ^ nil ].
@@ -181,17 +189,14 @@ MateOGGrammar >> feedByObjectInstance: instance seen: seen maxDepth: maxDepth [
 	
 	decl := self typeDeclarationBy: instance.
 
-	"Adding instance type declaration"
 	self addTypeDeclaration: decl.
 	
 	seen add: instance.
 	
-	"Creating definitions of instance variables"
 	decl instanceVariableDeclarations do: [ :instDecl |
 		self feedByObjectInstance: (instance instVarNamed: instDecl name) seen: seen maxDepth: (maxDepth -1)
 	].
 
-	"Creating definitions of array elements"
 	instance isArray ifTrue: [
 		instance do: [ :element | self feedByObjectInstance: element seen: seen maxDepth: (maxDepth - 1) ]
 	]
@@ -247,8 +252,10 @@ MateOGGrammar >> instArrayVar: name by: array [
 	
 	filteredArray := array reject: #isNil.
 	
-	elementType :=  filteredArray ifEmpty: [ Object ] ifNotEmpty: [
-		filteredArray allButFirst inject: filteredArray first class into: [ :class :element | class | element class ]
+	elementType := filteredArray ifEmpty: [ nil ] ifNotEmpty: [
+		filteredArray allButFirst
+			inject: (self typeOf: filteredArray first)
+			into: [ :type :element | MateOptionalType union: type with: (self typeOf: element) ]
 	].
 
 	^ MateInstArrayVarDecl new name: name; elementType: elementType; sizeBetween: 0 and: filteredArray size.
@@ -257,11 +264,9 @@ MateOGGrammar >> instArrayVar: name by: array [
 { #category : 'as yet unclassified' }
 MateOGGrammar >> instanceVarDeclaration: name by: var [
 
-	| type |
-	
-	type := (Boolean acceptType: var class) ifTrue: [ Boolean ] ifFalse: [ var class ].
+	var isBehavior ifTrue: [ ^ MateInstOneOfVarDecl new name: name; options: { var } ].
 
-	^ MateInstVarDecl new name: name; type: type
+	^ MateInstVarDecl new name: name; type: (self typeOf: var)
 ]
 
 { #category : 'as yet unclassified' }
@@ -294,6 +299,24 @@ MateOGGrammar >> parse: object [
 MateOGGrammar >> parser [
 
 	 ^ parser
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> reachableDeclarationsFrom: roots [
+
+	| reached pending |
+	
+	reached := IdentitySet new.
+	pending := OrderedCollection withAll: roots.
+	
+	[ pending isEmpty ] whileFalse: [ | decl |
+		decl := pending removeFirst.
+		(reached includes: decl) ifFalse: [
+			reached add: decl.
+			decl reachableTypes do: [ :type |
+				typeDeclarations at: type ifPresent: [ :next | pending add: next ] ] ] ].
+
+	^ reached asArray
 ]
 
 { #category : 'rendering' }
@@ -345,6 +368,12 @@ MateOGGrammar >> replace: node by: variant [
 	]
 ]
 
+{ #category : 'accessing' }
+MateOGGrammar >> seed: anInteger [
+
+	generator seed: anInteger
+]
+
 { #category : 'rendering' }
 MateOGGrammar >> totalVisitsAcrossDeclarations [
 
@@ -366,6 +395,14 @@ MateOGGrammar >> typeDeclarationBy: instance [
 	].
 
 	 ^ MateInstDecl new type: instance class; instanceVariableDeclarations: instanceVarDecls asArray
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> typeOf: anObject [
+
+	^ (anObject class includesBehavior: Boolean)
+		ifTrue: [ Boolean ]
+		ifFalse: [ anObject class ]
 ]
 
 { #category : 'accessing' }

@@ -1,9 +1,8 @@
 Class {
 	#name : 'MatePaperBlocExperiment',
 	#superclass : 'MatePaperExperiment',
-	#category : 'Mate-Mate Paper Experimentation',
-	#package : 'Mate',
-	#tag : 'Mate Paper Experimentation'
+	#category : 'Mate-Experiments',
+	#package : 'Mate-Experiments'
 }
 
 { #category : 'running' }

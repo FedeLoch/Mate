@@ -14,5 +14,9 @@ BaselineOfMate >> baseline: spec [
 		spec baseline: 'Gnocco' with: [ spec repository: 'github://Alamvic/gnocco:release/src' ].
 
 		spec package: 'Mate' with: [ spec requires: #( 'BlocBenchs' 'Gnocco' ) ].
+		spec package: 'Mate-Experiments' with: [ spec requires: #( 'Mate' ) ].
+
+		spec group: 'default' with: #( 'Mate' ).
+		spec group: 'experiments' with: #( 'Mate-Experiments' ).
 	]
 ]

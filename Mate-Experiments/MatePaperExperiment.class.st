@@ -5,9 +5,8 @@ Class {
 		'configurations',
 		'timeout'
 	],
-	#category : 'Mate-Mate Paper Experimentation',
-	#package : 'Mate',
-	#tag : 'Mate Paper Experimentation'
+	#category : 'Mate-Experiments',
+	#package : 'Mate-Experiments'
 }
 
 { #category : 'running' }
@@ -94,8 +93,6 @@ MatePaperExperiment >> initialize [
 { #category : 'testing' }
 MatePaperExperiment >> isValid: anInput [
 	
-"	[ STON fromString: (STON toString: anInput) ] onErrorDo: [ ^ false ]."
-	
 	^ true
 ]
 
@@ -126,7 +123,7 @@ MatePaperExperiment >> run: fileName iterations: iterations [
 		self evalConfiguration: conf iterations: iterations
 	].
 	
-	((fileName, '.json') asFileReference) writeStreamDo: [ :stream |
+	((fileName, '.json') asFileReference) ensureDelete; writeStreamDo: [ :stream |
 		stream nextPutAll: (NeoJSONWriter toStringPretty: results)
 	] 
 ]

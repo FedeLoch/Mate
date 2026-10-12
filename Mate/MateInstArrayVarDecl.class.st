@@ -16,7 +16,7 @@ MateInstArrayVarDecl >> = anObject [
 
 	super = anObject ifFalse: [ ^ false ].
 	
-	^ elementType = anObject elementType and: [ 
+	^ self elementType = anObject elementType and: [ 
 		minSize = anObject minSize and: [ 
 			maxSize = anObject maxSize ] ]
 ]
@@ -36,7 +36,7 @@ MateInstArrayVarDecl >> chooseOneElementTypeFrom: context [
 { #category : 'accessing' }
 MateInstArrayVarDecl >> elementType [
 
-	^ elementType
+	^ elementType ifNil: [ Object ]
 ]
 
 { #category : 'accessing' }
@@ -48,16 +48,15 @@ MateInstArrayVarDecl >> elementType: aType [
 { #category : 'as yet unclassified' }
 MateInstArrayVarDecl >> explorationPercentage [
 
-	^ visits ifEmpty: [ 0 ] ifNotEmpty: [
-		(visits size	> 1) ifTrue: [ 1 halt. ].
-		1
-	] 
+	^ visits ifEmpty: [ 0 ] ifNotEmpty: [ 1 ]
 ]
 
-{ #category : 'comparing' }
-MateInstArrayVarDecl >> hash [
+{ #category : 'initialization' }
+MateInstArrayVarDecl >> initialize [
 
-	^ ((super hash bitXor: elementType hash) bitXor: minSize hash) bitXor: maxSize hash
+	super initialize.
+	minSize := 0.
+	maxSize := 10
 ]
 
 { #category : 'accessing' }
@@ -69,7 +68,10 @@ MateInstArrayVarDecl >> maxSize [
 { #category : 'actions' }
 MateInstArrayVarDecl >> merge: decl [
 	
-	self mergeType: decl type.
+	(decl isKindOf: MateInstArrayVarDecl) ifFalse: [ ^ super merge: decl ].
+	
+	elementType := MateOptionalType union: elementType with: decl observedElementType.
+	minSize := minSize min: decl minSize.
 	maxSize := maxSize max: decl maxSize
 ]
 
@@ -77,6 +79,18 @@ MateInstArrayVarDecl >> merge: decl [
 MateInstArrayVarDecl >> minSize [
 
 	^ minSize
+]
+
+{ #category : 'accessing' }
+MateInstArrayVarDecl >> observedElementType [
+
+	^ elementType
+]
+
+{ #category : 'accessing' }
+MateInstArrayVarDecl >> reachableTypes [
+
+	^ MateOptionalType typesOf: self elementType
 ]
 
 { #category : 'rendering' }
@@ -173,7 +187,7 @@ MateInstArrayVarDecl >> updateMe: parent replacingChild: child by: newChild [
 
 	| index |
 
-	index := parent instance indexOf: child instance.
+	index := parent edges keyAtIdentityValue: child.
 	parent addEdge: newChild at: index.
 	parent instance at: index put: newChild instance.
 ]

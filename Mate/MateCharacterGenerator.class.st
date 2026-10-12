@@ -1,14 +1,23 @@
 Class {
 	#name : 'MateCharacterGenerator',
 	#superclass : 'MateBuiltInGenerator',
+	#instVars : [
+		'stringGenerator'
+	],
 	#category : 'Mate-Generation',
 	#package : 'Mate',
 	#tag : 'Generation'
 }
 
 { #category : 'translating' }
-MateCharacterGenerator >> generate [
+MateCharacterGenerator >> generate: aRandom [
 
-	^ ($a to: $z) atRandom
-	 
+	^ stringGenerator characterFor: aRandom
+]
+
+{ #category : 'initialization' }
+MateCharacterGenerator >> initialize [ 
+	
+	super initialize.
+	stringGenerator := MateByteStringGenerator new type: WideString
 ]

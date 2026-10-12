@@ -7,7 +7,7 @@ Class {
 }
 
 { #category : 'translating' }
-MateBooleanGenerator >> generate [
+MateBooleanGenerator >> generate: aRandom [
 
-	^ { true . false } atRandom
+	^ aRandom next < 0.5
 ]

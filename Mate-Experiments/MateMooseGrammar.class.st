@@ -1,9 +1,8 @@
 Class {
 	#name : 'MateMooseGrammar',
 	#superclass : 'MateOGGrammar',
-	#category : 'Mate-Grammar Examples',
-	#package : 'Mate',
-	#tag : 'Grammar Examples'
+	#category : 'Mate-Experiments',
+	#package : 'Mate-Experiments'
 }
 
 { #category : 'accessing' }

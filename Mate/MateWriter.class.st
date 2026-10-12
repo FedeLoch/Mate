@@ -9,7 +9,7 @@ Class {
 { #category : 'writing' }
 MateWriter >> definition: type decl: decl [
 
-	^ decl visit: self from: MateContext new constraint: nil
+	^ decl visiting: self from: MateContext new constraint: nil
 ]
 
 { #category : 'writing' }
@@ -27,13 +27,13 @@ MateWriter >> mateDefinition [
 
 	| definitions |
 	
-	definitions := grammar typeDeclarations keys inject: OrderedCollection new into: [ :defs :type | | decl |
+	definitions := (grammar typeDeclarations keys asSortedCollection: [ :a :b | a name <= b name ]) inject: OrderedCollection new into: [ :defs :type | | decl |
 		decl := grammar typeDeclarations at: type.
 		(self shouldHandle: decl) ifTrue: [ defs add: (self definition: type decl: decl) ].
 		defs
 	].
 
-^ (String streamContents: [ :stream | (definitions reject: #isEmpty) do: [ :each |
+	^ (String streamContents: [ :stream | (definitions reject: #isEmpty) do: [ :each |
 		stream nextPutAll: each ] separatedBy: [ stream cr; cr ] ]) trim
 ]
 
@@ -102,7 +102,7 @@ MateWriter >> visitInstVarDecl: decl from: context [
 	^ String streamContents: [ :s |
 		s nextPutAll: decl name.
 		s nextPutAll: ': '.
-		s nextPutAll: (self writeType: decl type constraint: decl constraint)
+		s nextPutAll: (self writeType: decl type constraint: decl constraint nullable: decl nullable)
 	]
 ]
 
@@ -118,7 +118,7 @@ MateWriter >> visitInstanceDeclaration: decl from: context [
 		decl instanceVariableDeclarations doWithIndex: [ :instVarDecl :index |
 			index > 1 ifTrue: [ s nextPut: $, ].
 			s cr; nextPutAll: '	'.
-			s nextPutAll: (instVarDecl visit: self from: context constraint: instVarDecl constraint).
+			s nextPutAll: (instVarDecl visiting: self from: context constraint: instVarDecl constraint).
 		].
 		
 		decl selfReferences ifNotEmpty: [ :refs |
@@ -144,8 +144,7 @@ MateWriter >> visitOneOfDecl: decl from: context [
 		s nextPutAll: ': { oneOf: { '.
 		decl options doWithIndex: [ :option :index |
 			index > 1 ifTrue: [ s nextPutAll: ' . ' ].
-			s nextPut: $#.
-			s nextPutAll: option asString
+			s nextPutAll: (self writeLiteral: option)
 		].
 		s nextPutAll: ' } }'
 	]
@@ -164,35 +163,49 @@ MateWriter >> writeReferencePath: path [
 ]
 
 { #category : 'writing' }
-MateWriter >> writeType: type constraint: aConstraint [
+MateWriter >> writeConstraint: aConstraint on: aStream [
+
+	(aConstraint min notNil and: [ aConstraint max notNil ]) ifTrue: [
+		aStream nextPutAll: ', between: '; nextPutAll: (self writeLiteral: aConstraint min); nextPutAll: ' and: '; nextPutAll: (self writeLiteral: aConstraint max) ].
+	(aConstraint min notNil and: [ aConstraint max isNil ]) ifTrue: [
+		aStream nextPutAll: ', atLeast: '; nextPutAll: (self writeLiteral: aConstraint min) ].
+	(aConstraint min isNil and: [ aConstraint max notNil ]) ifTrue: [
+		aStream nextPutAll: ', atMost: '; nextPutAll: (self writeLiteral: aConstraint max) ].
+	aConstraint hasOptions ifTrue: [
+		aStream nextPutAll: ', in: [ '.
+		aConstraint options do: [ :each | aStream nextPutAll: (self writeLiteral: each) ] separatedBy: [ aStream nextPutAll: ', ' ].
+		aStream nextPutAll: ' ]' ]
+]
+
+{ #category : 'writing' }
+MateWriter >> writeLiteral: anObject [
+
+	anObject isSymbol ifTrue: [ ^ anObject storeString ].
+	anObject isString ifTrue: [ ^ anObject storeString ].
+	anObject isInteger ifTrue: [ ^ anObject printString ].
+	anObject isFloat ifTrue: [
+		anObject isFinite ifFalse: [ self error: 'Cannot write non finite float ', anObject printString ].
+		^ anObject printString ].
+	(anObject isNil or: [ anObject == true or: [ anObject == false ] ]) ifTrue: [ ^ anObject printString ].
+	anObject isBehavior ifTrue: [ ^ anObject name ].
+
+	^ self error: 'Cannot write literal ', anObject printString
+]
+
+{ #category : 'writing' }
+MateWriter >> writeType: type constraint: aConstraint nullable: isNullable [
+
+	| typeName |
+	
+	typeName := type name.
+	
+	(aConstraint isNil and: [ isNullable not ]) ifTrue: [ ^ typeName ].
+	(aConstraint isNil and: [ (type isKindOf: MateOptionalType) not ]) ifTrue: [ ^ typeName, '?' ].
+	aConstraint isNil ifTrue: [ ^ '(', typeName, ')?' ].
 
 	^ String streamContents: [ :s |
-		(type isKindOf: MateOptionalType) ifTrue: [ | types |
-			types := type types asArray.
-			types doWithIndex: [ :t :index |
-				index > 1 ifTrue: [ s nextPutAll: ' | ' ].
-				s nextPutAll: t name
-			]
-		] ifFalse: [
-			aConstraint ifNotNil: [ | universe |
-				universe := aConstraint universe.
-				s nextPutAll: '{ type: '.
-				s nextPutAll: type name.
-				(universe isKindOf: Interval) ifTrue: [
-					(universe last = universe last class maxVal) ifTrue: [
-						s nextPutAll: ', greaterThan: '.
-						s nextPutAll: universe first asString
-					] ifFalse: [
-						s nextPutAll: ', between: '.
-						s nextPutAll: universe first asString.
-						s nextPutAll: ' and: '.
-						s nextPutAll: universe last asString
-					]
-				].
-				s nextPutAll: ' }'.
-			] ifNil: [
-				s nextPutAll: type name
-			]
-		]
-	]
+		s nextPutAll: '{ type: '; nextPutAll: typeName.
+		self writeConstraint: aConstraint on: s.
+		isNullable ifTrue: [ s nextPutAll: ', nullable: true' ].
+		s nextPutAll: ' }' ]
 ]

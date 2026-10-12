@@ -15,6 +15,15 @@ MatePathProp class >> from: propName [
 	^ self new prop: propName
 ]
 
+{ #category : 'comparing' }
+MatePathProp >> = anObject [
+
+	self == anObject ifTrue: [ ^ true ].
+	self class = anObject class ifFalse: [ ^ false ].
+
+	^ prop = anObject prop
+]
+
 { #category : 'instance creation' }
 MatePathProp >> from: object [ 
 	
@@ -29,14 +38,22 @@ MatePathProp >> fromDerivation: derivationNode [
 	^ derivationNode edges at: prop ifAbsent: [ nil ]
 ]
 
-{ #category : 'spec protocol' }
-MatePathProp >> insert: instance at: where [ 
+{ #category : 'comparing' }
+MatePathProp >> hash [
 
-	| instancesToUpdate |
-	
-	instancesToUpdate := where isCollection ifTrue: [ where ] ifFalse: [ { where } ].
-	
-	instancesToUpdate do: [ :toInsert | toInsert instVarNamed: prop put: instance ]
+	^ self class hash bitXor: prop hash
+]
+
+{ #category : 'testing' }
+MatePathProp >> holds: instance in: targets [
+
+	^ (self ownersIn: targets) allSatisfy: [ :owner | (owner instVarNamed: prop) == instance ]
+]
+
+{ #category : 'spec protocol' }
+MatePathProp >> insert: instance into: targets [ 
+
+	(self ownersIn: targets) do: [ :owner | owner instVarNamed: prop put: instance ]
 ]
 
 { #category : 'derivation' }
@@ -56,6 +73,12 @@ MatePathProp >> isEach [
 ]
 
 { #category : 'accessing' }
+MatePathProp >> ownersIn: targets [
+
+	^ targets reject: #isNil
+]
+
+{ #category : 'accessing' }
 MatePathProp >> prop [
 
 	^ prop
@@ -65,4 +88,10 @@ MatePathProp >> prop [
 MatePathProp >> prop: propName [
 
 	prop := propName
+]
+
+{ #category : 'accessing' }
+MatePathProp >> valuesFrom: objects [
+
+	^ (self ownersIn: objects) collect: [ :owner | owner instVarNamed: prop ]
 ]

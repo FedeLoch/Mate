@@ -18,6 +18,32 @@ MateOptionalType class >> options: classes [
 	^ self new options: classes
 ]
 
+{ #category : 'accessing' }
+MateOptionalType class >> typesOf: aType [
+
+	aType ifNil: [ ^ #() ].
+
+	^ (aType isKindOf: MateOptionalType)
+		ifTrue: [ aType types asArray ]
+		ifFalse: [ { aType } ]
+]
+
+{ #category : 'accessing' }
+MateOptionalType class >> union: aType with: anotherType [
+
+	| types |
+	
+	aType ifNil: [ ^ anotherType ].
+	anotherType ifNil: [ ^ aType ].
+	
+	types := Set new.
+	types addAll: (self typesOf: aType); addAll: (self typesOf: anotherType).
+	
+	types size = 1 ifTrue: [ ^ types anyOne ].
+
+	^ self options: types
+]
+
 { #category : 'comparing' }
 MateOptionalType >> = anObject [
 
@@ -30,7 +56,7 @@ MateOptionalType >> = anObject [
 { #category : 'visiting' }
 MateOptionalType >> acceptType: aType [
 
-	^ optionTypes includes: aType
+	^ optionTypes anySatisfy: [ :each | aType includesBehavior: each ]
 ]
 
 { #category : 'as yet unclassified' }
@@ -45,24 +71,28 @@ MateOptionalType >> getBestRewardedType: context [
 	
 	totalVisits := contextVisits values sum.
 	
-	optionTypes do: [ :type | | typeVisits typeReward score |
+	self orderedTypes do: [ :type | | typeVisits typeReward score |
 		typeVisits := contextVisits at: type.
 		typeReward := contextRewards at: type ifAbsent: [ 1 ].
 		
-		"UCT = (reward(rule) / visits(rule)) + C * sqrt(log(total_visits) / visits(rule)))"
 		score := (typeReward / typeVisits) + (explorationConstant * ((totalVisits ln / typeVisits) sqrt)).
 		
 		score > bestScore ifTrue: [ bestScore := score. bestType := type ].
 	].
 
-	^ bestType ifNil: [ self getOne ]
+	^ bestType ifNil: [ self getOne: context random ]
 ]
 
 { #category : 'as yet unclassified' }
 MateOptionalType >> getOne [
-	"Fallback random selection without context"
-	
-	^ optionTypes atRandom 
+
+	^ self getOne: SharedRandom globalGenerator
+]
+
+{ #category : 'as yet unclassified' }
+MateOptionalType >> getOne: aRandom [
+
+	^ self orderedTypes atRandom: aRandom
 ]
 
 { #category : 'as yet unclassified' }
@@ -79,7 +109,7 @@ MateOptionalType >> getOneFrom: context [
 { #category : 'comparing' }
 MateOptionalType >> hash [
 
-	^ optionTypes hash
+	^ self class hash
 ]
 
 { #category : 'rendering' }
@@ -111,19 +141,33 @@ MateOptionalType >> initialize [
 { #category : 'accessing' }
 MateOptionalType >> name [
 	
-	^ (optionTypes collect: #name) asOrderedCollection joinUsing: ' | '
+	^ (self orderedTypes collect: #name) joinUsing: ' | '
+]
+
+{ #category : 'accessing' }
+MateOptionalType >> optionFor: anInstance [
+
+	^ self orderedTypes
+		detect: [ :each | anInstance class includesBehavior: each ]
+		ifNone: [ anInstance class ]
 ]
 
 { #category : 'accessing' }
 MateOptionalType >> options: options [ 
 	
-	optionTypes addAll: options
+	options do: [ :each | optionTypes addAll: (self class typesOf: each) ]
+]
+
+{ #category : 'accessing' }
+MateOptionalType >> orderedTypes [
+
+	^ (optionTypes asSortedCollection: [ :a :b | a name <= b name ]) asArray
 ]
 
 { #category : 'rendering' }
 MateOptionalType >> renderShapes: totalVisits parent: parentNode [
 
-	^ optionTypes collect: [ :type | | node label box color composite visitsForType |
+	^ self orderedTypes collect: [ :type | | node label box color composite visitsForType |
 		visitsForType := self totalVisitsFor: type.
 		
 		node := MateGrammarRenderNode new.
@@ -173,19 +217,15 @@ MateOptionalType >> selectAtype: context [
 	
 	| contextVisits differenceAtLevel |
 
-	"Case where the context was not explored before"
-	visits at: context key ifAbsent: [ ^ self getOne ].
+	visits at: context key ifAbsent: [ ^ self getOne: context random ].
 	
 	contextVisits := visits at: context key.
 	
-	"Case where in the context, there are options unexplored yet"
-	differenceAtLevel := (optionTypes difference: contextVisits keys).
-	differenceAtLevel ifNotEmpty: [ ^ differenceAtLevel asArray first ].
+	differenceAtLevel := self orderedTypes reject: [ :each | contextVisits includesKey: each ].
+	differenceAtLevel ifNotEmpty: [ ^ differenceAtLevel first ].
 	
-	"Case where there is no reward, so, random"
-	rewards at: context key ifAbsent: [ ^ self getOne ].
+	rewards at: context key ifAbsent: [ ^ self getOne: context random ].
 
-	"Case where we can choose a type by using previous reward information"
 	^ self getBestRewardedType: context
 ]
 
@@ -219,7 +259,7 @@ MateOptionalType >> updateReward: improvement context: context from: decl [
 	| key optionToReward |
 
 	key := context key.
-	optionToReward := (context parentNode edges at: decl name) instance class.
+	optionToReward := self optionFor: (context parentNode edges at: decl name) instance.
 	
 	rewards at: key ifAbsentPut: [ Dictionary new ].
 	rewards at: key at: optionToReward ifAbsentPut: [ 1 ].
@@ -246,7 +286,7 @@ MateOptionalType >> visits [
 ]
 
 { #category : 'logical operations' }
-MateOptionalType >> | aClass [ 
+MateOptionalType >> | aType [ 
 
-	optionTypes add: aClass 
+	optionTypes addAll: (self class typesOf: aType)
 ]
