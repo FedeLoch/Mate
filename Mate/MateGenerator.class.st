@@ -53,6 +53,37 @@ MateGenerator >> cutDerivation: instVarDecl from: context [
 	^ ((self declarationFor: type) visit: self from: context constraint: instVarDecl constraint) declaration: instVarDecl
 ]
 
+{ #category : 'visiting' }
+MateGenerator >> enforce: invariant of: decl on: node from: context [
+
+	| attempts |
+
+	attempts := 0.
+	[ (invariant holdsFor: node instance) or: [ attempts >= self invariantAttempts ] ] whileFalse: [
+		attempts := attempts + 1.
+		self
+			regenerate: (decl instanceVariableDeclarationNamed: (attempts odd ifTrue: [ invariant right ] ifFalse: [ invariant left ]))
+			on: node
+			from: context ].
+
+	(invariant holdsFor: node instance) ifTrue: [ ^ self ].
+
+	invariant operator = '=' ifTrue: [
+		self set: invariant right to: (node instance instVarNamed: invariant left) on: node ].
+	invariant operator = '<=' ifTrue: [ | leftValue rightValue |
+		leftValue := node instance instVarNamed: invariant left.
+		rightValue := node instance instVarNamed: invariant right.
+		self set: invariant left to: rightValue on: node.
+		self set: invariant right to: leftValue on: node ]
+]
+
+{ #category : 'visiting' }
+MateGenerator >> enforceInvariantsOf: decl on: node from: context [
+
+	2 timesRepeat: [
+		decl invariants do: [ :invariant | self enforce: invariant of: decl on: node from: context ] ]
+]
+
 { #category : 'accessing' }
 MateGenerator >> gen: type [
 
@@ -89,6 +120,12 @@ MateGenerator >> initialize [
 MateGenerator >> insert: node path: path [
 
 	path insertReference: node instance
+]
+
+{ #category : 'accessing' }
+MateGenerator >> invariantAttempts [
+
+	^ 30
 ]
 
 { #category : 'testing' }
@@ -148,10 +185,29 @@ MateGenerator >> random [
 	^ random
 ]
 
+{ #category : 'visiting' }
+MateGenerator >> regenerate: instVarDecl on: node from: context [
+
+	| edge |
+
+	instVarDecl ifNil: [ ^ self ].
+
+	edge := instVarDecl visit: self from: context constraint: nil.
+	node addEdge: edge at: instVarDecl name.
+	node instance instVarNamed: instVarDecl name put: edge instance
+]
+
 { #category : 'accessing' }
 MateGenerator >> seed: anInteger [
 
 	random := Random seed: anInteger
+]
+
+{ #category : 'visiting' }
+MateGenerator >> set: fieldName to: aValue on: node [
+
+	node instance instVarNamed: fieldName put: aValue.
+	(node edges at: fieldName ifAbsent: [ nil ]) ifNotNil: [ :edge | edge instance: aValue ]
 ]
 
 { #category : 'visiting' }
@@ -175,7 +231,7 @@ MateGenerator >> visitArrayDecl: decl from: context [
 		edge
 	].
 
-	^ node instance: (edges collect: #instance) asArray
+	^ node instance: (decl collectionFrom: (edges collect: #instance))
 ]
 
 { #category : 'visiting' }
@@ -241,6 +297,8 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 	].
 
 	node instance: (self objectInstance: node constraint: nil).
+
+	self enforceInvariantsOf: decl on: node from: childContext.
 
 	decl selfReferences do: [ :path |
 		self insert: node path: path.

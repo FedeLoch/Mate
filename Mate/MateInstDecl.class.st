@@ -3,7 +3,8 @@ Class {
 	#superclass : 'MateTypeDecl',
 	#instVars : [
 		'instanceVariableDeclarations',
-		'selfReferences'
+		'selfReferences',
+		'invariants'
 	],
 	#category : 'Mate-Grammar',
 	#package : 'Mate',
@@ -42,7 +43,10 @@ MateInstDecl >> feed: decl [
 	].
 
 	decl selfReferences do: [ :reference |
-		(selfReferences includes: reference) ifFalse: [ selfReferences := selfReferences asOrderedCollection copyWith: reference ] ]
+		(selfReferences includes: reference) ifFalse: [ selfReferences := selfReferences asOrderedCollection copyWith: reference ] ].
+
+	decl invariants do: [ :invariant |
+		(invariants includes: invariant) ifFalse: [ invariants := invariants asOrderedCollection copyWith: invariant ] ]
 ]
 
 { #category : 'comparing' }
@@ -57,6 +61,7 @@ MateInstDecl >> initialize [
 	super initialize.
 	instanceVariableDeclarations := OrderedCollection new.
 	selfReferences := OrderedCollection new.
+	invariants := #()
 ]
 
 { #category : 'accessing' }
@@ -80,6 +85,18 @@ MateInstDecl >> instanceVariableDeclarations [
 MateInstDecl >> instanceVariableDeclarations: decls [ 
 
 	instanceVariableDeclarations := decls
+]
+
+{ #category : 'accessing' }
+MateInstDecl >> invariants [
+
+	^ invariants
+]
+
+{ #category : 'accessing' }
+MateInstDecl >> invariants: aCollection [
+
+	invariants := aCollection asArray
 ]
 
 { #category : 'accessing' }

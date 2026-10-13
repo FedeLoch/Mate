@@ -76,6 +76,18 @@ MateOGGrammar class >> fromObjects: collection maxDepth: maxDepth [
 ]
 
 { #category : 'instance creation' }
+MateOGGrammar class >> inferFrom: instances [
+
+	^ (MateGrammarInferrer new observeAll: instances; yourself) grammar
+]
+
+{ #category : 'instance creation' }
+MateOGGrammar class >> inferFromTest: aTestClass [
+
+	^ self inferFrom: (self collectTestSuiteInstances: aTestClass suite)
+]
+
+{ #category : 'instance creation' }
 MateOGGrammar class >> fromTest: aTestClass [
 
 	^ self fromObjects: (self collectTestSuiteInstances: aTestClass suite)

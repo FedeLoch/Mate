@@ -91,6 +91,7 @@ MateLanguageParser >> createInstArrayVarDecl: dict [
 
 	decl := MateInstArrayVarDecl new.
 	decl elementType: elementType.
+	(dict includesKey: 'collection') ifTrue: [ decl collectionClass: (self resolveType: (dict at: 'collection')) ].
 
 	^ self applySize: dict to: decl
 ]
@@ -251,12 +252,13 @@ MateLanguageParser >> parseComplexType: stream [
 { #category : 'parsing' }
 MateLanguageParser >> parseDefinition: stream [
 
-	| decls selfRefs pos name |
+	| decls selfRefs invariants pos name |
 
 	self expect: '{' from: stream.
 
 	decls := OrderedCollection new.
 	selfRefs := OrderedCollection new.
+	invariants := OrderedCollection new.
 
 	[ self skipWhitespace: stream. (self match: '}' from: stream) ] whileFalse: [
 		self expectNotAtEnd: stream.
@@ -264,16 +266,17 @@ MateLanguageParser >> parseDefinition: stream [
 		name := self requireIdentifier: stream.
 		stream position: pos.
 
-		name = 'selfReferences' ifTrue: [
-			selfRefs addAll: (self parseSelfReferences: stream).
-		] ifFalse: [
-			decls add: (self parseField: stream).
-		].
+		name = 'selfReferences'
+			ifTrue: [ selfRefs addAll: (self parseSelfReferences: stream) ]
+			ifFalse: [
+				name = 'invariants'
+					ifTrue: [ invariants addAll: (self parseInvariants: stream) ]
+					ifFalse: [ decls add: (self parseField: stream) ] ].
 		self skipWhitespace: stream.
 		self match: ',' from: stream.
 	].
 
-	^ { decls. selfRefs }
+	^ { decls. selfRefs. invariants }
 ]
 
 { #category : 'parsing' }
@@ -299,6 +302,45 @@ MateLanguageParser >> parseIdentifier: stream [
 	^ String streamContents: [ :s |
 		[ self isIdentifierCharacter: stream peek ] whileTrue: [ s nextPut: stream next ]
 	]
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> parseInvariant: stream [
+
+	| left operator right |
+
+	left := self requireIdentifier: stream.
+	self skipWhitespace: stream.
+	operator := #( '<=' '>=' '<' '>' '=' )
+		detect: [ :each | self match: each from: stream ]
+		ifNone: [ self error: 'Expected a comparison operator' at: stream ].
+	self skipWhitespace: stream.
+	right := self requireIdentifier: stream.
+
+	^ MateInvariant left: left operator: operator right: right
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> parseInvariants: stream [
+
+	| invariants |
+
+	self requireIdentifier: stream.
+	self skipWhitespace: stream.
+	self expect: ':' from: stream.
+	self skipWhitespace: stream.
+	self expect: '{' from: stream.
+
+	invariants := OrderedCollection new.
+
+	[ self skipWhitespace: stream. (self match: '}' from: stream) ] whileFalse: [
+		self expectNotAtEnd: stream.
+		invariants add: (self parseInvariant: stream).
+		self skipWhitespace: stream.
+		self match: ',' from: stream.
+	].
+
+	^ invariants
 ]
 
 { #category : 'parsing' }
@@ -389,7 +431,12 @@ MateLanguageParser >> parseRule: stream [
 
 	type := self resolveClass: className.
 
-	^ MateInstDecl new type: type; instanceVariableDeclarations: definition asArray; selfReferences: selfRefs asArray
+	^ MateInstDecl new
+		type: type;
+		instanceVariableDeclarations: definition asArray;
+		selfReferences: selfRefs asArray;
+		invariants: result third;
+		yourself
 ]
 
 { #category : 'parsing' }
