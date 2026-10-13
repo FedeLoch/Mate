@@ -65,7 +65,10 @@ MateWriter >> visitArrayDecl: decl from: context [
 		s nextPutAll: decl name.
 		s nextPutAll: ': { type: [ '.
 		s nextPutAll: decl elementType name.
-		s nextPutAll: ' ], sizeBetween: '.
+		s nextPutAll: ' ], '.
+		decl collectionClass = Array ifFalse: [
+			s nextPutAll: 'collection: '; nextPutAll: decl collectionClass name; nextPutAll: ', ' ].
+		s nextPutAll: 'sizeBetween: '.
 		s nextPutAll: decl minSize asString.
 		s nextPutAll: ' and: '.
 		s nextPutAll: decl maxSize asString.
@@ -131,7 +134,15 @@ MateWriter >> visitInstanceDeclaration: decl from: context [
 			].
 			s nextPutAll: ' }'.
 		].
-		
+
+		decl invariants ifNotEmpty: [ :invariants |
+			s nextPut: $,.
+			s cr; nextPutAll: '	'.
+			s nextPutAll: 'invariants: { '.
+			invariants do: [ :invariant | s print: invariant ] separatedBy: [ s nextPutAll: ', ' ].
+			s nextPutAll: ' }'.
+		].
+
 		s cr; nextPutAll: '}'
 	]
 ]

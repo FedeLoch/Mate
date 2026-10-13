@@ -194,8 +194,12 @@ Example -> {
   species: OrderedCollection class | Set class,
   items: { type: [ SmallInteger | ByteString ], sizeBetween: 0 and: 5 },
   pair: { type: [ Point ], size: 2 },
+  children: { type: [ Example ], collection: OrderedCollection, sizeBetween: 0 and: 3 },
   owner: { refType: Example },
-  selfReferences: { items[ .owner ] }
+  low: SmallInteger,
+  high: SmallInteger,
+  selfReferences: { children[ .owner ] },
+  invariants: { low <= high }
 }
 ```
 
@@ -208,8 +212,10 @@ Example -> {
 | `in: [ ... ]` | The value is one of the listed literals |
 | `oneOf: { ... }` | The field is one of the listed literals (symbols, strings, numbers, booleans, `nil`, classes) |
 | `[ T ]` with `sizeBetween: a and: b` or `size: n` | Array of `T`; without a size it defaults to `sizeBetween: 0 and: 10` |
+| `collection: OrderedCollection` | Generate the elements into this collection class (`Array`, `OrderedCollection`, `Set`, `IdentitySet` or `Bag`) through `withAll:` instead of an `Array` |
 | `refType: T` | Reference filled by a `selfReferences` path, not generated |
 | `X class`, `X classTrait` | Metaclass types |
+| `invariants: { a <= b }` | A relation between two numeric fields of the same object (`<`, `<=`, `=`, `>`, `>=`); generation retries or repairs the fields until it holds, and validation rejects objects that break it |
 
 Identifiers may contain letters, digits and `_`. Numbers may be negative and use decimals or exponents. Malformed input raises an error that includes the position where parsing failed.
 
@@ -265,10 +271,87 @@ grammar parse: (Player new name: 'Fede'; level: 500; characterClass: Rogue new; 
 
 ## Inferring Grammars from Objects
 
+Mate offers two levels of inference.
+
+### Types only
+
 ```smalltalk
 grammar := MateOGGrammar fromObjects: { player1 . player2 . player3 }.
 grammar mateDefinition.
 ```
 
-Inference merges the observed classes of each field into unions, merges array element types and size ranges (empty arrays add no evidence), records Booleans as `Boolean`, and records fields that hold classes as `oneOf` choices. The output of `mateDefinition` is sorted by type name and parses back into the same grammar.
+This merges the observed classes of each field into unions, merges array element types and size ranges (empty arrays add no evidence), records Booleans as `Boolean`, and records fields that hold classes as `oneOf` choices. The output of `mateDefinition` is sorted by type name and parses back into the same grammar.
+
+### Types, constraints and relationships
+
+```smalltalk
+grammar := MateOGGrammar inferFrom: players.
+grammar := MateOGGrammar inferFromTest: PlayerTest.
+```
+
+`inferFromTest:` runs each test and observes the objects held in its instance variables plus its return value, so it works best when tests keep the objects they build in instance variables; objects that only live in local variables are not seen.
+
+`inferFrom:` walks every instance by identity, collects statistics for each field and the links between objects, and keeps only the constraints that every instance satisfies and that have enough supporting observations. From 30 sample players it produces:
+
+```smalltalk
+Player -> {
+	name: ByteString,
+	characterClass: Mage | Rogue | Warrior,
+	level: { type: SmallInteger, between: 3 and: 90 },
+	missingExperienceForNextLevel: { type: SmallInteger, between: 10 and: 300 },
+	invariants: { level < missingExperienceForNextLevel }
+}
+```
+
+And from a few trees whose children point back to their parent:
+
+```smalltalk
+MateTreeNode -> {
+	label: { oneOf: { #a . #b . #c } },
+	children: { type: [ MateTreeNode ], collection: OrderedCollection, sizeBetween: 0 and: 2 },
+	parent: { refType: MateTreeNode },
+	selfReferences: { children[ .parent ] }
+}
+```
+
+What it infers:
+
+| Family | Inferred as |
+| --- | --- |
+| Field types | unions of the observed classes, `Boolean` for booleans |
+| Nullability | `T?` when a field is sometimes `nil` |
+| Numeric ranges | `between:and:` with enough observations, otherwise only the sign (`greaterThan: 0` or `atLeast: 0`) |
+| Enumerations | `oneOf:` for symbols, strings and characters with few distinct values seen many times, and for fields that hold classes |
+| Collections | element types, size ranges, and the collection class (`Array`, `OrderedCollection`, `Set`, `IdentitySet`, `Bag`), observed through their elements rather than their private slots |
+| Back-references | paths of up to three steps where an object always reaches itself, such as `children[ .parent ]` or Bloc's `children.array[ .parent ]`; the closing field becomes a `refType` |
+| Invariants | `<`, `<=` or `=` between numeric fields of the same object, unless the ranges already imply them |
+
+Every decision is recorded, including the rejected ones, so you can review them:
+
+```smalltalk
+inferrer := MateGrammarInferrer new
+	minimumSupport: 20;
+	maxEnumerationSize: 5;
+	maxPathLength: 3;
+	observeAll: players;
+	yourself.
+
+grammar := inferrer grammar.
+inferrer report.
+"[rejected] Player.name enumeration: 30 distinct values in 30 observations (support 30)
+ [accepted] Player.level range: between: 3 and: 90 (support 30)
+ [accepted] Player invariant: level < missingExperienceForNextLevel (support 30)"
+```
+
+The report also flags objects that are shared by several others: generated graphs hold separate copies of them, because the grammar language does not express sharing yet.
+
+### What inference cannot know
+
+- **Accidental truths.** Inference keeps every constraint the sample satisfies. In the example above, `level < missingExperienceForNextLevel` holds only because of how the sample players were built. Review the report, raise `minimumSupport`, or feed more varied instances.
+- **What was never observed.** A union option, a `nil` or a size that never appears in the sample will not be in the grammar.
+- **Constraints that come from behavior.** Caches that must match computed values, hashed layouts, or objects that are only valid after some method has run are not visible in snapshots.
+- **Arbitrary functions and external state.** Checksums, encodings, valid source code, files, sockets or globals are out of reach.
+- **Unsupported values.** Fields holding blocks, methods, processes or other unsupported objects are skipped and reported. Dictionaries are still described through their slots.
+
+See [docs/constraint-inference.md](docs/constraint-inference.md) for the design behind this.
 
