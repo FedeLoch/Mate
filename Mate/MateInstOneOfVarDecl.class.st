@@ -82,7 +82,6 @@ MateInstOneOfVarDecl >> getOne: context [
 	^ selected
 ]
 
-{ #category : 'comparing' }
 { #category : 'initialization' }
 MateInstOneOfVarDecl >> initialize [ 
 
