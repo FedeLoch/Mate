@@ -1,27 +1,8 @@
-# Inferring Mate Constraints and Relationships from Instances
+# Inferring Mate Constraints and Relationships from Object Instances
 
 Status: phases 1, 2, 3, 4 (except dictionaries) and 5 of the plan in section 8 are implemented in `MateGrammarInferrer`, `MateObserver`, `MateFieldProfile`, `MateInferenceFinding` and `MateInvariant`. Not implemented yet: string shapes, divisibility, conditional nullness, type correlations, linear equalities, ownership as a grammar construct (sharing is only reported), dictionaries, numeric confidence scores, held-out validation and incremental change reports.
 
-## 1. Where we are
-
-`MateOGGrammar fromObjects:` walks each instance and records, per class:
-
-- one declaration per non-nil instance variable, with its observed class (unions are built across instances);
-- arrays (`Array` only) with a merged element type and a `0..maxObservedSize` size range;
-- class-valued fields as `oneOf` choices.
-
-What it cannot express today:
-
-| Gap | Consequence |
-| --- | --- |
-| `nil` fields are skipped | Nullability is lost; a field that is sometimes `nil` looks mandatory |
-| No value statistics | No ranges, enumerations, string shapes or size distributions |
-| No relationship analysis | Back-pointers (`child.parent == self`) are inferred as plain fields, so generated graphs break them and the generator only terminates thanks to the depth limit |
-| Collections other than `Array` are treated as plain objects | `OrderedCollection`, `Dictionary` and `Set` are rebuilt from their private slots (`firstIndex`, `tally`, hash buckets), so generated instances violate their internal invariants |
-| One global `seen` set | Shared objects and aliasing are invisible; a shared object is described once and then generated as many independent copies |
-| Merge is the only operation | Every observation widens the grammar, nothing ever narrows it, and there is no measure of how sure we are |
-
-## 2. Proposed architecture
+## Proposed architecture
 
 Separate observing from deciding.
 
