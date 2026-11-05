@@ -52,14 +52,7 @@ MateOGGrammar class >> fromFile: aFilePath [
 { #category : 'instance creation' }
 MateOGGrammar class >> fromObjects: collection [
 	
-	| seen |
-	
-	seen := IdentitySet new.
-	
-	^ collection inject: self new into: [ :grammar :instance |
-		grammar feedByObjectInstance: instance seen: seen.
-		grammar
-	]
+	^ MateGrammarInferrer new observeAll: collection; minimumSupport: 30; grammar
 ]
 
 { #category : 'instance creation' }
