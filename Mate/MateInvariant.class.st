@@ -37,8 +37,9 @@ MateInvariant >> accepts: leftValue with: rightValue [
 	(leftValue isNil or: [ rightValue isNil ]) ifTrue: [ ^ true ].
 	(leftValue isNumber and: [ rightValue isNumber ]) ifFalse: [ ^ false ].
 
-	operator = '<' ifTrue: [ ^ leftValue < rightValue ].
-	operator = '<=' ifTrue: [ ^ leftValue <= rightValue ].
+	self isLt ifTrue: [ ^ leftValue < rightValue ].
+	self isLq ifTrue: [ ^ leftValue <= rightValue ].
+	
 	^ leftValue = rightValue
 ]
 
@@ -52,6 +53,18 @@ MateInvariant >> hash [
 MateInvariant >> holdsFor: anObject [
 
 	^ self accepts: (anObject instVarNamed: left) with: (anObject instVarNamed: right)
+]
+
+{ #category : 'testing' }
+MateInvariant >> isLq [
+
+	^ operator = '<='
+]
+
+{ #category : 'testing' }
+MateInvariant >> isLt [
+
+	^ operator = '<'
 ]
 
 { #category : 'accessing' }
