@@ -76,6 +76,12 @@ MateOGGrammar class >> fromObjects: collection maxDepth: maxDepth [
 ]
 
 { #category : 'instance creation' }
+MateOGGrammar class >> fromTest: aTestClass [
+
+	^ self fromObjects: (self collectTestSuiteInstances: aTestClass suite)
+]
+
+{ #category : 'instance creation' }
 MateOGGrammar class >> inferFrom: instances [
 
 	^ (MateGrammarInferrer new observeAll: instances; yourself) grammar
@@ -85,12 +91,6 @@ MateOGGrammar class >> inferFrom: instances [
 MateOGGrammar class >> inferFromTest: aTestClass [
 
 	^ self inferFrom: (self collectTestSuiteInstances: aTestClass suite)
-]
-
-{ #category : 'instance creation' }
-MateOGGrammar class >> fromTest: aTestClass [
-
-	^ self fromObjects: (self collectTestSuiteInstances: aTestClass suite)
 ]
 
 { #category : 'accessing' }
@@ -409,16 +409,16 @@ MateOGGrammar >> typeDeclarationBy: instance [
 	 ^ MateInstDecl new type: instance class; instanceVariableDeclarations: instanceVarDecls asArray
 ]
 
+{ #category : 'accessing' }
+MateOGGrammar >> typeDeclarations [
+
+	^ typeDeclarations
+]
+
 { #category : 'as yet unclassified' }
 MateOGGrammar >> typeOf: anObject [
 
 	^ (anObject class includesBehavior: Boolean)
 		ifTrue: [ Boolean ]
 		ifFalse: [ anObject class ]
-]
-
-{ #category : 'accessing' }
-MateOGGrammar >> typeDeclarations [
-
-	^ typeDeclarations
 ]

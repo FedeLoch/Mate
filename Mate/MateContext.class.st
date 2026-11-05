@@ -28,6 +28,12 @@ MateContext >> depth [
 	^ path size
 ]
 
+{ #category : 'accessing' }
+MateContext >> ensureRandom: aRandom [
+
+	random ifNil: [ random := aRandom ]
+]
+
 { #category : 'testing' }
 MateContext >> includes: aDeclaration [
 
@@ -40,12 +46,6 @@ MateContext >> initialize [
 	super initialize.
 	path := OrderedCollection new.
 	level := 0.
-]
-
-{ #category : 'accessing' }
-MateContext >> ensureRandom: aRandom [
-
-	random ifNil: [ random := aRandom ]
 ]
 
 { #category : 'accessing' }

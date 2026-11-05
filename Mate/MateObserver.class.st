@@ -18,9 +18,9 @@ MateObserver >> collectionClasses [
 ]
 
 { #category : 'accessing' }
-MateObserver >> elementsOf: aCollection [
+MateObserver >> elementsOf: elements [
 
-	^ aCollection asArray
+	^ elements asArray
 ]
 
 { #category : 'initialization' }
@@ -44,30 +44,35 @@ MateObserver >> isCollectionValue: anObject [
 ]
 
 { #category : 'testing' }
-MateObserver >> isLeaf: anObject [
+MateObserver >> isLeaf: object [
 
-	anObject ifNil: [ ^ true ].
-	anObject isBehavior ifTrue: [ ^ true ].
+	object ifNil: [ ^ true ].
+	object isBehavior ifTrue: [ ^ true ].
 
-	^ self leafClasses anySatisfy: [ :each | anObject isKindOf: each ]
+	^ self leafClasses anySatisfy: [ :each | object isKindOf: each ]
 ]
 
 { #category : 'testing' }
 MateObserver >> isObserved: anObject [
 
-	^ anObject notNil and: [ (instancesByClass at: anObject class ifAbsent: [ #() ]) identityIncludes: anObject ]
+	^ anObject notNil and: [
+			  (instancesByClass at: anObject class ifAbsent: [ #(  ) ])
+				  identityIncludes: anObject
+	]
 ]
 
 { #category : 'testing' }
 MateObserver >> isUnsupported: anObject [
 
-	^ self unsupportedClasses anySatisfy: [ :each | anObject isKindOf: each ]
+	^ self unsupportedClasses anySatisfy: [ :each |
+		  anObject isKindOf: each
+	]
 ]
 
 { #category : 'accessing' }
 MateObserver >> leafClasses [
 
-	^ { Number. String. Character. Boolean. Point. Color }
+	^ { Number . String . Character . Boolean . Point . Color }
 ]
 
 { #category : 'accessing' }

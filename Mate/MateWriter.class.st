@@ -162,18 +162,6 @@ MateWriter >> visitOneOfDecl: decl from: context [
 ]
 
 { #category : 'writing' }
-MateWriter >> writeReferencePath: path [
-
-	^ String streamContents: [ :s |
-		path path doWithIndex: [ :segment :index |
-			s nextPutAll: (segment isEach ifTrue: [
-				self eachProp: segment prop
-			] ifFalse: [ self prop: segment prop index: index ])
-		]
-	]
-]
-
-{ #category : 'writing' }
 MateWriter >> writeConstraint: aConstraint on: aStream [
 
 	(aConstraint min notNil and: [ aConstraint max notNil ]) ifTrue: [
@@ -201,6 +189,18 @@ MateWriter >> writeLiteral: anObject [
 	anObject isBehavior ifTrue: [ ^ anObject name ].
 
 	^ self error: 'Cannot write literal ', anObject printString
+]
+
+{ #category : 'writing' }
+MateWriter >> writeReferencePath: path [
+
+	^ String streamContents: [ :s |
+		path path doWithIndex: [ :segment :index |
+			s nextPutAll: (segment isEach ifTrue: [
+				self eachProp: segment prop
+			] ifFalse: [ self prop: segment prop index: index ])
+		]
+	]
 ]
 
 { #category : 'writing' }

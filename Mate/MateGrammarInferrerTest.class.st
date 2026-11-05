@@ -61,17 +61,6 @@ MateGrammarInferrerTest >> spans [
 		MateSpan from: i to: i + (i \\ 4) kind: (#( #open #closed #moved nil ) at: i \\ 4 + 1) ]
 ]
 
-{ #category : 'helpers' }
-MateGrammarInferrerTest >> trees [
-
-	^ (1 to: 12) collect: [ :i | | root |
-		root := MateTreeNode new label: (#( #a #b #c ) atWrap: i); yourself.
-		1 to: 2 do: [ :j | | child |
-			child := root addChild: (MateTreeNode new label: (#( #a #b #c ) atWrap: i + j); yourself).
-			child addChild: (MateTreeNode new label: (#( #a #b #c ) atWrap: i + j + 1); yourself) ].
-		root ]
-]
-
 { #category : 'tests - relationships' }
 MateGrammarInferrerTest >> testDetectsBlocChildParentBackReference [
 
@@ -98,6 +87,30 @@ MateGrammarInferrerTest >> testDetectsTreeBackReferenceThroughOrderedCollections
 	self assert: children elementType equals: MateTreeNode.
 	self assert: children minSize equals: 0.
 	self assert: children maxSize equals: 2
+]
+
+{ #category : 'tests - unary' }
+MateGrammarInferrerTest >> testDoesNotInferEnumerationsForManyDistinctValues [
+
+	| inferrer grammar |
+
+	inferrer := self inferrerFor: self players.
+	grammar := inferrer grammar.
+
+	self assert: (self field: 'name' of: Player in: grammar) type equals: ByteString.
+	self assert: (inferrer findings anySatisfy: [ :each |
+		each kind = #enumeration and: [ each field = 'name' and: [ each accepted not ] ] ])
+]
+
+{ #category : 'tests - generation' }
+MateGrammarInferrerTest >> testGeneratedPlayersAreValidForTheInferredGrammar [
+
+	| grammar |
+
+	grammar := (self inferrerFor: self players) grammar.
+	grammar seed: 3.
+
+	50 timesRepeat: [ self assert: (grammar parse: (grammar gen: Player)) notNil ]
 ]
 
 { #category : 'tests - generation' }
@@ -131,28 +144,16 @@ MateGrammarInferrerTest >> testGeneratedTreesKeepTheirBackReferences [
 		self assert: (grammar parse: tree) notNil ]
 ]
 
-{ #category : 'tests - generation' }
-MateGrammarInferrerTest >> testGeneratedPlayersAreValidForTheInferredGrammar [
+{ #category : 'tests - language' }
+MateGrammarInferrerTest >> testInferredGrammarsRoundTripThroughTheLanguage [
 
-	| grammar |
-
-	grammar := (self inferrerFor: self players) grammar.
-	grammar seed: 3.
-
-	50 timesRepeat: [ self assert: (grammar parse: (grammar gen: Player)) notNil ]
-]
-
-{ #category : 'tests - unary' }
-MateGrammarInferrerTest >> testDoesNotInferEnumerationsForManyDistinctValues [
-
-	| inferrer grammar |
-
-	inferrer := self inferrerFor: self players.
-	grammar := inferrer grammar.
-
-	self assert: (self field: 'name' of: Player in: grammar) type equals: ByteString.
-	self assert: (inferrer findings anySatisfy: [ :each |
-		each kind = #enumeration and: [ each field = 'name' and: [ each accepted not ] ] ])
+	{ self spans. self trees. self players } do: [ :instances | | grammar |
+		grammar := (self inferrerFor: instances) grammar.
+		(MateLanguageParser parse: grammar mateDefinition) do: [ :decl | | original |
+			original := grammar typeDeclarations at: decl type.
+			self assert: decl equals: original.
+			self assert: decl invariants asArray equals: original invariants asArray.
+			self assert: decl selfReferences asArray equals: original selfReferences asArray ] ]
 ]
 
 { #category : 'tests - unary' }
@@ -164,6 +165,19 @@ MateGrammarInferrerTest >> testInfersEnumerationsIncludingNil [
 
 	self assert: (decl isKindOf: MateInstOneOfVarDecl).
 	self assert: decl options asSet equals: #( #open #closed #moved nil ) asSet
+]
+
+{ #category : 'tests - unary' }
+MateGrammarInferrerTest >> testInfersNullableFields [
+
+	| grammar decl |
+
+	grammar := (self inferrerFor: (self players collect: [ :each |
+		each level odd ifTrue: [ each name: nil ].
+		each ])) grammar.
+	decl := self field: 'name' of: Player in: grammar.
+
+	self assert: decl nullable
 ]
 
 { #category : 'tests - unary' }
@@ -180,17 +194,16 @@ MateGrammarInferrerTest >> testInfersOnlyTheSignWithFewObservations [
 		each kind = #range and: [ each field = 'start' and: [ each accepted not ] ] ])
 ]
 
-{ #category : 'tests - unary' }
-MateGrammarInferrerTest >> testInfersNullableFields [
+{ #category : 'tests - invariants' }
+MateGrammarInferrerTest >> testInfersOrderingInvariants [
 
-	| grammar decl |
+	| grammar |
 
-	grammar := (self inferrerFor: (self players collect: [ :each |
-		each level odd ifTrue: [ each name: nil ].
-		each ])) grammar.
-	decl := self field: 'name' of: Player in: grammar.
+	grammar := (self inferrerFor: self spans) grammar.
 
-	self assert: decl nullable
+	self
+		assert: (grammar typeDeclarations at: MateSpan) invariants asArray
+		equals: { MateInvariant left: 'start' operator: '<=' right: 'stop' }
 ]
 
 { #category : 'tests - unary' }
@@ -217,28 +230,15 @@ MateGrammarInferrerTest >> testInfersUnionsOfObservedClasses [
 	self deny: (decl acceptType: Player)
 ]
 
-{ #category : 'tests - invariants' }
-MateGrammarInferrerTest >> testInfersOrderingInvariants [
+{ #category : 'tests - reporting' }
+MateGrammarInferrerTest >> testReportListsAcceptedAndRejectedFindings [
 
-	| grammar |
+	| report |
 
-	grammar := (self inferrerFor: self spans) grammar.
+	report := (self inferrerFor: self players) report.
 
-	self
-		assert: (grammar typeDeclarations at: MateSpan) invariants asArray
-		equals: { MateInvariant left: 'start' operator: '<=' right: 'stop' }
-]
-
-{ #category : 'tests - language' }
-MateGrammarInferrerTest >> testInferredGrammarsRoundTripThroughTheLanguage [
-
-	{ self spans. self trees. self players } do: [ :instances | | grammar |
-		grammar := (self inferrerFor: instances) grammar.
-		(MateLanguageParser parse: grammar mateDefinition) do: [ :decl | | original |
-			original := grammar typeDeclarations at: decl type.
-			self assert: decl equals: original.
-			self assert: decl invariants asArray equals: original invariants asArray.
-			self assert: decl selfReferences asArray equals: original selfReferences asArray ] ]
+	self assert: (report includesSubstring: '[accepted] Player.level range').
+	self assert: (report includesSubstring: '[rejected] Player.name enumeration')
 ]
 
 { #category : 'tests - relationships' }
@@ -255,17 +255,6 @@ MateGrammarInferrerTest >> testReportsSharedObjects [
 
 	self assert: (inferrer findings anySatisfy: [ :each |
 		each kind = #sharing and: [ each type = ReferredObject ] ])
-]
-
-{ #category : 'tests - reporting' }
-MateGrammarInferrerTest >> testReportListsAcceptedAndRejectedFindings [
-
-	| report |
-
-	report := (self inferrerFor: self players) report.
-
-	self assert: (report includesSubstring: '[accepted] Player.level range').
-	self assert: (report includesSubstring: '[rejected] Player.name enumeration')
 ]
 
 { #category : 'tests - unary' }
@@ -292,4 +281,15 @@ MateGrammarInferrerTest >> testValidationRejectsInvariantViolations [
 	grammar := (self inferrerFor: self spans) grammar.
 
 	self should: [ grammar parse: (MateSpan from: 20 to: 10 kind: #open) ] raise: Error
+]
+
+{ #category : 'helpers' }
+MateGrammarInferrerTest >> trees [
+
+	^ (1 to: 12) collect: [ :i | | root |
+		root := MateTreeNode new label: (#( #a #b #c ) atWrap: i); yourself.
+		1 to: 2 do: [ :j | | child |
+			child := root addChild: (MateTreeNode new label: (#( #a #b #c ) atWrap: i + j); yourself).
+			child addChild: (MateTreeNode new label: (#( #a #b #c ) atWrap: i + j + 1); yourself) ].
+		root ]
 ]

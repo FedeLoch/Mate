@@ -7,18 +7,6 @@ Class {
 }
 
 { #category : 'translating' }
-MateByteStringGenerator >> generate: aRandom [
-
-	| size string |
-	
-	size := self sizeFor: aRandom.
-	string := type new: size.
-	1 to: size do: [ :index | string at: index put: (self characterFor: aRandom) ].
-	
-	^ string
-]
-
-{ #category : 'translating' }
 MateByteStringGenerator >> characterFor: aRandom [
 
 	| choice |
@@ -31,6 +19,18 @@ MateByteStringGenerator >> characterFor: aRandom [
 	(type = WideString and: [ choice < 0.97 ]) ifTrue: [ ^ self wideCharacterFor: aRandom ].
 	
 	^ Character value: (aRandom nextInteger: 256) - 1
+]
+
+{ #category : 'translating' }
+MateByteStringGenerator >> generate: aRandom [
+
+	| size string |
+	
+	size := self sizeFor: aRandom.
+	string := type new: size.
+	1 to: size do: [ :index | string at: index put: (self characterFor: aRandom) ].
+	
+	^ string
 ]
 
 { #category : 'translating' }

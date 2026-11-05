@@ -97,6 +97,29 @@ MateGrammarInferrer >> enumerationRatio: aNumber [
 	enumerationRatio := aNumber
 ]
 
+{ #category : 'relationships' }
+MateGrammarInferrer >> extend: steps state: state toward: aClass remaining: remaining into: paths [
+
+	| kind classes |
+
+	kind := state first.
+	classes := state second.
+
+	classes do: [ :ownerClass |
+		ownerClass allInstVarNames do: [ :field | | step values |
+			step := kind = #objects
+				ifTrue: [ MatePathProp from: field ]
+				ifFalse: [ MatePathEachProp from: field ].
+			values := (observer instancesOf: ownerClass) collect: [ :each | each instVarNamed: field ] thenReject: #isNil.
+			remaining = 1
+				ifTrue: [
+					(values anySatisfy: [ :each | each isKindOf: aClass ]) ifTrue: [ paths add: steps , { step } ] ]
+				ifFalse: [
+					(referenceFields includesKey: { ownerClass. field }) ifFalse: [
+						(self statesFrom: values) do: [ :next |
+							self extend: steps , { step } state: next toward: aClass remaining: remaining - 1 into: paths ] ] ] ] ]
+]
+
 { #category : 'declarations' }
 MateGrammarInferrer >> fieldDeclarationFor: profile in: aClass [
 
@@ -152,8 +175,11 @@ MateGrammarInferrer >> grammar [
 	self inferBackReferences.
 
 	grammar := MateOGGrammar new.
-	(observer observedClasses reject: [ :each | grammar typeDeclarations includesKey: each ]) do: [ :each |
-		grammar addTypeDeclaration: (self declarationFor: each) ].
+	
+	(observer observedClasses reject: [ :each |
+		grammar typeDeclarations includesKey: each ]) do: [ :each |
+		grammar addTypeDeclaration: (self declarationFor: each)
+	].
 
 	self inferSharing.
 
@@ -243,49 +269,59 @@ MateGrammarInferrer >> initialize [
 ]
 
 { #category : 'invariants' }
-MateGrammarInferrer >> invariantsFor: aClass [
-
-	| instances numericFields invariants |
-
-	instances := observer instancesOf: aClass.
-	instances size < minimumSupport ifTrue: [ ^ #() ].
-
-	numericFields := aClass allInstVarNames select: [ :field |
-		instances allSatisfy: [ :each | | value |
-			value := each instVarNamed: field.
-			value isNumber and: [ value isFloat not or: [ value isFinite ] ] ] ].
-
-	invariants := OrderedCollection new.
-
-	numericFields do: [ :left |
-		numericFields do: [ :right |
-			left = right ifFalse: [
-				(self invariantBetween: left and: right in: instances) ifNotNil: [ :invariant |
-					invariants add: invariant.
-					self record: #invariant on: aClass field: nil description: invariant printString support: instances size accepted: true ] ] ] ].
-
-	^ invariants asArray
-]
-
-{ #category : 'invariants' }
 MateGrammarInferrer >> invariantBetween: left and: right in: instances [
 
 	| leftValues rightValues pairs |
-
 	leftValues := instances collect: [ :each | each instVarNamed: left ].
 	rightValues := instances collect: [ :each | each instVarNamed: right ].
 	pairs := leftValues with: rightValues collect: [ :a :b | a -> b ].
 
 	(pairs allSatisfy: [ :pair | pair key = pair value ]) ifTrue: [
-		(leftValues asSet size = 1 or: [ left > right ]) ifTrue: [ ^ nil ].
-		^ MateInvariant left: left operator: '=' right: right ].
+			(leftValues asSet size = 1 or: [ left > right ]) ifTrue: [ ^ nil ].
+			^ MateInvariant left: left operator: '=' right: right ].
 
-	(leftValues max < rightValues min) ifTrue: [ ^ nil ].
+	leftValues max < rightValues min ifTrue: [ ^ nil ].
 
-	(pairs allSatisfy: [ :pair | pair key < pair value ]) ifTrue: [ ^ MateInvariant left: left operator: '<' right: right ].
-	(pairs allSatisfy: [ :pair | pair key <= pair value ]) ifTrue: [ ^ MateInvariant left: left operator: '<=' right: right ].
+	(pairs allSatisfy: [ :pair | pair key < pair value ]) ifTrue: [
+		^ MateInvariant left: left operator: '<' right: right ].
+	(pairs allSatisfy: [ :pair | pair key <= pair value ]) ifTrue: [
+		^ MateInvariant left: left operator: '<=' right: right ].
 
 	^ nil
+]
+
+{ #category : 'invariants' }
+MateGrammarInferrer >> invariantsFor: aClass [
+
+	| instances numericFields invariants |
+
+	instances := observer instancesOf: aClass.
+	instances size < minimumSupport ifTrue: [ ^ #(  ) ].
+
+	numericFields := aClass allInstVarNames select: [ :field |
+			                 instances allSatisfy: [ :each |
+					                 | value |
+					                 value := each instVarNamed: field.
+					                 value isNumber and: [
+						                 value isFloat not or: [ value isFinite ] ] ] ].
+
+	invariants := OrderedCollection new.
+
+	numericFields do: [ :left |
+			numericFields do: [ :right |
+					left = right ifFalse: [
+							(self invariantBetween: left and: right in: instances)
+								ifNotNil: [ :invariant |
+										invariants add: invariant.
+										self
+											record: #invariant
+											on: aClass
+											field: nil
+											description: invariant printString
+											support: instances size
+											accepted: true ] ] ] ].
+
+	^ invariants asArray
 ]
 
 { #category : 'declarations' }
@@ -415,36 +451,6 @@ MateGrammarInferrer >> pathsFrom: aClass length: length [
 	^ paths
 ]
 
-{ #category : 'relationships' }
-MateGrammarInferrer >> extend: steps state: state toward: aClass remaining: remaining into: paths [
-
-	| kind classes |
-
-	kind := state first.
-	classes := state second.
-
-	classes do: [ :ownerClass |
-		ownerClass allInstVarNames do: [ :field | | step values |
-			step := kind = #objects
-				ifTrue: [ MatePathProp from: field ]
-				ifFalse: [ MatePathEachProp from: field ].
-			values := (observer instancesOf: ownerClass) collect: [ :each | each instVarNamed: field ] thenReject: #isNil.
-			remaining = 1
-				ifTrue: [
-					(values anySatisfy: [ :each | each isKindOf: aClass ]) ifTrue: [ paths add: steps , { step } ] ]
-				ifFalse: [
-					(referenceFields includesKey: { ownerClass. field }) ifFalse: [
-						(self statesFrom: values) do: [ :next |
-							self extend: steps , { step } state: next toward: aClass remaining: remaining - 1 into: paths ] ] ] ] ]
-]
-
-{ #category : 'inferring' }
-MateGrammarInferrer >> report [
-
-	^ String streamContents: [ :stream |
-		self findings do: [ :each | stream print: each ] separatedBy: [ stream cr ] ]
-]
-
 { #category : 'reporting' }
 MateGrammarInferrer >> record: kind on: aClass field: fieldName description: aString support: anInteger accepted: aBoolean [
 
@@ -455,6 +461,13 @@ MateGrammarInferrer >> record: kind on: aClass field: fieldName description: aSt
 		description: aString
 		support: anInteger
 		accepted: aBoolean)
+]
+
+{ #category : 'inferring' }
+MateGrammarInferrer >> report [
+
+	^ String streamContents: [ :stream |
+		self findings do: [ :each | stream print: each ] separatedBy: [ stream cr ] ]
 ]
 
 { #category : 'relationships' }
