@@ -4,7 +4,8 @@ Class {
 	#instVars : [
 		'elementType',
 		'minSize',
-		'maxSize'
+		'maxSize',
+		'collectionClass'
 	],
 	#category : 'Mate-Grammar',
 	#package : 'Mate',
@@ -17,8 +18,9 @@ MateInstArrayVarDecl >> = anObject [
 	super = anObject ifFalse: [ ^ false ].
 	
 	^ self elementType = anObject elementType and: [ 
+		self collectionClass = anObject collectionClass and: [ 
 		minSize = anObject minSize and: [ 
-			maxSize = anObject maxSize ] ]
+			maxSize = anObject maxSize ] ] ]
 ]
 
 { #category : 'visiting' }
@@ -31,6 +33,26 @@ MateInstArrayVarDecl >> acceptSize: size [
 MateInstArrayVarDecl >> chooseOneElementTypeFrom: context [
 
 	^ elementType getOneFrom: context
+]
+
+{ #category : 'accessing' }
+MateInstArrayVarDecl >> collectionClass [
+
+	^ collectionClass ifNil: [ Array ]
+]
+
+{ #category : 'accessing' }
+MateInstArrayVarDecl >> collectionClass: aClass [
+
+	collectionClass := aClass = Array ifTrue: [ nil ] ifFalse: [ aClass ]
+]
+
+{ #category : 'accessing' }
+MateInstArrayVarDecl >> collectionFrom: elements [
+
+	^ collectionClass
+		ifNil: [ elements asArray ]
+		ifNotNil: [ collectionClass withAll: elements ]
 ]
 
 { #category : 'accessing' }
@@ -189,7 +211,11 @@ MateInstArrayVarDecl >> updateMe: parent replacingChild: child by: newChild [
 
 	index := parent edges keyAtIdentityValue: child.
 	parent addEdge: newChild at: index.
-	parent instance at: index put: newChild instance.
+	(parent instance isKindOf: SequenceableCollection)
+		ifTrue: [ parent instance at: index put: newChild instance ]
+		ifFalse: [
+			parent instance remove: child instance ifAbsent: [ nil ].
+			parent instance add: newChild instance ]
 ]
 
 { #category : 'visiting' }

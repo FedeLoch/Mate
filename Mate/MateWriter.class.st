@@ -65,7 +65,10 @@ MateWriter >> visitArrayDecl: decl from: context [
 		s nextPutAll: decl name.
 		s nextPutAll: ': { type: [ '.
 		s nextPutAll: decl elementType name.
-		s nextPutAll: ' ], sizeBetween: '.
+		s nextPutAll: ' ], '.
+		decl collectionClass = Array ifFalse: [
+			s nextPutAll: 'collection: '; nextPutAll: decl collectionClass name; nextPutAll: ', ' ].
+		s nextPutAll: 'sizeBetween: '.
 		s nextPutAll: decl minSize asString.
 		s nextPutAll: ' and: '.
 		s nextPutAll: decl maxSize asString.
@@ -131,7 +134,15 @@ MateWriter >> visitInstanceDeclaration: decl from: context [
 			].
 			s nextPutAll: ' }'.
 		].
-		
+
+		decl invariants ifNotEmpty: [ :invariants |
+			s nextPut: $,.
+			s cr; nextPutAll: '	'.
+			s nextPutAll: 'invariants: { '.
+			invariants do: [ :invariant | s print: invariant ] separatedBy: [ s nextPutAll: ', ' ].
+			s nextPutAll: ' }'.
+		].
+
 		s cr; nextPutAll: '}'
 	]
 ]
@@ -147,18 +158,6 @@ MateWriter >> visitOneOfDecl: decl from: context [
 			s nextPutAll: (self writeLiteral: option)
 		].
 		s nextPutAll: ' } }'
-	]
-]
-
-{ #category : 'writing' }
-MateWriter >> writeReferencePath: path [
-
-	^ String streamContents: [ :s |
-		path path doWithIndex: [ :segment :index |
-			s nextPutAll: (segment isEach ifTrue: [
-				self eachProp: segment prop
-			] ifFalse: [ self prop: segment prop index: index ])
-		]
 	]
 ]
 
@@ -190,6 +189,18 @@ MateWriter >> writeLiteral: anObject [
 	anObject isBehavior ifTrue: [ ^ anObject name ].
 
 	^ self error: 'Cannot write literal ', anObject printString
+]
+
+{ #category : 'writing' }
+MateWriter >> writeReferencePath: path [
+
+	^ String streamContents: [ :s |
+		path path doWithIndex: [ :segment :index |
+			s nextPutAll: (segment isEach ifTrue: [
+				self eachProp: segment prop
+			] ifFalse: [ self prop: segment prop index: index ])
+		]
+	]
 ]
 
 { #category : 'writing' }

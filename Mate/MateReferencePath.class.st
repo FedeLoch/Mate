@@ -43,12 +43,6 @@ MateReferencePath >> isSatisfiedBy: instance [
 ]
 
 { #category : 'accessing' }
-MateReferencePath >> targetsFrom: instance [
-
-	^ path allButLast inject: { instance } into: [ :objects :prop | prop valuesFrom: objects ]
-]
-
-{ #category : 'accessing' }
 MateReferencePath >> path [
 
 	^ path
@@ -58,6 +52,12 @@ MateReferencePath >> path [
 MateReferencePath >> path: aPath [ 
 
 	path := aPath
+]
+
+{ #category : 'accessing' }
+MateReferencePath >> targetsFrom: instance [
+
+	^ path allButLast inject: { instance } into: [ :objects :prop | prop valuesFrom: objects ]
 ]
 
 { #category : 'derivation' }

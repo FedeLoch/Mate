@@ -52,14 +52,7 @@ MateOGGrammar class >> fromFile: aFilePath [
 { #category : 'instance creation' }
 MateOGGrammar class >> fromObjects: collection [
 	
-	| seen |
-	
-	seen := IdentitySet new.
-	
-	^ collection inject: self new into: [ :grammar :instance |
-		grammar feedByObjectInstance: instance seen: seen.
-		grammar
-	]
+	^ MateGrammarInferrer new observeAll: collection; minimumSupport: 30; grammar
 ]
 
 { #category : 'instance creation' }
@@ -79,6 +72,18 @@ MateOGGrammar class >> fromObjects: collection maxDepth: maxDepth [
 MateOGGrammar class >> fromTest: aTestClass [
 
 	^ self fromObjects: (self collectTestSuiteInstances: aTestClass suite)
+]
+
+{ #category : 'instance creation' }
+MateOGGrammar class >> inferFrom: instances [
+
+	^ (MateGrammarInferrer new observeAll: instances; yourself) grammar
+]
+
+{ #category : 'instance creation' }
+MateOGGrammar class >> inferFromTest: aTestClass [
+
+	^ self inferFrom: (self collectTestSuiteInstances: aTestClass suite)
 ]
 
 { #category : 'accessing' }
@@ -397,16 +402,16 @@ MateOGGrammar >> typeDeclarationBy: instance [
 	 ^ MateInstDecl new type: instance class; instanceVariableDeclarations: instanceVarDecls asArray
 ]
 
+{ #category : 'accessing' }
+MateOGGrammar >> typeDeclarations [
+
+	^ typeDeclarations
+]
+
 { #category : 'as yet unclassified' }
 MateOGGrammar >> typeOf: anObject [
 
 	^ (anObject class includesBehavior: Boolean)
 		ifTrue: [ Boolean ]
 		ifFalse: [ anObject class ]
-]
-
-{ #category : 'accessing' }
-MateOGGrammar >> typeDeclarations [
-
-	^ typeDeclarations
 ]

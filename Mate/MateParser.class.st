@@ -88,7 +88,10 @@ MateParser >> visitArrayDecl: decl from: context [
 	node := MateOGInstanceNode new declaration: decl; context: context; instance: array.
 	childContext parentNode: node.
 
-	array doWithIndex: [ :item :index | | specificContext itemNode |
+	(array isKindOf: decl collectionClass) ifFalse: [
+		self error: 'Expected ', decl collectionClass name, ' in field ', decl name, ' but got ', array class name ].
+
+	array asArray doWithIndex: [ :item :index | | specificContext itemNode |
 		specificContext := childContext copy.
 		specificContext object: item.
 
@@ -188,6 +191,10 @@ MateParser >> visitInstanceDeclaration: decl from: context [
 	decl selfReferences do: [ :reference |
 		(reference isSatisfiedBy: instance) ifFalse: [
 			self error: 'Self reference ', reference printString, ' is not satisfied by ', instance printString ] ].
+
+	decl invariants do: [ :invariant |
+		(invariant holdsFor: instance) ifFalse: [
+			self error: 'Invariant ', invariant printString, ' is not satisfied by ', instance printString ] ].
 
 	^ node
 ]

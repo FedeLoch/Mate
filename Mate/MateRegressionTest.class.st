@@ -124,6 +124,22 @@ MateRegressionTest >> testFloatGeneratorRespectsGreaterThan [
 	200 timesRepeat: [ self assert: (generator generateWithConstraint: constraint random: random) > 0.5 ]
 ]
 
+{ #category : 'tests - generation' }
+MateRegressionTest >> testGrammarsInferredFromCyclesTerminate [
+
+	| first second grammar |
+
+	first := ReferredObject new.
+	second := ReferredObject new.
+	first instVarNamed: 'value' put: 1; instVarNamed: 'ref' put: second.
+	second instVarNamed: 'value' put: 2; instVarNamed: 'ref' put: first.
+
+	grammar := MateOGGrammar from: first.
+
+	self assert: ([ grammar gen: ReferredObject ] valueWithin: 5 seconds onTimeout: [ nil ]) class equals: ReferredObject.
+	self assert: ([ grammar parse: first ] valueWithin: 5 seconds onTimeout: [ nil ]) notNil
+]
+
 { #category : 'tests - inference' }
 MateRegressionTest >> testInferredArraysMergeElementTypes [
 
@@ -314,22 +330,6 @@ MateRegressionTest >> testRecursiveFieldsTerminate [
 ]
 
 { #category : 'tests - generation' }
-MateRegressionTest >> testGrammarsInferredFromCyclesTerminate [
-
-	| first second grammar |
-
-	first := ReferredObject new.
-	second := ReferredObject new.
-	first instVarNamed: 'value' put: 1; instVarNamed: 'ref' put: second.
-	second instVarNamed: 'value' put: 2; instVarNamed: 'ref' put: first.
-
-	grammar := MateOGGrammar from: first.
-
-	self assert: ([ grammar gen: ReferredObject ] valueWithin: 5 seconds onTimeout: [ nil ]) class equals: ReferredObject.
-	self assert: ([ grammar parse: first ] valueWithin: 5 seconds onTimeout: [ nil ]) notNil
-]
-
-{ #category : 'tests - generation' }
 MateRegressionTest >> testSeedMakesGenerationReproducible [
 
 	| generate |
@@ -359,6 +359,16 @@ MateRegressionTest >> testUnionsAreFlattenedAndAcceptSubclasses [
 ]
 
 { #category : 'tests - validation' }
+MateRegressionTest >> testValidationAcceptsSubclassesOfDeclaredType [
+
+	| grammar |
+
+	grammar := self grammarFrom: 'MateAge -> { value: Float }'.
+
+	self assert: (grammar parse: (MateAge new value: 0.5)) instance value equals: 0.5
+]
+
+{ #category : 'tests - validation' }
 MateRegressionTest >> testValidationAcceptsUnionArrayElements [
 
 	| grammar sample |
@@ -370,16 +380,6 @@ MateRegressionTest >> testValidationAcceptsUnionArrayElements [
 
 	sample instVarNamed: 'array' put: { #symbol }.
 	self should: [ grammar parse: sample ] raise: Error
-]
-
-{ #category : 'tests - validation' }
-MateRegressionTest >> testValidationAcceptsSubclassesOfDeclaredType [
-
-	| grammar |
-
-	grammar := self grammarFrom: 'MateAge -> { value: Float }'.
-
-	self assert: (grammar parse: (MateAge new value: 0.5)) instance value equals: 0.5
 ]
 
 { #category : 'tests - validation' }

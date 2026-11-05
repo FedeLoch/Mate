@@ -66,12 +66,6 @@ MateInstOneOfVarDecl >> getOne [
 ]
 
 { #category : 'as yet unclassified' }
-MateInstOneOfVarDecl >> getOneRandomly: aRandom [
-	
-	^ options atRandom: aRandom
-]
-
-{ #category : 'as yet unclassified' }
 MateInstOneOfVarDecl >> getOne: context [ 
 
 	| selected |
@@ -80,6 +74,12 @@ MateInstOneOfVarDecl >> getOne: context [
 	self updateVisits: context selecting: selected.
 	
 	^ selected
+]
+
+{ #category : 'as yet unclassified' }
+MateInstOneOfVarDecl >> getOneRandomly: aRandom [
+	
+	^ options atRandom: aRandom
 ]
 
 { #category : 'initialization' }
@@ -130,6 +130,12 @@ MateInstOneOfVarDecl >> options [
 MateInstOneOfVarDecl >> options: someOptions [
 
 	options := someOptions asArray
+]
+
+{ #category : 'as yet unclassified' }
+MateInstOneOfVarDecl >> reachableTypes [
+
+	^ #()
 ]
 
 { #category : 'rendering' }
@@ -189,12 +195,6 @@ MateInstOneOfVarDecl >> renderShapes: totalVisits parent: parentNode [
 	].
 
 	^ { myShape } , optionShapes
-]
-
-{ #category : 'as yet unclassified' }
-MateInstOneOfVarDecl >> reachableTypes [
-
-	^ #()
 ]
 
 { #category : 'as yet unclassified' }
