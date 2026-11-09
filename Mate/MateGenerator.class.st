@@ -173,7 +173,7 @@ MateGenerator >> nilProbability: aProbability [
 { #category : 'visiting' }
 MateGenerator >> objectInstance: node constraint: constraint [
 
-	^ node edges keys inject: node declaration type new into: [ :inst :edgeName |
+	^ node edges keys inject: node declaration type mateNew into: [ :inst :edgeName |
 		inst instVarNamed: edgeName put: (node edges at: edgeName) instance.
 		inst
 	]
@@ -270,8 +270,8 @@ MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 	(instVarDecl nullable and: [ context random next < nilProbability ])
 		ifTrue: [ ^ self nilNode: instVarDecl from: context ].
 
-	context level >= maxDerivationHeight
-		ifTrue: [ ^ self cutDerivation: instVarDecl from: context ].
+"	context level >= maxDerivationHeight
+		ifTrue: [ ^ self cutDerivation: instVarDecl from: context ]."
 
 	type := instVarDecl chooseOneTypeFrom: context.
 

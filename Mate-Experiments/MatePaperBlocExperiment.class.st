@@ -9,14 +9,18 @@ Class {
 MatePaperBlocExperiment >> bechmark: blElement [
 
 	UmeBlocRender render: blElement
-
-	
 ]
 
 { #category : 'as yet unclassified' }
 MatePaperBlocExperiment >> mateGrammar [
 
 	^ MateBlocGrammarByLang new
+]
+
+{ #category : 'as yet unclassified' }
+MatePaperBlocExperiment >> mateGrammarWithoutConstraints [
+
+	^ MateBlocGrammarWithoutConstraintsByLang new
 ]
 
 { #category : 'running' }
