@@ -257,6 +257,58 @@ grammar explorationPercentage.          "coverage of the declarations reachable 
 grammar explorationPercentageFrom: Player.  "coverage of the declarations reachable from Player"
 ```
 
+### Generating invalid objects on purpose
+
+`gen:` always produces objects that satisfy the grammar. For robustness testing you may want the opposite: objects that break exactly one rule, to check that your code rejects them with a proper error instead of crashing. Ask for a **validity**, the probability that a generated object is fully valid:
+
+```smalltalk
+grammar := MatePlayerGrammar new.
+grammar seed: 42.
+
+player := grammar gen: Player validity: 0.95.
+"=> 95% of the time a valid Player, otherwise a Player that breaks exactly one rule"
+```
+
+Mate first generates a valid graph and then breaks one place in it, so the rest of the object stays valid and any failure can be traced to that single violation. To see what was broken, ask for the derivation tree:
+
+```smalltalk
+derivation := grammar gen: Player from: MateContext new validity: 0.
+derivation isValid.      "=> false"
+derivation violations.
+"=> an Array(nil: Player.characterClass a Warrior -> nil (mandatory field set to nil))"
+```
+
+| Kind | What gets broken |
+| --- | --- |
+| `#range` | a number just outside its bounds (`level := 100` when the range is 0..99) |
+| `#oneOf` | a value outside a `oneOf:` or `in:` list |
+| `#type` | a value of a class the field does not accept, or a non-collection in a collection field |
+| `#nil` | `nil` in a field that is not nullable |
+| `#size` | a collection one element over its maximum or under its minimum |
+| `#element` | a collection element of a class the collection does not accept |
+| `#reference` | a back-reference that no longer points to its owner (`child parent := nil`) |
+| `#invariant` | two fields that break an `invariants:` relation |
+
+You can restrict the kinds, or break more than one rule per invalid object (each on a different field):
+
+```smalltalk
+grammar gen: Player validity: 0.9 violating: #( #range #nil ).
+grammar generator violationsPerObject: 2.
+```
+
+If a graph has nothing that can be broken with the requested kinds, the object stays valid and `violations` is empty.
+
+The kinds also take part in guided fuzzing. When you reward an invalid object, the reward goes to the grammar choices that built it and to the kinds of violation it contains, so kinds that expose bugs are picked more often:
+
+```smalltalk
+1 to: 1000 do: [ :i |
+    | player |
+    player := grammar gen: Player validity: 0.8.
+    grammar backPropagate: (self scoreFor: player) from: player ].
+```
+
+Use strict validation (below) as the oracle: every injected violation is rejected by `parse: anObject strict: true`.
+
 ## Object Graph Validation
 
 `parse:` checks an object graph against the grammar and returns its derivation tree. It raises an error when a field has the wrong type, an array has the wrong size, a value violates a constraint, or a `selfReferences` path does not hold. It never modifies the object, accepts subclasses of declared types, and terminates on cyclic graphs.
@@ -268,6 +320,15 @@ grammar parse: (Player new name: 'Fede'; level: 42; characterClass: Rogue new; m
 grammar parse: (Player new name: 'Fede'; level: 500; characterClass: Rogue new; missingExperienceForNextLevel: 1).
 "=> Error: Value 500 of type SmallInteger violates MateConstraint( min: 0 max: 99)"
 ```
+
+By default `parse:` accepts `nil` in any field, because generation sets fields to `nil` when it reaches the depth limit. Strict validation only accepts `nil` in nullable (`T?`) and `refType` fields:
+
+```smalltalk
+grammar parse: (Player new name: nil; level: 42; characterClass: Rogue new; missingExperienceForNextLevel: 1) strict: true.
+"=> Error: Field name must not be nil"
+```
+
+Recursive grammars whose cycles have no nullable field are cut with `nil` at the depth limit, so their deepest objects fail strict validation. Mark the recursive field as nullable (`next: Node?`) to describe such graphs exactly.
 
 ## Inferring Grammars from Objects
 

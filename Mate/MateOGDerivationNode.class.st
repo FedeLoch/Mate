@@ -6,7 +6,8 @@ Class {
 		'edges',
 		'context',
 		'instance',
-		'derivationPath'
+		'derivationPath',
+		'violations'
 	],
 	#category : 'Mate-Derivation Tree',
 	#package : 'Mate',
@@ -67,6 +68,24 @@ MateOGDerivationNode >> derivationPath [
 	derivationPath ifNil: [ derivationPath := { instance className . edges collect: #derivationPath } ].
 	
 	^ derivationPath
+]
+
+{ #category : 'testing' }
+MateOGDerivationNode >> isValid [
+
+	^ self violations isEmpty
+]
+
+{ #category : 'accessing' }
+MateOGDerivationNode >> violations [
+
+	^ violations ifNil: [ #() ]
+]
+
+{ #category : 'accessing' }
+MateOGDerivationNode >> violations: aCollection [
+
+	violations := aCollection asArray
 ]
 
 { #category : 'accessing' }
