@@ -10,7 +10,8 @@ Class {
 		'findings',
 		'backReferences',
 		'referenceFields',
-		'maxRelationshipSamples'
+		'maxRelationshipSamples',
+		'limitedFields'
 	],
 	#category : 'Mate-Inference',
 	#package : 'Mate',
@@ -112,6 +113,7 @@ MateGrammarInferrer >> extend: steps state: state toward: aClass remaining: rema
 				ifTrue: [ MatePathProp from: field ]
 				ifFalse: [ MatePathEachProp from: field ].
 			values := (self sampleOf: ownerClass) collect: [ :each | each instVarNamed: field ] thenReject: #isNil.
+			(limitedFields includes: { ownerClass. field }) ifTrue: [ values := #() ].
 			remaining = 1
 				ifTrue: [
 					(values anySatisfy: [ :each | each isKindOf: aClass ]) ifTrue: [ paths add: steps , { step } ] ]
@@ -132,6 +134,10 @@ MateGrammarInferrer >> fieldDeclarationFor: profile in: aClass [
 
 	profile isUnsupported ifTrue: [
 		self record: #unsupported on: aClass field: profile name description: 'holds blocks, methods, processes or other unsupported objects' support: profile observationCount accepted: false.
+		^ nil ].
+
+	(limitedFields includes: { aClass. profile name }) ifTrue: [
+		self record: #depthLimit on: aClass field: profile name description: 'holds classes only found beyond the maximum depth, so it is left out and keeps the value set by new' support: profile observationCount accepted: false.
 		^ nil ].
 
 	referenceFields at: { aClass. profile name } ifPresent: [ :target |
@@ -173,6 +179,7 @@ MateGrammarInferrer >> grammar [
 	backReferences := Dictionary new.
 	referenceFields := Dictionary new.
 
+	self inferLimitedFields.
 	self inferBackReferences.
 
 	grammar := MateOGGrammar new.
@@ -263,6 +270,17 @@ MateGrammarInferrer >> inferBackReferences [
 					result = #upward
 						ifTrue: [ self rejectUpwardReference: steps for: aClass ]
 						ifFalse: [ self acceptBackReference: steps for: aClass ownerClasses: result first support: result second ] ] ] ] ]
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> inferLimitedFields [
+
+	limitedFields := Set new.
+
+	observer observedClasses do: [ :aClass |
+		aClass allInstVarNames do: [ :field |
+			((observer instancesOf: aClass) allSatisfy: [ :each | observer covers: (each instVarNamed: field) ])
+				ifFalse: [ limitedFields add: { aClass. field } ] ] ]
 ]
 
 { #category : 'relationships' }

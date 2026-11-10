@@ -41,6 +41,19 @@ MateObserver >> computeDepths [
 				queue add: each ] ] ]
 ]
 
+{ #category : 'testing' }
+MateObserver >> covers: aValue [
+
+	aValue ifNil: [ ^ true ].
+	(self isLeaf: aValue) ifTrue: [ ^ true ].
+	(self isUnsupported: aValue) ifTrue: [ ^ true ].
+
+	(self isCollectionValue: aValue) ifTrue: [
+		^ (self elementsOf: aValue) allSatisfy: [ :each | self covers: each ] ].
+
+	^ (self instancesOf: aValue class) notEmpty
+]
+
 { #category : 'depths' }
 MateObserver >> depthOf: anObject [
 
@@ -113,47 +126,54 @@ MateObserver >> maxDepth: anInteger [
 { #category : 'observing' }
 MateObserver >> observe: anObject [
 
-	depths := nil.
-	(roots identityIncludes: anObject) ifFalse: [ roots add: anObject ].
-	self observe: anObject depth: 0
+	self observeAll: { anObject }
 ]
 
 { #category : 'observing' }
-MateObserver >> observe: anObject depth: depth [
+MateObserver >> shouldVisit: anObject at: depth [
 
-	(maxDepth notNil and: [ depth > maxDepth ]) ifTrue: [ ^ self ].
-	(self isLeaf: anObject) ifTrue: [ ^ self ].
-	(self isUnsupported: anObject) ifTrue: [ ^ self ].
-	(visited includes: anObject) ifTrue: [ ^ self ].
+	(maxDepth notNil and: [ depth > maxDepth ]) ifTrue: [ ^ false ].
+	(self isLeaf: anObject) ifTrue: [ ^ false ].
+	(self isUnsupported: anObject) ifTrue: [ ^ false ].
 
-	visited add: anObject.
+	^ (visited includes: anObject) not
+]
 
-	(self isCollectionValue: anObject) ifTrue: [
-		(self elementsOf: anObject) do: [ :each | self observe: each depth: depth + 1 ].
-		^ self ].
+{ #category : 'observing' }
+MateObserver >> valuesOf: anObject [
 
-	(instancesByClass at: anObject class ifAbsentPut: [ OrderedCollection new ]) add: anObject.
-
-	anObject class allInstVarNames do: [ :name |
-		self observe: (anObject instVarNamed: name) depth: depth + 1 ]
+	^ (self isCollectionValue: anObject)
+		ifTrue: [ self elementsOf: anObject ]
+		ifFalse: [ anObject class allInstVarNames collect: [ :each | anObject instVarNamed: each ] ]
 ]
 
 { #category : 'depths' }
 MateObserver >> neighboursOf: anObject [
 
-	| values |
-
-	values := (self isCollectionValue: anObject)
-		ifTrue: [ self elementsOf: anObject ]
-		ifFalse: [ anObject class allInstVarNames collect: [ :each | anObject instVarNamed: each ] ].
-
-	^ values select: [ :each | each notNil and: [ visited includes: each ] ]
+	^ (self valuesOf: anObject) select: [ :each | each notNil and: [ visited includes: each ] ]
 ]
 
 { #category : 'observing' }
 MateObserver >> observeAll: aCollection [
 
-	aCollection do: [ :each | self observe: each ]
+	| queue |
+
+	depths := nil.
+	queue := OrderedCollection new.
+
+	aCollection do: [ :each |
+		(roots identityIncludes: each) ifFalse: [ roots add: each ].
+		queue add: each -> 0 ].
+
+	[ queue isEmpty ] whileFalse: [ | entry object depth |
+		entry := queue removeFirst.
+		object := entry key.
+		depth := entry value.
+		(self shouldVisit: object at: depth) ifTrue: [
+			visited add: object.
+			(self isCollectionValue: object) ifFalse: [
+				(instancesByClass at: object class ifAbsentPut: [ OrderedCollection new ]) add: object ].
+			(self valuesOf: object) do: [ :each | queue add: each -> (depth + 1) ] ] ]
 ]
 
 { #category : 'accessing' }

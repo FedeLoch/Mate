@@ -108,6 +108,72 @@ MateGrammarInferrerTest >> testKeepsOnlyTheDownwardDirectionOfTwoWayReferences [
 	self deny: ((self field: 'myLittleObject' of: RefObject in: grammar) isKindOf: MateInstRefVarDecl)
 ]
 
+{ #category : 'tests - depth' }
+MateGrammarInferrerTest >> testDepthLimitLeavesOutFieldsOfUnobservedClasses [
+
+	| inferrer grammar |
+
+	inferrer := MateGrammarInferrer new
+		maxDepth: 1;
+		observeAll: self ownersWithTrees;
+		yourself.
+	grammar := inferrer grammar.
+
+	self deny: (inferrer observer observedClasses includes: MateSpan).
+	self assert: (self field: 'label' of: MateTreeNode in: grammar) isNil.
+	self assert: (self field: 'name' of: RefObject in: grammar) type equals: MateTreeNode.
+	self assert: (inferrer findings anySatisfy: [ :each |
+		each kind = #depthLimit and: [ each type = MateTreeNode and: [ each field = 'label' ] ] ])
+]
+
+{ #category : 'tests - depth' }
+MateGrammarInferrerTest >> testDepthLimitKeepsFieldsOfClassesObservedCloser [
+
+	| grammar children |
+
+	grammar := (MateGrammarInferrer new
+		maxDepth: 3;
+		observeAll: self trees;
+		yourself) grammar.
+	children := self field: 'children' of: MateTreeNode in: grammar.
+
+	self assert: children notNil.
+	self assert: children elementType equals: MateTreeNode.
+	self assert: ((self referencePathsOf: MateTreeNode in: grammar) includes: 'children[ .parent ]')
+]
+
+{ #category : 'tests - depth' }
+MateGrammarInferrerTest >> testDepthLimitedGrammarsGenerateValidObjects [
+
+	| grammar |
+
+	grammar := (MateGrammarInferrer new
+		maxDepth: 1;
+		observeAll: self ownersWithTrees;
+		yourself) grammar.
+	grammar seed: 2.
+
+	10 timesRepeat: [ | owner |
+		owner := grammar gen: RefObject.
+		self assert: (owner instVarNamed: 'name') class equals: MateTreeNode.
+		self assert: ((owner instVarNamed: 'name') instVarNamed: 'label') isNil.
+		self assert: (grammar parse: owner) notNil ]
+]
+
+{ #category : 'tests - depth' }
+MateGrammarInferrerTest >> testObservationUsesShortestDepths [
+
+	| deep shortcut observer |
+
+	deep := MateTreeNode new.
+	shortcut := RefObject new instVarNamed: 'name' put: deep; yourself.
+	observer := MateObserver new maxDepth: 1; yourself.
+	observer observeAll: { (MateTreeNode new addChild: (MateTreeNode new addChild: deep; yourself); yourself). shortcut }.
+
+	self assert: (observer depthOf: deep) equals: 1.
+	self assert: (observer isObserved: deep)
+]
+
 { #category : 'tests - relationships' }
 MateGrammarInferrerTest >> testShortcutsDoNotHideTheDownwardDirection [
 
@@ -360,6 +426,18 @@ MateGrammarInferrerTest >> owners [
 			instVarNamed: 'ref' put: owner;
 			yourself).
 		owner ]
+]
+
+{ #category : 'helpers' }
+MateGrammarInferrerTest >> ownersWithTrees [
+
+	^ (1 to: 12) collect: [ :i | | node |
+		node := MateTreeNode new.
+		node label: (MateSpan from: i to: i + 1 kind: #open).
+		RefObject new
+			instVarNamed: 'name' put: node;
+			instVarNamed: 'myLittleObject' put: (ReferredObject new instVarNamed: 'value' put: i; yourself);
+			yourself ]
 ]
 
 { #category : 'helpers' }

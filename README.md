@@ -346,6 +346,17 @@ inferrer report.
 
 The report also flags objects that are shared by several others: generated graphs hold separate copies of them, because the grammar language does not express sharing yet.
 
+To keep the grammar about your domain rather than everything your objects reach (event handlers, announcers, weak message sends), limit how far observation goes:
+
+```smalltalk
+inferrer := MateGrammarInferrer new
+	maxDepth: 4;
+	observeAll: elements;
+	yourself.
+```
+
+The given objects are at depth 0, and each field or collection element adds one level. Observation is breadth-first, so every object is reached through its shortest path. Set `maxDepth:` before `observeAll:`. Classes found only beyond the limit get no declaration, and fields that hold them are left out of the grammar and reported as `#depthLimit`: generated objects keep the value `new` gives those fields. Fields whose classes were observed closer to the roots are kept, even for the deepest instances.
+
 Back-reference candidates are first tested on a sample of each class's instances (`maxRelationshipSamples:`, 200 by default) and then verified on all of them, so large inputs such as benchmark scenes with thousands of elements stay fast without accepting a reference that only holds on the sample.
 
 ### What inference cannot know
