@@ -4,7 +4,9 @@ Class {
 	#instVars : [
 		'instancesByClass',
 		'visited',
-		'maxDepth'
+		'maxDepth',
+		'roots',
+		'depths'
 	],
 	#category : 'Mate-Inference',
 	#package : 'Mate',
@@ -15,6 +17,35 @@ Class {
 MateObserver >> collectionClasses [
 
 	^ { Array. OrderedCollection. Set. IdentitySet. Bag }
+]
+
+{ #category : 'depths' }
+MateObserver >> computeDepths [
+
+	| queue |
+
+	depths := IdentityDictionary new.
+	queue := OrderedCollection new.
+
+	roots do: [ :each |
+		(depths includesKey: each) ifFalse: [
+			depths at: each put: 0.
+			queue add: each ] ].
+
+	[ queue isEmpty ] whileFalse: [ | current depth |
+		current := queue removeFirst.
+		depth := depths at: current.
+		(self neighboursOf: current) do: [ :each |
+			(depths includesKey: each) ifFalse: [
+				depths at: each put: depth + 1.
+				queue add: each ] ] ]
+]
+
+{ #category : 'depths' }
+MateObserver >> depthOf: anObject [
+
+	depths ifNil: [ self computeDepths ].
+	^ depths at: anObject ifAbsent: [ SmallInteger maxVal ]
 ]
 
 { #category : 'accessing' }
@@ -28,7 +59,8 @@ MateObserver >> initialize [
 
 	super initialize.
 	instancesByClass := Dictionary new.
-	visited := IdentitySet new
+	visited := IdentitySet new.
+	roots := OrderedCollection new
 ]
 
 { #category : 'accessing' }
@@ -55,10 +87,7 @@ MateObserver >> isLeaf: object [
 { #category : 'testing' }
 MateObserver >> isObserved: anObject [
 
-	^ anObject notNil and: [
-			  (instancesByClass at: anObject class ifAbsent: [ #(  ) ])
-				  identityIncludes: anObject
-	]
+	^ anObject notNil and: [ (visited includes: anObject) and: [ (self isCollectionValue: anObject) not ] ]
 ]
 
 { #category : 'testing' }
@@ -84,6 +113,8 @@ MateObserver >> maxDepth: anInteger [
 { #category : 'observing' }
 MateObserver >> observe: anObject [
 
+	depths := nil.
+	(roots identityIncludes: anObject) ifFalse: [ roots add: anObject ].
 	self observe: anObject depth: 0
 ]
 
@@ -105,6 +136,18 @@ MateObserver >> observe: anObject depth: depth [
 
 	anObject class allInstVarNames do: [ :name |
 		self observe: (anObject instVarNamed: name) depth: depth + 1 ]
+]
+
+{ #category : 'depths' }
+MateObserver >> neighboursOf: anObject [
+
+	| values |
+
+	values := (self isCollectionValue: anObject)
+		ifTrue: [ self elementsOf: anObject ]
+		ifFalse: [ anObject class allInstVarNames collect: [ :each | anObject instVarNamed: each ] ].
+
+	^ values select: [ :each | each notNil and: [ visited includes: each ] ]
 ]
 
 { #category : 'observing' }

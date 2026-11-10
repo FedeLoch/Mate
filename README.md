@@ -323,7 +323,7 @@ What it infers:
 | Numeric ranges | `between:and:` with enough observations, otherwise only the sign (`greaterThan: 0` or `atLeast: 0`) |
 | Enumerations | `oneOf:` for symbols, strings and characters with few distinct values seen many times, and for fields that hold classes |
 | Collections | element types, size ranges, and the collection class (`Array`, `OrderedCollection`, `Set`, `IdentitySet`, `Bag`), observed through their elements rather than their private slots |
-| Back-references | paths of up to three steps where an object always reaches itself, such as `children[ .parent ]` or Bloc's `children.array[ .parent ]`; the closing field becomes a `refType` |
+| Back-references | paths of up to three steps where an object always reaches itself, such as `children[ .parent ]` or Bloc's `children.array[ .parent ]`; the closing field becomes a `refType`. When two objects point at each other (an element and its event dispatcher), only the direction that starts from the object nearer the observed roots is kept, so generation, which builds graphs from the root down, creates both objects |
 | Invariants | `<`, `<=` or `=` between numeric fields of the same object, unless the ranges already imply them |
 
 Every decision is recorded, including the rejected ones, so you can review them:
@@ -333,6 +333,7 @@ inferrer := MateGrammarInferrer new
 	minimumSupport: 20;
 	maxEnumerationSize: 5;
 	maxPathLength: 3;
+	maxRelationshipSamples: 200;
 	observeAll: players;
 	yourself.
 
@@ -344,6 +345,8 @@ inferrer report.
 ```
 
 The report also flags objects that are shared by several others: generated graphs hold separate copies of them, because the grammar language does not express sharing yet.
+
+Back-reference candidates are first tested on a sample of each class's instances (`maxRelationshipSamples:`, 200 by default) and then verified on all of them, so large inputs such as benchmark scenes with thousands of elements stay fast without accepting a reference that only holds on the sample.
 
 ### What inference cannot know
 

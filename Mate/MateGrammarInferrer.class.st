@@ -9,7 +9,8 @@ Class {
 		'maxPathLength',
 		'findings',
 		'backReferences',
-		'referenceFields'
+		'referenceFields',
+		'maxRelationshipSamples'
 	],
 	#category : 'Mate-Inference',
 	#package : 'Mate',
@@ -110,7 +111,7 @@ MateGrammarInferrer >> extend: steps state: state toward: aClass remaining: rema
 			step := kind = #objects
 				ifTrue: [ MatePathProp from: field ]
 				ifFalse: [ MatePathEachProp from: field ].
-			values := (observer instancesOf: ownerClass) collect: [ :each | each instVarNamed: field ] thenReject: #isNil.
+			values := (self sampleOf: ownerClass) collect: [ :each | each instVarNamed: field ] thenReject: #isNil.
 			remaining = 1
 				ifTrue: [
 					(values anySatisfy: [ :each | each isKindOf: aClass ]) ifTrue: [ paths add: steps , { step } ] ]
@@ -187,34 +188,69 @@ MateGrammarInferrer >> grammar [
 ]
 
 { #category : 'relationships' }
-MateGrammarInferrer >> holds: steps for: aClass [
+MateGrammarInferrer >> check: steps for: aClass on: instances [
 
-	| path support ownerClasses field |
+	| path field support ownerClasses downward upward |
 
 	path := MateReferencePath new: steps asArray.
 	field := steps last prop.
 	support := 0.
 	ownerClasses := Set new.
+	downward := 0.
+	upward := 0.
 
-	(observer instancesOf: aClass) do: [ :instance | | owners |
+	instances do: [ :instance | | owners |
 		owners := [ steps last ownersIn: (path targetsFrom: instance) ] on: Error do: [ :e | ^ nil ].
 		owners do: [ :owner |
 			([ (owner instVarNamed: field) == instance ] on: Error do: [ :e | false ]) ifFalse: [ ^ nil ].
+			(owner == instance or: [ (observer depthOf: owner) > (observer depthOf: instance) ])
+				ifTrue: [ downward := downward + 1 ]
+				ifFalse: [ upward := upward + 1 ].
 			ownerClasses add: owner class ].
 		support := support + owners size ].
 
 	support = 0 ifTrue: [ ^ nil ].
+	upward > downward ifTrue: [ ^ #upward ].
+
+	^ { ownerClasses. support }
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> closes: steps for: aClass ownerClasses: ownerClasses [
+
+	| path field |
+
+	path := MateReferencePath new: steps asArray.
+	field := steps last prop.
 
 	ownerClasses do: [ :ownerClass |
-		(referenceFields includesKey: { ownerClass. field }) ifTrue: [ ^ nil ].
+		(referenceFields includesKey: { ownerClass. field }) ifTrue: [ ^ false ].
 		(observer instancesOf: ownerClass) do: [ :owner | | target |
 			target := owner instVarNamed: field.
 			target ifNotNil: [
 				((target isKindOf: aClass) and: [
 					([ (steps last ownersIn: (path targetsFrom: target)) identityIncludes: owner ] on: Error do: [ :e | false ]) ])
-						ifFalse: [ ^ nil ] ] ] ].
+						ifFalse: [ ^ false ] ] ] ].
 
-	^ { ownerClasses. support }
+	^ true
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> holds: steps for: aClass [
+
+	| sample result |
+
+	sample := self sampleOf: aClass.
+	result := self check: steps for: aClass on: sample.
+	(result isNil or: [ result = #upward ]) ifTrue: [ ^ result ].
+
+	sample size < (observer instancesOf: aClass) size ifTrue: [
+		result := self check: steps for: aClass on: (observer instancesOf: aClass).
+		(result isNil or: [ result = #upward ]) ifTrue: [ ^ result ] ].
+
+	(self closes: steps for: aClass ownerClasses: result first) ifFalse: [ ^ nil ].
+
+	^ result
 ]
 
 { #category : 'relationships' }
@@ -224,7 +260,9 @@ MateGrammarInferrer >> inferBackReferences [
 		observer observedClasses do: [ :aClass |
 			(self pathsFrom: aClass length: length) do: [ :steps |
 				(self holds: steps for: aClass) ifNotNil: [ :result |
-					self acceptBackReference: steps for: aClass ownerClasses: result first support: result second ] ] ] ]
+					result = #upward
+						ifTrue: [ self rejectUpwardReference: steps for: aClass ]
+						ifFalse: [ self acceptBackReference: steps for: aClass ownerClasses: result first support: result second ] ] ] ] ]
 ]
 
 { #category : 'relationships' }
@@ -265,7 +303,8 @@ MateGrammarInferrer >> initialize [
 	minimumSupport := 10.
 	maxEnumerationSize := 8.
 	enumerationRatio := 3.
-	maxPathLength := 3
+	maxPathLength := 3.
+	maxRelationshipSamples := 200
 ]
 
 { #category : 'invariants' }
@@ -351,6 +390,12 @@ MateGrammarInferrer >> isEnumeration: profile in: aClass [
 MateGrammarInferrer >> maxDepth: anInteger [
 
 	observer maxDepth: anInteger
+]
+
+{ #category : 'accessing' }
+MateGrammarInferrer >> maxRelationshipSamples: anInteger [
+
+	maxRelationshipSamples := anInteger
 ]
 
 { #category : 'accessing' }
@@ -449,6 +494,36 @@ MateGrammarInferrer >> pathsFrom: aClass length: length [
 		remaining: length
 		into: paths.
 	^ paths
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> rejectUpwardReference: steps for: aClass [
+
+	| description |
+
+	description := MateWriter new writeReferencePath: (MateReferencePath new: steps asArray).
+
+	(findings anySatisfy: [ :each | each kind = #backReference and: [ each type = aClass and: [ each description = description ] ] ]) ifTrue: [ ^ self ].
+
+	self
+		record: #backReference
+		on: aClass
+		field: nil
+		description: description, ' points back toward the roots, so the other direction is kept'
+		support: (observer instancesOf: aClass) size
+		accepted: false
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> sampleOf: aClass [
+
+	| instances step |
+
+	instances := observer instancesOf: aClass.
+	instances size <= maxRelationshipSamples ifTrue: [ ^ instances ].
+
+	step := instances size / maxRelationshipSamples.
+	^ (0 to: maxRelationshipSamples - 1) collect: [ :index | instances at: (index * step) floor + 1 ]
 ]
 
 { #category : 'reporting' }
