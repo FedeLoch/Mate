@@ -330,6 +330,63 @@ MateRegressionTest >> testRecursiveFieldsTerminate [
 ]
 
 { #category : 'tests - generation' }
+MateRegressionTest >> testClassesThatForbidNewAreStillGenerated [
+
+	| grammar |
+
+	grammar := self grammarFrom: 'MateSealed -> { value: { type: SmallInteger, between: 1 and: 9 } }'.
+
+	self assert: ((grammar gen: MateSealed) value between: 1 and: 9)
+]
+
+{ #category : 'tests - generation' }
+MateRegressionTest >> testSelfReferencesReachObjectsWithoutDeclaration [
+
+	| grammar owner |
+
+	grammar := self grammarFrom: 'RefObject -> { myLittleObject: ReferredObject, selfReferences: { myLittleObject.ref } }'.
+	owner := grammar gen: RefObject.
+
+	self assert: ((owner instVarNamed: 'myLittleObject') instVarNamed: 'ref') identicalTo: owner
+]
+
+{ #category : 'tests - generation' }
+MateRegressionTest >> testSelfReferencesSkipObjectsWithoutTheField [
+
+	| grammar holder |
+
+	grammar := self grammarFrom: 'BlChildrenArray -> {
+		array: { type: [ ReferredObject | MateAge ], size: 6 },
+		selfReferences: { array[ .ref ] } }'.
+	grammar seed: 8.
+	holder := grammar gen: BlChildrenArray.
+
+	self assert: (holder array anySatisfy: [ :each | each class = MateAge ]).
+	(holder array select: [ :each | each class = ReferredObject ]) do: [ :each |
+		self assert: (each instVarNamed: 'ref') identicalTo: holder ].
+	self assert: (grammar parse: holder) notNil
+]
+
+{ #category : 'tests - generation' }
+MateRegressionTest >> testEqualityInvariantsAreEnforcedTogether [
+
+	| grammar |
+
+	grammar := self grammarFrom: 'MateSpan -> {
+		start: { type: SmallInteger, between: 0 and: 1000 },
+		stop: { type: SmallInteger, between: 0 and: 1000 },
+		kind: { type: SmallInteger, between: 0 and: 1000 },
+		invariants: { kind = start, kind = stop, start = stop } }'.
+	grammar seed: 21.
+
+	20 timesRepeat: [ | span |
+		span := grammar gen: MateSpan.
+		self assert: span start equals: span stop.
+		self assert: span kind equals: span start.
+		self assert: (grammar parse: span) notNil ]
+]
+
+{ #category : 'tests - generation' }
 MateRegressionTest >> testSeedMakesGenerationReproducible [
 
 	| generate |
