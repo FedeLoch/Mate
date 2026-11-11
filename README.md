@@ -219,6 +219,30 @@ Example -> {
 
 Identifiers may contain letters, digits and `_`. Numbers may be negative and use decimals or exponents. Malformed input raises an error that includes the position where parsing failed.
 
+### Type aliases
+
+An alias gives a name to a type or to a whole field description, so you write it once and use it in many fields:
+
+```smalltalk
+Geometry = BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry
+Shape = Geometry | BlPolygonGeometry
+Level = { type: SmallInteger, between: 0 and: 99 }
+Tags = { type: [ ByteSymbol ], sizeBetween: 0 and: 5 }
+
+BlCustomVisuals -> { geometry: Geometry, clipChildren: Boolean }
+Player -> { level: Level, maxLevel: Level, bonus: Level?, tags: Tags }
+Canvas -> { shapes: { type: [ Shape ], sizeBetween: 0 and: 10 }, selected: (Shape | Player)? }
+```
+
+- An alias is written `Name = definition`, with no `->`. It can be defined before or after the rules that use it.
+- A **type alias** (a class or a union) can be used wherever a type is expected: as a field type, inside a union, or as the element type of a collection.
+- A **field alias** (a `{ ... }` description with constraints, a collection or a `oneOf`) can only be used as the whole type of a field.
+- A field can make either kind nullable with `?`; the alias definition itself cannot be nullable.
+- Aliases can use other aliases. An alias that ends up defined in terms of itself is an error.
+- An alias cannot have the name of an existing class, and cannot be defined twice.
+- Aliases only exist in the grammar: generation and validation see the types they stand for. Each use gets its own copy, so every field keeps its own rewards and visit counts during guided fuzzing.
+- `mateDefinition` writes the aliases first, sorted by name, keeps their names in the rules, and its output parses back into the same grammar.
+
 ## Fuzzing
 
 ### Reproducible generation

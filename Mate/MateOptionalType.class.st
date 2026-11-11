@@ -5,12 +5,29 @@ Class {
 		'optionTypes',
 		'rewards',
 		'visits',
-		'explorationConstant'
+		'explorationConstant',
+		'aliases'
 	],
 	#category : 'Mate-Custom Types',
 	#package : 'Mate',
 	#tag : 'Custom Types'
 }
+
+{ #category : 'accessing' }
+MateOptionalType class >> aliasesOf: aType [
+
+	^ (aType isKindOf: MateOptionalType)
+		ifTrue: [ aType aliases ]
+		ifFalse: [ #() ]
+]
+
+{ #category : 'accessing' }
+MateOptionalType class >> freshCopyOf: aType [
+
+	^ (aType isKindOf: MateOptionalType)
+		ifTrue: [ (self options: aType types) aliases: aType aliases; yourself ]
+		ifFalse: [ aType ]
+]
 
 { #category : 'accessing' }
 MateOptionalType class >> options: classes [
@@ -31,17 +48,18 @@ MateOptionalType class >> typesOf: aType [
 { #category : 'accessing' }
 MateOptionalType class >> union: aType with: anotherType [
 
-	| types |
+	| types aliases |
 	
 	aType ifNil: [ ^ anotherType ].
 	anotherType ifNil: [ ^ aType ].
 	
 	types := Set new.
 	types addAll: (self typesOf: aType); addAll: (self typesOf: anotherType).
+	aliases := (self aliasesOf: aType) , (self aliasesOf: anotherType).
 	
-	types size = 1 ifTrue: [ ^ types anyOne ].
+	(types size = 1 and: [ aliases isEmpty ]) ifTrue: [ ^ types anyOne ].
 
-	^ self options: types
+	^ (self options: types) addAliases: aliases; yourself
 ]
 
 { #category : 'comparing' }
@@ -51,6 +69,26 @@ MateOptionalType >> = anObject [
 	self class = anObject class ifFalse: [ ^ false ].
 	
 	^ optionTypes = anObject types
+]
+
+{ #category : 'accessing' }
+MateOptionalType >> addAliases: someAliases [
+
+	someAliases do: [ :each |
+		(self aliases anySatisfy: [ :existing | existing name = each name ])
+			ifFalse: [ aliases := self aliases copyWith: each ] ]
+]
+
+{ #category : 'accessing' }
+MateOptionalType >> aliases [
+
+	^ aliases ifNil: [ #() ]
+]
+
+{ #category : 'accessing' }
+MateOptionalType >> aliases: someAliases [
+
+	aliases := someAliases asArray
 ]
 
 { #category : 'visiting' }
@@ -141,7 +179,15 @@ MateOptionalType >> initialize [
 { #category : 'accessing' }
 MateOptionalType >> name [
 	
-	^ (self orderedTypes collect: #name) joinUsing: ' | '
+	| covered names |
+	
+	covered := Set new.
+	self aliases do: [ :each | covered addAll: each types ].
+	
+	names := (self aliases collect: #name) asOrderedCollection.
+	names addAll: ((self orderedTypes reject: [ :each | covered includes: each ]) collect: #name).
+
+	^ (names asSortedCollection: [ :a :b | a <= b ]) asArray joinUsing: ' | '
 ]
 
 { #category : 'accessing' }
@@ -155,7 +201,9 @@ MateOptionalType >> optionFor: anInstance [
 { #category : 'accessing' }
 MateOptionalType >> options: options [ 
 	
-	options do: [ :each | optionTypes addAll: (self class typesOf: each) ]
+	options do: [ :each |
+		optionTypes addAll: (self class typesOf: each).
+		self addAliases: (self class aliasesOf: each) ]
 ]
 
 { #category : 'accessing' }
@@ -288,5 +336,6 @@ MateOptionalType >> visits [
 { #category : 'logical operations' }
 MateOptionalType >> | aType [ 
 
-	optionTypes addAll: (self class typesOf: aType)
+	optionTypes addAll: (self class typesOf: aType).
+	self addAliases: (self class aliasesOf: aType)
 ]
