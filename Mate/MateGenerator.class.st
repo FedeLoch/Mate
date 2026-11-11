@@ -58,7 +58,7 @@ MateGenerator >> enforce: invariant of: decl on: node from: context [
 
 	| attempts |
 
-	attempts := 0.
+	attempts := invariant operator = '=' ifTrue: [ self invariantAttempts ] ifFalse: [ 0 ].
 	[ (invariant holdsFor: node instance) or: [ attempts >= self invariantAttempts ] ] whileFalse: [
 		attempts := attempts + 1.
 		self

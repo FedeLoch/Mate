@@ -322,8 +322,8 @@ What it infers:
 | Nullability | `T?` when a field is sometimes `nil` |
 | Numeric ranges | `between:and:` with enough observations, otherwise only the sign (`greaterThan: 0` or `atLeast: 0`) |
 | Enumerations | `oneOf:` for symbols, strings and characters with few distinct values seen many times, and for fields that hold classes |
-| Collections | element types, size ranges, and the collection class (`Array`, `OrderedCollection`, `Set`, `IdentitySet`, `Bag`), observed through their elements rather than their private slots |
-| Back-references | paths of up to three steps where an object always reaches itself, such as `children[ .parent ]` or Bloc's `children.array[ .parent ]`; the closing field becomes a `refType`. When two objects point at each other (an element and its event dispatcher), only the direction that starts from the object nearer the observed roots is kept, so generation, which builds graphs from the root down, creates both objects |
+| Collections | element types (including `nil` when collections have empty slots), the collection class (`Array`, `OrderedCollection`, `Set`, `IdentitySet`, `Bag`) and size ranges, observed through their elements rather than their private slots. Collections of plain values keep their observed minimum size (a polygon needs its vertices); collections of objects always allow 0 elements, so recursive structures can end |
+| Back-references | paths of up to three steps where an object always reaches itself, such as `children[ .parent ]` or Bloc's `children.array[ .parent ]`; the closing field becomes a `refType`. When two objects point at each other (an element and its event dispatcher), only the direction that starts from the object nearer the observed roots is kept, so generation, which builds graphs from the root down, creates both objects. A path found for one class is shared with the other classes of its hierarchy where it also holds, and an inherited closing field (such as `parent`) gets one reference type for the whole hierarchy |
 | Invariants | `<`, `<=` or `=` between numeric fields of the same object, unless the ranges already imply them |
 
 Every decision is recorded, including the rejected ones, so you can review them:
@@ -355,7 +355,7 @@ inferrer := MateGrammarInferrer new
 	yourself.
 ```
 
-The given objects are at depth 0, and each field or collection element adds one level. Observation is breadth-first, so every object is reached through its shortest path. Set `maxDepth:` before `observeAll:`. Classes found only beyond the limit get no declaration, and fields that hold them are left out of the grammar and reported as `#depthLimit`: generated objects keep the value `new` gives those fields. Fields whose classes were observed closer to the roots are kept, even for the deepest instances.
+The given objects are at depth 0, and each field or collection element adds one level. Observation is breadth-first, so every object is reached through its shortest path. Set `maxDepth:` before `observeAll:`. Classes found only beyond the limit get no declaration. A field that only holds such classes is left out of the grammar and reported as `#depthLimit`: generated objects keep the value `new` gives it. A field that also holds classes observed closer to the roots is kept, with only those classes in its type.
 
 Back-reference candidates are first tested on a sample of each class's instances (`maxRelationshipSamples:`, 200 by default) and then verified on all of them, so large inputs such as benchmark scenes with thousands of elements stay fast without accepting a reference that only holds on the sample.
 

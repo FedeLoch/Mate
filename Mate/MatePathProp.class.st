@@ -47,13 +47,19 @@ MatePathProp >> hash [
 { #category : 'testing' }
 MatePathProp >> holds: instance in: targets [
 
-	^ (self ownersIn: targets) allSatisfy: [ :owner | (owner instVarNamed: prop) == instance ]
+	^ (self holdersIn: targets) allSatisfy: [ :owner | (owner instVarNamed: prop) == instance ]
+]
+
+{ #category : 'accessing' }
+MatePathProp >> holdersIn: targets [
+
+	^ (self ownersIn: targets) select: [ :owner | owner class allInstVarNames includes: prop ]
 ]
 
 { #category : 'spec protocol' }
 MatePathProp >> insert: instance into: targets [ 
 
-	(self ownersIn: targets) do: [ :owner | owner instVarNamed: prop put: instance ]
+	(self holdersIn: targets) do: [ :owner | owner instVarNamed: prop put: instance ]
 ]
 
 { #category : 'derivation' }
@@ -63,7 +69,7 @@ MatePathProp >> insertDerivation: instance atDerivation: aNode [
 	
 	nodes := aNode isCollection ifTrue: [ aNode ] ifFalse: [ { aNode } ].
 	
-	nodes do: [ :node | (node edges at: prop) instance: instance ]
+	nodes do: [ :node | node edges at: prop ifPresent: [ :edge | edge instance: instance ] ]
 ]
 
 { #category : 'testing' }

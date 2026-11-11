@@ -11,7 +11,8 @@ Class {
 		'backReferences',
 		'referenceFields',
 		'maxRelationshipSamples',
-		'limitedFields'
+		'limitedFields',
+		'referencePaths'
 	],
 	#category : 'Mate-Inference',
 	#package : 'Mate',
@@ -25,8 +26,10 @@ MateGrammarInferrer >> acceptBackReference: steps for: aClass ownerClasses: owne
 
 	path := MateReferencePath new: steps asArray.
 	(backReferences at: aClass ifAbsentPut: [ OrderedCollection new ]) add: path.
-	ownerClasses do: [ :ownerClass |
-		referenceFields at: { ownerClass. steps last prop } put: aClass ].
+	ownerClasses do: [ :ownerClass | | key |
+		key := { ownerClass. steps last prop }.
+		referencePaths at: key put: path.
+		referenceFields at: key put: (self commonSuperclassOf: (referenceFields at: key ifAbsent: [ aClass ]) and: aClass) ].
 
 	self
 		record: #backReference
@@ -35,6 +38,12 @@ MateGrammarInferrer >> acceptBackReference: steps for: aClass ownerClasses: owne
 		description: (MateWriter new writeReferencePath: path)
 		support: support
 		accepted: true
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> commonSuperclassOf: aClass and: anotherClass [
+
+	^ aClass withAllSuperclasses detect: [ :each | anotherClass includesBehavior: each ]
 ]
 
 { #category : 'declarations' }
@@ -54,16 +63,16 @@ MateGrammarInferrer >> collectionDeclarationFor: profile in: aClass [
 
 	decl := MateInstArrayVarDecl new name: profile name.
 	decl collectionClass: collectionClasses anyOne.
-	decl elementType: (self unionOf: elements).
+	decl elementType: (self unionOf: profile elements).
 
 	sizes := profile sizes.
-	sizes size >= minimumSupport
+	(sizes size >= minimumSupport and: [ elements noneSatisfy: [ :each | observer isObserved: each ] ])
 		ifTrue: [
 			decl sizeBetween: sizes min and: sizes max.
 			self record: #size on: aClass field: profile name description: 'sizeBetween: ', sizes min printString, ' and: ', sizes max printString support: sizes size accepted: true ]
 		ifFalse: [
 			decl sizeBetween: 0 and: sizes max.
-			self record: #size on: aClass field: profile name description: 'minimum size ', sizes min printString, ' generalized to 0' support: sizes size accepted: false ].
+			self record: #size on: aClass field: profile name description: 'minimum size ', sizes min printString, ' generalized to 0, because there are few observations or the elements are objects that may recurse' support: sizes size accepted: false ].
 
 	^ decl
 ]
@@ -80,7 +89,8 @@ MateGrammarInferrer >> declarationFor: aClass [
 			self
 				fieldDeclarationFor: (MateFieldProfile
 					name: field
-					values: (instances collect: [ :each | each instVarNamed: field ])
+					values: ((instances collect: [ :each | each instVarNamed: field ])
+						select: [ :each | (observer isCollectionValue: each) or: [ observer covers: each ] ])
 					observer: observer)
 				in: aClass ]
 		thenSelect: #notNil.
@@ -128,16 +138,16 @@ MateGrammarInferrer >> fieldDeclarationFor: profile in: aClass [
 
 	| decl |
 
+	(limitedFields includes: { aClass. profile name }) ifTrue: [
+		self record: #depthLimit on: aClass field: profile name description: 'only holds classes found beyond the maximum depth, so it is left out and keeps the value set by new' support: profile observationCount accepted: false.
+		^ nil ].
+
 	profile allNil ifTrue: [
 		self record: #skipped on: aClass field: profile name description: 'always nil, no type can be inferred' support: profile observationCount accepted: false.
 		^ nil ].
 
 	profile isUnsupported ifTrue: [
 		self record: #unsupported on: aClass field: profile name description: 'holds blocks, methods, processes or other unsupported objects' support: profile observationCount accepted: false.
-		^ nil ].
-
-	(limitedFields includes: { aClass. profile name }) ifTrue: [
-		self record: #depthLimit on: aClass field: profile name description: 'holds classes only found beyond the maximum depth, so it is left out and keeps the value set by new' support: profile observationCount accepted: false.
 		^ nil ].
 
 	referenceFields at: { aClass. profile name } ifPresent: [ :target |
@@ -178,9 +188,12 @@ MateGrammarInferrer >> grammar [
 	findings := OrderedCollection new.
 	backReferences := Dictionary new.
 	referenceFields := Dictionary new.
+	referencePaths := Dictionary new.
 
 	self inferLimitedFields.
 	self inferBackReferences.
+	self inheritBackReferences.
+	self unifyReferenceFields.
 
 	grammar := MateOGGrammar new.
 	
@@ -231,7 +244,7 @@ MateGrammarInferrer >> closes: steps for: aClass ownerClasses: ownerClasses [
 	field := steps last prop.
 
 	ownerClasses do: [ :ownerClass |
-		(referenceFields includesKey: { ownerClass. field }) ifTrue: [ ^ false ].
+		(referencePaths at: { ownerClass. field } ifAbsent: [ path ]) = path ifFalse: [ ^ false ].
 		(observer instancesOf: ownerClass) do: [ :owner | | target |
 			target := owner instVarNamed: field.
 			target ifNotNil: [
@@ -273,14 +286,54 @@ MateGrammarInferrer >> inferBackReferences [
 ]
 
 { #category : 'relationships' }
+MateGrammarInferrer >> inherit: path in: aClass [
+
+	| result |
+
+	((backReferences at: aClass ifAbsent: [ #() ]) includes: path) ifTrue: [ ^ self ].
+
+	result := self check: path path for: aClass on: (observer instancesOf: aClass).
+	(result isNil or: [ result = #upward ]) ifTrue: [ ^ self ].
+
+	(backReferences at: aClass ifAbsentPut: [ OrderedCollection new ]) add: path.
+	result first do: [ :ownerClass | | key |
+		key := { ownerClass. path path last prop }.
+		(referencePaths at: key ifAbsent: [ nil ]) = path ifTrue: [
+			referenceFields at: key put: (self commonSuperclassOf: (referenceFields at: key) and: aClass) ] ].
+
+	self
+		record: #backReference
+		on: aClass
+		field: nil
+		description: (MateWriter new writeReferencePath: path), ' shared with a class of its hierarchy'
+		support: result second
+		accepted: true
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> inheritBackReferences [
+
+	backReferences associations do: [ :association |
+		association value copy do: [ :path |
+			observer observedClasses do: [ :other |
+				(other ~= association key and: [ (other inheritsFrom: association key) or: [ association key inheritsFrom: other ] ])
+					ifTrue: [ self inherit: path in: other ] ] ] ]
+]
+
+{ #category : 'relationships' }
 MateGrammarInferrer >> inferLimitedFields [
 
 	limitedFields := Set new.
 
 	observer observedClasses do: [ :aClass |
-		aClass allInstVarNames do: [ :field |
-			((observer instancesOf: aClass) allSatisfy: [ :each | observer covers: (each instVarNamed: field) ])
-				ifFalse: [ limitedFields add: { aClass. field } ] ] ]
+		aClass allInstVarNames do: [ :field | | atoms |
+			atoms := ((observer instancesOf: aClass) flatCollect: [ :each | | value |
+				value := each instVarNamed: field.
+				(observer isCollectionValue: value)
+					ifTrue: [ observer elementsOf: value ]
+					ifFalse: [ { value } ] ]) reject: #isNil.
+			(atoms notEmpty and: [ atoms noneSatisfy: [ :each | observer covers: each ] ])
+				ifTrue: [ limitedFields add: { aClass. field } ] ] ]
 ]
 
 { #category : 'relationships' }
@@ -341,6 +394,8 @@ MateGrammarInferrer >> invariantBetween: left and: right in: instances [
 
 	(pairs allSatisfy: [ :pair | pair key < pair value ]) ifTrue: [
 		^ MateInvariant left: left operator: '<' right: right ].
+	leftValues max <= rightValues min ifTrue: [ ^ nil ].
+
 	(pairs allSatisfy: [ :pair | pair key <= pair value ]) ifTrue: [
 		^ MateInvariant left: left operator: '<=' right: right ].
 
@@ -511,7 +566,10 @@ MateGrammarInferrer >> pathsFrom: aClass length: length [
 		toward: aClass
 		remaining: length
 		into: paths.
-	^ paths
+
+	^ paths inject: OrderedCollection new into: [ :unique :each |
+		(unique includes: each) ifFalse: [ unique add: each ].
+		unique ]
 ]
 
 { #category : 'relationships' }
@@ -585,6 +643,34 @@ MateGrammarInferrer >> typeOf: anObject [
 	^ (anObject class includesBehavior: Boolean)
 		ifTrue: [ Boolean ]
 		ifFalse: [ anObject class ]
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> unifyReferenceFields [
+
+	| definitions |
+
+	definitions := Set new.
+	referenceFields keysDo: [ :key |
+		definitions add: { key first withAllSuperclasses detect: [ :each | each instVarNames includes: key second ]. key second } ].
+
+	definitions do: [ :definition | | holders type |
+		holders := observer observedClasses select: [ :each | each includesBehavior: definition first ].
+		type := nil.
+		holders do: [ :holder |
+			referenceFields at: { holder. definition second } ifPresent: [ :each | type := self widen: type with: each ].
+			(observer instancesOf: holder) do: [ :instance | | value |
+				value := instance instVarNamed: definition second.
+				(observer isObserved: value) ifTrue: [ type := self widen: type with: value class ] ] ].
+		holders do: [ :holder | referenceFields at: { holder. definition second } put: type ] ]
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> widen: aClassOrNil with: aClass [
+
+	^ aClassOrNil
+		ifNil: [ aClass ]
+		ifNotNil: [ self commonSuperclassOf: aClassOrNil and: aClass ]
 ]
 
 { #category : 'declarations' }
