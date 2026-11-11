@@ -5,7 +5,10 @@ Class {
 		'builtInGenerators',
 		'maxDerivationHeight',
 		'random',
-		'nilProbability'
+		'nilProbability',
+		'injector',
+		'violationsPerObject',
+		'invalidDerivations'
 	],
 	#category : 'Mate-Generation',
 	#package : 'Mate',
@@ -99,6 +102,52 @@ MateGenerator >> gen: type from: context [
 ]
 
 { #category : 'accessing' }
+MateGenerator >> gen: type from: context validity: aValidity violating: kinds [
+
+	| derivation |
+
+	(aValidity between: 0 and: 1) ifFalse: [ self error: 'Validity must be between 0 and 1' ].
+
+	derivation := self gen: type from: context.
+
+	context random next >= aValidity ifTrue: [
+		derivation violations: (self injector inject: violationsPerObject into: derivation kinds: kinds random: context random).
+		derivation isValid ifFalse: [ invalidDerivations at: derivation instance put: derivation ] ].
+
+	^ derivation
+]
+
+{ #category : 'accessing' }
+MateGenerator >> gen: type validity: aValidity violating: kinds [
+
+	^ (self gen: type from: self newContext validity: aValidity violating: kinds) instance
+]
+
+{ #category : 'accessing' }
+MateGenerator >> injector [
+
+	^ injector ifNil: [ injector := MateViolationInjector new generator: self; yourself ]
+]
+
+{ #category : 'accessing' }
+MateGenerator >> invalidDerivationOf: anInstance [
+
+	^ invalidDerivations at: anInstance ifAbsent: [ nil ]
+]
+
+{ #category : 'accessing' }
+MateGenerator >> violationsPerObject [
+
+	^ violationsPerObject
+]
+
+{ #category : 'accessing' }
+MateGenerator >> violationsPerObject: anInteger [
+
+	violationsPerObject := anInteger
+]
+
+{ #category : 'accessing' }
 MateGenerator >> genVariant: derivation [
 
 	derivation context ensureRandom: random.
@@ -113,6 +162,8 @@ MateGenerator >> initialize [
 	maxDerivationHeight := 12.
 	nilProbability := 0.1.
 	random := Random new.
+	violationsPerObject := 1.
+	invalidDerivations := WeakIdentityKeyDictionary new.
 	builtInGenerators := self class defaultBuiltInGenerators
 ]
 

@@ -2,7 +2,8 @@ Class {
 	#name : 'MateParser',
 	#superclass : 'MateGrammarVisitor',
 	#instVars : [
-		'visiting'
+		'visiting',
+		'strict'
 	],
 	#category : 'Mate-Parsing',
 	#package : 'Mate',
@@ -36,7 +37,8 @@ MateParser >> declarationFor: aType [
 MateParser >> initialize [
 
 	super initialize.
-	visiting := IdentitySet new
+	visiting := IdentitySet new.
+	strict := false
 ]
 
 { #category : 'visiting' }
@@ -51,6 +53,23 @@ MateParser >> parse: obj [
 	visiting := IdentitySet new.
 
 	^ self parse: obj class from: (MateParsingContext from: obj)
+]
+
+{ #category : 'parsing' }
+MateParser >> parse: obj strict: aBoolean [
+
+	| previous |
+
+	previous := strict.
+	strict := aBoolean.
+	^ [ self parse: obj ] ensure: [ strict := previous ]
+]
+
+{ #category : 'visiting' }
+MateParser >> rejectNilIn: decl [
+
+	(strict and: [ decl nullable not ]) ifTrue: [
+		self error: 'Field ', decl name asString, ' must not be nil' ]
 ]
 
 { #category : 'parsing' }
@@ -72,7 +91,9 @@ MateParser >> visitArrayDecl: decl from: context [
 
 	array := context object.
 
-	array ifNil: [ ^ self nilNode: decl from: context ].
+	array ifNil: [
+		self rejectNilIn: decl.
+		^ self nilNode: decl from: context ].
 
 	(array isCollection) ifFalse: [
 		self error: 'Expected collection in field ', decl name, ' but got ', array class name
@@ -146,7 +167,9 @@ MateParser >> visitInstVarDecl: instVarDecl from: context [
 
 	instance := context object.
 
-	instance ifNil: [ ^ self nilNode: instVarDecl from: context ].
+	instance ifNil: [
+		self rejectNilIn: instVarDecl.
+		^ self nilNode: instVarDecl from: context ].
 
 	type := instance class.
 
