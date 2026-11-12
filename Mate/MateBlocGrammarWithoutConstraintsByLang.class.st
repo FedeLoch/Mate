@@ -18,7 +18,7 @@ MateBlocGrammarWithoutConstraintsByLang >> defineObjectGraph [
 		}
 		
 		BlChildrenArray -> { 
-			array: { type: [ BlElement ], sizeBetween: 1 and: 10 }
+			array: { type: [ BlElement ], sizeBetween: 0 and: 10 }
 		}
 		
 		BlCustomVisuals -> { 

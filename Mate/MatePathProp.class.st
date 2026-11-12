@@ -44,16 +44,16 @@ MatePathProp >> hash [
 	^ self class hash bitXor: prop hash
 ]
 
-{ #category : 'testing' }
-MatePathProp >> holds: instance in: targets [
-
-	^ (self holdersIn: targets) allSatisfy: [ :owner | (owner instVarNamed: prop) == instance ]
-]
-
 { #category : 'accessing' }
 MatePathProp >> holdersIn: targets [
 
 	^ (self ownersIn: targets) select: [ :owner | owner class allInstVarNames includes: prop ]
+]
+
+{ #category : 'testing' }
+MatePathProp >> holds: instance in: targets [
+
+	^ (self holdersIn: targets) allSatisfy: [ :owner | (owner instVarNamed: prop) == instance ]
 ]
 
 { #category : 'spec protocol' }

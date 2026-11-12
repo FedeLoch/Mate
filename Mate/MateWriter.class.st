@@ -7,6 +7,37 @@ Class {
 }
 
 { #category : 'writing' }
+MateWriter >> aliasDefinitions [
+
+	| found pending |
+
+	found := OrderedCollection new.
+	pending := OrderedCollection new.
+
+	grammar typeDeclarations do: [ :decl |
+		(decl isKindOf: MateInstDecl) ifTrue: [
+			decl instanceVariableDeclarations do: [ :each | pending addAll: each aliases ] ] ].
+
+	[ pending isEmpty ] whileFalse: [ | alias |
+		alias := pending removeFirst.
+		(found anySatisfy: [ :each | each name = alias name ]) ifFalse: [
+			found add: alias.
+			pending addAll: alias aliases ] ].
+
+	^ (found asSortedCollection: [ :a :b | a name <= b name ]) asArray collect: [ :each | self writeAlias: each ]
+]
+
+{ #category : 'writing' }
+MateWriter >> aliasUseOf: decl [
+
+	decl alias ifNil: [ ^ nil ].
+
+	^ String streamContents: [ :s |
+		s nextPutAll: decl name; nextPutAll: ': '; nextPutAll: decl alias name.
+		(decl nullable and: [ decl alias definition nullable not ]) ifTrue: [ s nextPut: $? ] ]
+]
+
+{ #category : 'writing' }
 MateWriter >> definition: type decl: decl [
 
 	^ decl visiting: self from: MateContext new constraint: nil
@@ -40,53 +71,6 @@ MateWriter >> mateDefinition [
 				stream cr; cr ].
 		(definitions reject: #isEmpty) do: [ :each |
 			stream nextPutAll: each ] separatedBy: [ stream cr; cr ] ]) trim
-]
-
-{ #category : 'writing' }
-MateWriter >> aliasDefinitions [
-
-	| found pending |
-
-	found := OrderedCollection new.
-	pending := OrderedCollection new.
-
-	grammar typeDeclarations do: [ :decl |
-		(decl isKindOf: MateInstDecl) ifTrue: [
-			decl instanceVariableDeclarations do: [ :each | pending addAll: each aliases ] ] ].
-
-	[ pending isEmpty ] whileFalse: [ | alias |
-		alias := pending removeFirst.
-		(found anySatisfy: [ :each | each name = alias name ]) ifFalse: [
-			found add: alias.
-			pending addAll: alias aliases ] ].
-
-	^ (found asSortedCollection: [ :a :b | a name <= b name ]) asArray collect: [ :each | self writeAlias: each ]
-]
-
-{ #category : 'writing' }
-MateWriter >> aliasUseOf: decl [
-
-	decl alias ifNil: [ ^ nil ].
-
-	^ String streamContents: [ :s |
-		s nextPutAll: decl name; nextPutAll: ': '; nextPutAll: decl alias name.
-		(decl nullable and: [ decl alias definition nullable not ]) ifTrue: [ s nextPut: $? ] ]
-]
-
-{ #category : 'writing' }
-MateWriter >> writeAlias: anAlias [
-
-	| description |
-
-	anAlias isTypeAlias ifTrue: [ ^ anAlias name, ' = ', anAlias definition name ].
-
-	(anAlias definition class == MateInstVarDecl and: [ anAlias definition constraint isNil ]) ifTrue: [
-		^ anAlias name, ' = { type: ', anAlias definition type name,
-			(anAlias definition nullable ifTrue: [ ', nullable: true' ] ifFalse: [ '' ]), ' }' ].
-
-	description := anAlias definition visiting: self from: MateContext new constraint: anAlias definition constraint.
-
-	^ anAlias name, ' = ', (description allButFirst: anAlias name size + 2)
 ]
 
 { #category : 'writing' }
@@ -217,6 +201,22 @@ MateWriter >> visitOneOfDecl: decl from: context [
 		].
 		s nextPutAll: ' } }'
 	]
+]
+
+{ #category : 'writing' }
+MateWriter >> writeAlias: anAlias [
+
+	| description |
+
+	anAlias isTypeAlias ifTrue: [ ^ anAlias name, ' = ', anAlias definition name ].
+
+	(anAlias definition class == MateInstVarDecl and: [ anAlias definition constraint isNil ]) ifTrue: [
+		^ anAlias name, ' = { type: ', anAlias definition type name,
+			(anAlias definition nullable ifTrue: [ ', nullable: true' ] ifFalse: [ '' ]), ' }' ].
+
+	description := anAlias definition visiting: self from: MateContext new constraint: anAlias definition constraint.
+
+	^ anAlias name, ' = ', (description allButFirst: anAlias name size + 2)
 ]
 
 { #category : 'writing' }

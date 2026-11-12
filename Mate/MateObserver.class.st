@@ -123,34 +123,16 @@ MateObserver >> maxDepth: anInteger [
 	maxDepth := anInteger
 ]
 
-{ #category : 'observing' }
-MateObserver >> observe: anObject [
-
-	self observeAll: { anObject }
-]
-
-{ #category : 'observing' }
-MateObserver >> shouldVisit: anObject at: depth [
-
-	(maxDepth notNil and: [ depth > maxDepth ]) ifTrue: [ ^ false ].
-	(self isLeaf: anObject) ifTrue: [ ^ false ].
-	(self isUnsupported: anObject) ifTrue: [ ^ false ].
-
-	^ (visited includes: anObject) not
-]
-
-{ #category : 'observing' }
-MateObserver >> valuesOf: anObject [
-
-	^ (self isCollectionValue: anObject)
-		ifTrue: [ self elementsOf: anObject ]
-		ifFalse: [ anObject class allInstVarNames collect: [ :each | anObject instVarNamed: each ] ]
-]
-
 { #category : 'depths' }
 MateObserver >> neighboursOf: anObject [
 
 	^ (self valuesOf: anObject) select: [ :each | each notNil and: [ visited includes: each ] ]
+]
+
+{ #category : 'observing' }
+MateObserver >> observe: anObject [
+
+	self observeAll: { anObject }
 ]
 
 { #category : 'observing' }
@@ -182,8 +164,26 @@ MateObserver >> observedClasses [
 	^ (instancesByClass keys asSortedCollection: [ :a :b | a name <= b name ]) asArray
 ]
 
+{ #category : 'observing' }
+MateObserver >> shouldVisit: anObject at: depth [
+
+	(maxDepth notNil and: [ depth > maxDepth ]) ifTrue: [ ^ false ].
+	(self isLeaf: anObject) ifTrue: [ ^ false ].
+	(self isUnsupported: anObject) ifTrue: [ ^ false ].
+
+	^ (visited includes: anObject) not
+]
+
 { #category : 'accessing' }
 MateObserver >> unsupportedClasses [
 
 	^ { BlockClosure. CompiledCode. Context. Process. SystemDictionary. Semaphore. Mutex }
+]
+
+{ #category : 'observing' }
+MateObserver >> valuesOf: anObject [
+
+	^ (self isCollectionValue: anObject)
+		ifTrue: [ self elementsOf: anObject ]
+		ifFalse: [ anObject class allInstVarNames collect: [ :each | anObject instVarNamed: each ] ]
 ]

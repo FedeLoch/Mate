@@ -29,12 +29,6 @@ MateInstArrayVarDecl >> acceptSize: size [
 	^ size between: minSize and: maxSize 
 ]
 
-{ #category : 'accessing' }
-MateInstArrayVarDecl >> chooseOneElementTypeFrom: context [
-
-	^ self elementType getOneFrom: context
-]
-
 { #category : 'copying' }
 MateInstArrayVarDecl >> aliasCopy [
 
@@ -51,6 +45,12 @@ MateInstArrayVarDecl >> aliases [
 	^ alias
 		ifNil: [ MateOptionalType aliasesOf: elementType ]
 		ifNotNil: [ { alias } ]
+]
+
+{ #category : 'accessing' }
+MateInstArrayVarDecl >> chooseOneElementTypeFrom: context [
+
+	^ self elementType getOneFrom: context
 ]
 
 { #category : 'accessing' }

@@ -82,17 +82,6 @@ MateGenerationLoopTest >> testDefaultBoundsLetNormalGrammarsGenerate [
 ]
 
 { #category : 'tests' }
-MateGenerationLoopTest >> testDerivationGenerationIsGuarded [
-
-	| grammar |
-
-	grammar := self runawayGrammar.
-	grammar generator maxObjects: 100.
-
-	self should: [ grammar gen: ReferredObject from: MateContext new ] raise: MateGenerationLoop
-]
-
-{ #category : 'tests' }
 MateGenerationLoopTest >> testDepthCutKeepsRecursiveGrammarsWithinTheBounds [
 
 	| grammar |
@@ -101,6 +90,17 @@ MateGenerationLoopTest >> testDepthCutKeepsRecursiveGrammarsWithinTheBounds [
 	grammar generator maxObjects: grammar generator maxDerivationHeight + 2.
 
 	self assert: (grammar gen: ReferredObject) class equals: ReferredObject
+]
+
+{ #category : 'tests' }
+MateGenerationLoopTest >> testDerivationGenerationIsGuarded [
+
+	| grammar |
+
+	grammar := self runawayGrammar.
+	grammar generator maxObjects: 100.
+
+	self should: [ grammar gen: ReferredObject from: MateContext new ] raise: MateGenerationLoop
 ]
 
 { #category : 'tests' }

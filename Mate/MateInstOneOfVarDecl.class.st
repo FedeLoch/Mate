@@ -18,18 +18,18 @@ MateInstOneOfVarDecl >> = anObject [
 	^ options asArray = anObject options asArray
 ]
 
+{ #category : 'as yet unclassified' }
+MateInstOneOfVarDecl >> acceptOption: option [
+	
+	^ options includes: option
+]
+
 { #category : 'copying' }
 MateInstOneOfVarDecl >> aliasCopy [
 
 	^ super aliasCopy
 		options: options copy;
 		yourself
-]
-
-{ #category : 'as yet unclassified' }
-MateInstOneOfVarDecl >> acceptOption: option [
-	
-	^ options includes: option
 ]
 
 { #category : 'as yet unclassified' }

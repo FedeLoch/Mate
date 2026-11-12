@@ -62,25 +62,6 @@ MateAliasTest >> testAliasNameCannotBeAnExistingClass [
 		raise: Error
 ]
 
-{ #category : 'tests - errors' }
-MateAliasTest >> testFieldAliasesCannotBeUsedInsideOtherTypes [
-
-	self
-		should: [ MateLanguageParser parse: 'MateBound = { type: SmallInteger, between: 0 and: 9 } MateSpan -> { start: MateBound | MateAge }' ]
-		raise: Error.
-	self
-		should: [ MateLanguageParser parse: 'MateBound = { type: SmallInteger, between: 0 and: 9 } BlChildrenArray -> { array: { type: [ MateBound ], size: 2 } }' ]
-		raise: Error
-]
-
-{ #category : 'tests - errors' }
-MateAliasTest >> testUnknownAliasesAreReportedAsMissingClasses [
-
-	self
-		should: [ MateLanguageParser parse: 'RefObject -> { name: MateUndefinedAlias }' ]
-		raise: Error
-]
-
 { #category : 'tests - generation' }
 MateAliasTest >> testAliasesCanBeDefinedAfterTheirUse [
 
@@ -174,6 +155,17 @@ MateAliasTest >> testFieldAliasCarriesItsConstraint [
 	self should: [ grammar parse: (MateSpan from: 3 to: 10 kind: nil) ] raise: Error
 ]
 
+{ #category : 'tests - errors' }
+MateAliasTest >> testFieldAliasesCannotBeUsedInsideOtherTypes [
+
+	self
+		should: [ MateLanguageParser parse: 'MateBound = { type: SmallInteger, between: 0 and: 9 } MateSpan -> { start: MateBound | MateAge }' ]
+		raise: Error.
+	self
+		should: [ MateLanguageParser parse: 'MateBound = { type: SmallInteger, between: 0 and: 9 } BlChildrenArray -> { array: { type: [ MateBound ], size: 2 } }' ]
+		raise: Error
+]
+
 { #category : 'tests - generation' }
 MateAliasTest >> testFieldsCanMakeAnAliasNullable [
 
@@ -188,6 +180,15 @@ MateAliasTest >> testFieldsCanMakeAnAliasNullable [
 	self assert: span start isNil.
 	self assert: span kind isNil.
 	self assert: span stop notNil
+]
+
+{ #category : 'tests - writing' }
+MateAliasTest >> testGrammarsWithoutAliasesAreWrittenWithoutAliasSection [
+
+	self
+		assert: (MatePersonGrammar new mateDefinition: MateAge)
+		equals: (self lines: #( 'MateAge -> {' '	value: SmallInteger' '}' )).
+	self deny: (MatePlayerGrammar new mateDefinition includesSubstring: ' = ')
 ]
 
 { #category : 'tests - generation' }
@@ -207,13 +208,12 @@ MateAliasTest >> testTypeAliasGeneratesOneOfItsTypes [
 	self assert: classes equals: { MateAge. ReferredObject. MateSpan } asSet
 ]
 
-{ #category : 'tests - writing' }
-MateAliasTest >> testGrammarsWithoutAliasesAreWrittenWithoutAliasSection [
+{ #category : 'tests - errors' }
+MateAliasTest >> testUnknownAliasesAreReportedAsMissingClasses [
 
 	self
-		assert: (MatePersonGrammar new mateDefinition: MateAge)
-		equals: (self lines: #( 'MateAge -> {' '	value: SmallInteger' '}' )).
-	self deny: (MatePlayerGrammar new mateDefinition includesSubstring: ' = ')
+		should: [ MateLanguageParser parse: 'RefObject -> { name: MateUndefinedAlias }' ]
+		raise: Error
 ]
 
 { #category : 'tests - writing' }

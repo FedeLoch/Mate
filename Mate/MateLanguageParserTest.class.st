@@ -6,10 +6,22 @@ Class {
 	#tag : 'MateLanguage Parser Tests'
 }
 
+{ #category : 'helpers' }
+MateLanguageParserTest >> field: aName in: declarations of: aClass [
+
+	^ (declarations detect: [ :each | each type = aClass ]) instanceVariableDeclarationNamed: aName
+]
+
 { #category : 'tests' }
 MateLanguageParserTest >> parseTest: source expect: expected [
 
 	self assert: (MateLanguageParser parse: source) equals: expected asOrderedCollection
+]
+
+{ #category : 'helpers' }
+MateLanguageParserTest >> shouldReject: source [
+
+	self should: [ MateLanguageParser parse: source ] raise: Error
 ]
 
 { #category : 'tests' }
@@ -29,86 +41,6 @@ MateLanguageParserTest >> testParseADefinitionWithRelationships [
 			MateInstVarDecl new name: 'constraints'; type: BlLayoutCommonConstraints.
 		}; selfReferences: { MateReferencePath new: { MatePathProp from: 'children' . MatePathProp from: 'array' . MatePathEachProp from: 'parent' }}
 	}
-]
-
-{ #category : 'tests' }
-MateLanguageParserTest >> testParseAsimpleDefinition [
-
-	self parseTest: 'BlLayoutExactResizer -> { size: SmallFloat64 }' expect: {
-		MateInstDecl new type: BlLayoutExactResizer; instanceVariableDeclarations: { MateInstVarDecl new name: 'size'; type: SmallFloat64 }
-	}
-]
-
-{ #category : 'tests' }
-MateLanguageParserTest >> testParseAsimpleDefinitionWithAnArray [
-
-	self parseTest: 'OrderedCollection -> {
-		array: { type: [ Object ], sizeBetween: 0 and: 1 },
-		firstIndex: SmallInteger,
-		lastIndex: SmallInteger
-	}' expect: {
-		MateInstDecl new type: OrderedCollection; instanceVariableDeclarations: {
-			MateInstArrayVarDecl new name: 'array'; elementType: Object; sizeBetween: 0 and: 1.
-			MateInstVarDecl new name: 'firstIndex'; type: SmallInteger.
-			MateInstVarDecl new name: 'lastIndex'; type: SmallInteger
-		}
-	}
-]
-
-{ #category : 'tests' }
-MateLanguageParserTest >> testParseAsimpleDefinitionWithAnArrayWithOptionalTypes [
-
-	self parseTest: 'OrderedCollection -> { array: { type: [ BlEllipseGeometry | BlTriangleGeometry ], sizeBetween: 0 and: 1 } }' expect: {
-		MateInstDecl new type: OrderedCollection; instanceVariableDeclarations: {
-			MateInstArrayVarDecl new name: 'array'; elementType: BlEllipseGeometry | BlTriangleGeometry; sizeBetween: 0 and: 1
-		}
-	}
-]
-
-{ #category : 'tests' }
-MateLanguageParserTest >> testParseAsimpleDefinitionWithAnArrayWithParenthesis [
-
-	self parseTest: 'OrderedCollection -> { array: { type: [ (SmallInteger) ], sizeBetween: 0 and: 1 } }' expect: {
-		MateInstDecl new type: OrderedCollection; instanceVariableDeclarations: {
-			MateInstArrayVarDecl new name: 'array'; elementType: SmallInteger; sizeBetween: 0 and: 1
-		}
-	}
-]
-
-{ #category : 'tests' }
-MateLanguageParserTest >> testParseAsimpleDefinitionWithMultipleOptionalTypes [
-
-	self parseTest: 'BlCustomVisuals -> { 
-		background: (BlPaintBackground | BlTransparentBackground),
-		geometry: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry),
-		clipChildren: Boolean
-	}' expect: {
-		MateInstDecl new type: BlCustomVisuals; instanceVariableDeclarations: {
-			MateInstVarDecl new name: 'background'; type: BlPaintBackground | BlTransparentBackground.
-			MateInstVarDecl new name: 'geometry'; type: BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry.
-			MateInstVarDecl new name: 'clipChildren'; type: Boolean
-		}
-	}
-]
-
-{ #category : 'tests' }
-MateLanguageParserTest >> testParseAsimpleDefinitionWithOptionalTypes [
-
-	self parseTest: 'BlLayoutExactResizer -> { size: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry) }' expect: {
-		MateInstDecl new type: BlLayoutExactResizer; instanceVariableDeclarations: { MateInstVarDecl new name: 'size'; type: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry) }
-	}
-]
-
-{ #category : 'helpers' }
-MateLanguageParserTest >> field: aName in: declarations of: aClass [
-
-	^ (declarations detect: [ :each | each type = aClass ]) instanceVariableDeclarationNamed: aName
-]
-
-{ #category : 'helpers' }
-MateLanguageParserTest >> shouldReject: source [
-
-	self should: [ MateLanguageParser parse: source ] raise: Error
 ]
 
 { #category : 'tests - aliases' }
@@ -182,6 +114,74 @@ MateLanguageParserTest >> testParseArrayElementTypeAlias [
 	self assert: field equals: (MateInstArrayVarDecl new name: 'array'; elementType: BlEllipseGeometry | BlTriangleGeometry; sizeBetween: 0 and: 2).
 	self assert: field elementType name equals: 'MateGeometry'.
 	self assert: (field aliases collect: #name) asArray equals: #( 'MateGeometry' )
+]
+
+{ #category : 'tests' }
+MateLanguageParserTest >> testParseAsimpleDefinition [
+
+	self parseTest: 'BlLayoutExactResizer -> { size: SmallFloat64 }' expect: {
+		MateInstDecl new type: BlLayoutExactResizer; instanceVariableDeclarations: { MateInstVarDecl new name: 'size'; type: SmallFloat64 }
+	}
+]
+
+{ #category : 'tests' }
+MateLanguageParserTest >> testParseAsimpleDefinitionWithAnArray [
+
+	self parseTest: 'OrderedCollection -> {
+		array: { type: [ Object ], sizeBetween: 0 and: 1 },
+		firstIndex: SmallInteger,
+		lastIndex: SmallInteger
+	}' expect: {
+		MateInstDecl new type: OrderedCollection; instanceVariableDeclarations: {
+			MateInstArrayVarDecl new name: 'array'; elementType: Object; sizeBetween: 0 and: 1.
+			MateInstVarDecl new name: 'firstIndex'; type: SmallInteger.
+			MateInstVarDecl new name: 'lastIndex'; type: SmallInteger
+		}
+	}
+]
+
+{ #category : 'tests' }
+MateLanguageParserTest >> testParseAsimpleDefinitionWithAnArrayWithOptionalTypes [
+
+	self parseTest: 'OrderedCollection -> { array: { type: [ BlEllipseGeometry | BlTriangleGeometry ], sizeBetween: 0 and: 1 } }' expect: {
+		MateInstDecl new type: OrderedCollection; instanceVariableDeclarations: {
+			MateInstArrayVarDecl new name: 'array'; elementType: BlEllipseGeometry | BlTriangleGeometry; sizeBetween: 0 and: 1
+		}
+	}
+]
+
+{ #category : 'tests' }
+MateLanguageParserTest >> testParseAsimpleDefinitionWithAnArrayWithParenthesis [
+
+	self parseTest: 'OrderedCollection -> { array: { type: [ (SmallInteger) ], sizeBetween: 0 and: 1 } }' expect: {
+		MateInstDecl new type: OrderedCollection; instanceVariableDeclarations: {
+			MateInstArrayVarDecl new name: 'array'; elementType: SmallInteger; sizeBetween: 0 and: 1
+		}
+	}
+]
+
+{ #category : 'tests' }
+MateLanguageParserTest >> testParseAsimpleDefinitionWithMultipleOptionalTypes [
+
+	self parseTest: 'BlCustomVisuals -> { 
+		background: (BlPaintBackground | BlTransparentBackground),
+		geometry: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry),
+		clipChildren: Boolean
+	}' expect: {
+		MateInstDecl new type: BlCustomVisuals; instanceVariableDeclarations: {
+			MateInstVarDecl new name: 'background'; type: BlPaintBackground | BlTransparentBackground.
+			MateInstVarDecl new name: 'geometry'; type: BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry.
+			MateInstVarDecl new name: 'clipChildren'; type: Boolean
+		}
+	}
+]
+
+{ #category : 'tests' }
+MateLanguageParserTest >> testParseAsimpleDefinitionWithOptionalTypes [
+
+	self parseTest: 'BlLayoutExactResizer -> { size: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry) }' expect: {
+		MateInstDecl new type: BlLayoutExactResizer; instanceVariableDeclarations: { MateInstVarDecl new name: 'size'; type: (BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry) }
+	}
 ]
 
 { #category : 'tests - aliases' }

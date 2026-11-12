@@ -41,9 +41,51 @@ MateGrammarInferrer >> acceptBackReference: steps for: aClass ownerClasses: owne
 ]
 
 { #category : 'relationships' }
-MateGrammarInferrer >> commonSuperclassOf: aClass and: anotherClass [
+MateGrammarInferrer >> check: steps for: aClass on: instances [
 
-	^ aClass withAllSuperclasses detect: [ :each | anotherClass includesBehavior: each ]
+	| path field support ownerClasses downward upward |
+
+	path := MateReferencePath new: steps asArray.
+	field := steps last prop.
+	support := 0.
+	ownerClasses := Set new.
+	downward := 0.
+	upward := 0.
+
+	instances do: [ :instance | | owners |
+		owners := [ steps last ownersIn: (path targetsFrom: instance) ] on: Error do: [ :e | ^ nil ].
+		owners do: [ :owner |
+			([ (owner instVarNamed: field) == instance ] on: Error do: [ :e | false ]) ifFalse: [ ^ nil ].
+			(owner == instance or: [ (observer depthOf: owner) > (observer depthOf: instance) ])
+				ifTrue: [ downward := downward + 1 ]
+				ifFalse: [ upward := upward + 1 ].
+			ownerClasses add: owner class ].
+		support := support + owners size ].
+
+	support = 0 ifTrue: [ ^ nil ].
+	upward > downward ifTrue: [ ^ #upward ].
+
+	^ { ownerClasses. support }
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> closes: steps for: aClass ownerClasses: ownerClasses [
+
+	| path field |
+
+	path := MateReferencePath new: steps asArray.
+	field := steps last prop.
+
+	ownerClasses do: [ :ownerClass |
+		(referencePaths at: { ownerClass. field } ifAbsent: [ path ]) = path ifFalse: [ ^ false ].
+		(observer instancesOf: ownerClass) do: [ :owner | | target |
+			target := owner instVarNamed: field.
+			target ifNotNil: [
+				((target isKindOf: aClass) and: [
+					([ (steps last ownersIn: (path targetsFrom: target)) identityIncludes: owner ] on: Error do: [ :e | false ]) ])
+						ifFalse: [ ^ false ] ] ] ].
+
+	^ true
 ]
 
 { #category : 'declarations' }
@@ -75,6 +117,12 @@ MateGrammarInferrer >> collectionDeclarationFor: profile in: aClass [
 			self record: #size on: aClass field: profile name description: 'minimum size ', sizes min printString, ' generalized to 0, because there are few observations or the elements are objects that may recurse' support: sizes size accepted: false ].
 
 	^ decl
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> commonSuperclassOf: aClass and: anotherClass [
+
+	^ aClass withAllSuperclasses detect: [ :each | anotherClass includesBehavior: each ]
 ]
 
 { #category : 'declarations' }
@@ -208,54 +256,6 @@ MateGrammarInferrer >> grammar [
 ]
 
 { #category : 'relationships' }
-MateGrammarInferrer >> check: steps for: aClass on: instances [
-
-	| path field support ownerClasses downward upward |
-
-	path := MateReferencePath new: steps asArray.
-	field := steps last prop.
-	support := 0.
-	ownerClasses := Set new.
-	downward := 0.
-	upward := 0.
-
-	instances do: [ :instance | | owners |
-		owners := [ steps last ownersIn: (path targetsFrom: instance) ] on: Error do: [ :e | ^ nil ].
-		owners do: [ :owner |
-			([ (owner instVarNamed: field) == instance ] on: Error do: [ :e | false ]) ifFalse: [ ^ nil ].
-			(owner == instance or: [ (observer depthOf: owner) > (observer depthOf: instance) ])
-				ifTrue: [ downward := downward + 1 ]
-				ifFalse: [ upward := upward + 1 ].
-			ownerClasses add: owner class ].
-		support := support + owners size ].
-
-	support = 0 ifTrue: [ ^ nil ].
-	upward > downward ifTrue: [ ^ #upward ].
-
-	^ { ownerClasses. support }
-]
-
-{ #category : 'relationships' }
-MateGrammarInferrer >> closes: steps for: aClass ownerClasses: ownerClasses [
-
-	| path field |
-
-	path := MateReferencePath new: steps asArray.
-	field := steps last prop.
-
-	ownerClasses do: [ :ownerClass |
-		(referencePaths at: { ownerClass. field } ifAbsent: [ path ]) = path ifFalse: [ ^ false ].
-		(observer instancesOf: ownerClass) do: [ :owner | | target |
-			target := owner instVarNamed: field.
-			target ifNotNil: [
-				((target isKindOf: aClass) and: [
-					([ (steps last ownersIn: (path targetsFrom: target)) identityIncludes: owner ] on: Error do: [ :e | false ]) ])
-						ifFalse: [ ^ false ] ] ] ].
-
-	^ true
-]
-
-{ #category : 'relationships' }
 MateGrammarInferrer >> holds: steps for: aClass [
 
 	| sample result |
@@ -283,41 +283,6 @@ MateGrammarInferrer >> inferBackReferences [
 					result = #upward
 						ifTrue: [ self rejectUpwardReference: steps for: aClass ]
 						ifFalse: [ self acceptBackReference: steps for: aClass ownerClasses: result first support: result second ] ] ] ] ]
-]
-
-{ #category : 'relationships' }
-MateGrammarInferrer >> inherit: path in: aClass [
-
-	| result |
-
-	((backReferences at: aClass ifAbsent: [ #() ]) includes: path) ifTrue: [ ^ self ].
-
-	result := self check: path path for: aClass on: (observer instancesOf: aClass).
-	(result isNil or: [ result = #upward ]) ifTrue: [ ^ self ].
-
-	(backReferences at: aClass ifAbsentPut: [ OrderedCollection new ]) add: path.
-	result first do: [ :ownerClass | | key |
-		key := { ownerClass. path path last prop }.
-		(referencePaths at: key ifAbsent: [ nil ]) = path ifTrue: [
-			referenceFields at: key put: (self commonSuperclassOf: (referenceFields at: key) and: aClass) ] ].
-
-	self
-		record: #backReference
-		on: aClass
-		field: nil
-		description: (MateWriter new writeReferencePath: path), ' shared with a class of its hierarchy'
-		support: result second
-		accepted: true
-]
-
-{ #category : 'relationships' }
-MateGrammarInferrer >> inheritBackReferences [
-
-	backReferences associations do: [ :association |
-		association value copy do: [ :path |
-			observer observedClasses do: [ :other |
-				(other ~= association key and: [ (other inheritsFrom: association key) or: [ association key inheritsFrom: other ] ])
-					ifTrue: [ self inherit: path in: other ] ] ] ]
 ]
 
 { #category : 'relationships' }
@@ -364,6 +329,41 @@ MateGrammarInferrer >> inferSharing [
 				description: shared printString, ' instances are referenced from more than one place; generated graphs will hold separate copies'
 				support: (observer instancesOf: aClass) size
 				accepted: false ] ]
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> inherit: path in: aClass [
+
+	| result |
+
+	((backReferences at: aClass ifAbsent: [ #() ]) includes: path) ifTrue: [ ^ self ].
+
+	result := self check: path path for: aClass on: (observer instancesOf: aClass).
+	(result isNil or: [ result = #upward ]) ifTrue: [ ^ self ].
+
+	(backReferences at: aClass ifAbsentPut: [ OrderedCollection new ]) add: path.
+	result first do: [ :ownerClass | | key |
+		key := { ownerClass. path path last prop }.
+		(referencePaths at: key ifAbsent: [ nil ]) = path ifTrue: [
+			referenceFields at: key put: (self commonSuperclassOf: (referenceFields at: key) and: aClass) ] ].
+
+	self
+		record: #backReference
+		on: aClass
+		field: nil
+		description: (MateWriter new writeReferencePath: path), ' shared with a class of its hierarchy'
+		support: result second
+		accepted: true
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> inheritBackReferences [
+
+	backReferences associations do: [ :association |
+		association value copy do: [ :path |
+			observer observedClasses do: [ :other |
+				(other ~= association key and: [ (other inheritsFrom: association key) or: [ association key inheritsFrom: other ] ])
+					ifTrue: [ self inherit: path in: other ] ] ] ]
 ]
 
 { #category : 'initialization' }
@@ -466,12 +466,6 @@ MateGrammarInferrer >> maxDepth: anInteger [
 ]
 
 { #category : 'accessing' }
-MateGrammarInferrer >> maxRelationshipSamples: anInteger [
-
-	maxRelationshipSamples := anInteger
-]
-
-{ #category : 'accessing' }
 MateGrammarInferrer >> maxEnumerationSize: anInteger [
 
 	maxEnumerationSize := anInteger
@@ -481,6 +475,12 @@ MateGrammarInferrer >> maxEnumerationSize: anInteger [
 MateGrammarInferrer >> maxPathLength: anInteger [
 
 	maxPathLength := anInteger
+]
+
+{ #category : 'accessing' }
+MateGrammarInferrer >> maxRelationshipSamples: anInteger [
+
+	maxRelationshipSamples := anInteger
 ]
 
 { #category : 'accessing' }
@@ -572,6 +572,18 @@ MateGrammarInferrer >> pathsFrom: aClass length: length [
 		unique ]
 ]
 
+{ #category : 'reporting' }
+MateGrammarInferrer >> record: kind on: aClass field: fieldName description: aString support: anInteger accepted: aBoolean [
+
+	findings add: (MateInferenceFinding
+		type: aClass
+		field: fieldName
+		kind: kind
+		description: aString
+		support: anInteger
+		accepted: aBoolean)
+]
+
 { #category : 'relationships' }
 MateGrammarInferrer >> rejectUpwardReference: steps for: aClass [
 
@@ -590,6 +602,13 @@ MateGrammarInferrer >> rejectUpwardReference: steps for: aClass [
 		accepted: false
 ]
 
+{ #category : 'inferring' }
+MateGrammarInferrer >> report [
+
+	^ String streamContents: [ :stream |
+		self findings do: [ :each | stream print: each ] separatedBy: [ stream cr ] ]
+]
+
 { #category : 'relationships' }
 MateGrammarInferrer >> sampleOf: aClass [
 
@@ -600,25 +619,6 @@ MateGrammarInferrer >> sampleOf: aClass [
 
 	step := instances size / maxRelationshipSamples.
 	^ (0 to: maxRelationshipSamples - 1) collect: [ :index | instances at: (index * step) floor + 1 ]
-]
-
-{ #category : 'reporting' }
-MateGrammarInferrer >> record: kind on: aClass field: fieldName description: aString support: anInteger accepted: aBoolean [
-
-	findings add: (MateInferenceFinding
-		type: aClass
-		field: fieldName
-		kind: kind
-		description: aString
-		support: anInteger
-		accepted: aBoolean)
-]
-
-{ #category : 'inferring' }
-MateGrammarInferrer >> report [
-
-	^ String streamContents: [ :stream |
-		self findings do: [ :each | stream print: each ] separatedBy: [ stream cr ] ]
 ]
 
 { #category : 'relationships' }
@@ -665,18 +665,18 @@ MateGrammarInferrer >> unifyReferenceFields [
 		holders do: [ :holder | referenceFields at: { holder. definition second } put: type ] ]
 ]
 
-{ #category : 'relationships' }
-MateGrammarInferrer >> widen: aClassOrNil with: aClass [
-
-	^ aClassOrNil
-		ifNil: [ aClass ]
-		ifNotNil: [ self commonSuperclassOf: aClassOrNil and: aClass ]
-]
-
 { #category : 'declarations' }
 MateGrammarInferrer >> unionOf: values [
 
 	^ values
 		inject: nil
 		into: [ :union :each | MateOptionalType union: union with: (self typeOf: each) ]
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> widen: aClassOrNil with: aClass [
+
+	^ aClassOrNil
+		ifNil: [ aClass ]
+		ifNotNil: [ self commonSuperclassOf: aClassOrNil and: aClass ]
 ]

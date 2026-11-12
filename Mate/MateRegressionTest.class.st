@@ -54,6 +54,16 @@ MateRegressionTest >> testArrayWithoutSizeHasDefaultBounds [
 		self assert: (instance array size between: 0 and: 10) ]
 ]
 
+{ #category : 'tests - generation' }
+MateRegressionTest >> testClassesThatForbidNewAreStillGenerated [
+
+	| grammar |
+
+	grammar := self grammarFrom: 'MateSealed -> { value: { type: SmallInteger, between: 1 and: 9 } }'.
+
+	self assert: ((grammar gen: MateSealed) value between: 1 and: 9)
+]
+
 { #category : 'tests - constraints' }
 MateRegressionTest >> testConstraintBoundsAreExclusiveForGreaterThanAndLessThan [
 
@@ -64,6 +74,53 @@ MateRegressionTest >> testConstraintBoundsAreExclusiveForGreaterThanAndLessThan 
 	self deny: ((MateConstraint lessThan: 10) includes: 10).
 	self assert: ((MateConstraint between: -5 and: 5) includes: -5).
 	self deny: ((MateConstraint between: -5 and: 5) includes: Float nan)
+]
+
+{ #category : 'tests - generation' }
+MateRegressionTest >> testDepthLimitOnlyCutsRecursiveFields [
+
+	| grammar person |
+
+	grammar := MatePersonGrammar new.
+	grammar generator maxDerivationHeight: 0.
+	person := grammar gen: MatePerson.
+
+	self assert: (person instVarNamed: 'age') class equals: MateAge.
+	self assert: person age isInteger
+]
+
+{ #category : 'tests - generation' }
+MateRegressionTest >> testDepthLimitPrefersNonRecursiveOptions [
+
+	| grammar instance |
+
+	grammar := self grammarFrom: 'ReferredObject -> { value: SmallInteger, ref: ReferredObject | MateAge }'.
+	grammar seed: 5.
+	grammar generator maxDerivationHeight: 3.
+
+	20 timesRepeat: [
+		instance := grammar gen: ReferredObject.
+		[ instance class = ReferredObject ] whileTrue: [ instance := instance instVarNamed: 'ref' ].
+		self assert: instance class equals: MateAge ]
+]
+
+{ #category : 'tests - generation' }
+MateRegressionTest >> testEqualityInvariantsAreEnforcedTogether [
+
+	| grammar |
+
+	grammar := self grammarFrom: 'MateSpan -> {
+		start: { type: SmallInteger, between: 0 and: 1000 },
+		stop: { type: SmallInteger, between: 0 and: 1000 },
+		kind: { type: SmallInteger, between: 0 and: 1000 },
+		invariants: { kind = start, kind = stop, start = stop } }'.
+	grammar seed: 21.
+
+	20 timesRepeat: [ | span |
+		span := grammar gen: MateSpan.
+		self assert: span start equals: span stop.
+		self assert: span kind equals: span start.
+		self assert: (grammar parse: span) notNil ]
 ]
 
 { #category : 'tests - coverage' }
@@ -316,34 +373,6 @@ MateRegressionTest >> testParserSupportsNullableFields [
 ]
 
 { #category : 'tests - generation' }
-MateRegressionTest >> testDepthLimitOnlyCutsRecursiveFields [
-
-	| grammar person |
-
-	grammar := MatePersonGrammar new.
-	grammar generator maxDerivationHeight: 0.
-	person := grammar gen: MatePerson.
-
-	self assert: (person instVarNamed: 'age') class equals: MateAge.
-	self assert: person age isInteger
-]
-
-{ #category : 'tests - generation' }
-MateRegressionTest >> testDepthLimitPrefersNonRecursiveOptions [
-
-	| grammar instance |
-
-	grammar := self grammarFrom: 'ReferredObject -> { value: SmallInteger, ref: ReferredObject | MateAge }'.
-	grammar seed: 5.
-	grammar generator maxDerivationHeight: 3.
-
-	20 timesRepeat: [
-		instance := grammar gen: ReferredObject.
-		[ instance class = ReferredObject ] whileTrue: [ instance := instance instVarNamed: 'ref' ].
-		self assert: instance class equals: MateAge ]
-]
-
-{ #category : 'tests - generation' }
 MateRegressionTest >> testRecursiveFieldsTerminate [
 
 	| grammar instance depth |
@@ -358,13 +387,18 @@ MateRegressionTest >> testRecursiveFieldsTerminate [
 ]
 
 { #category : 'tests - generation' }
-MateRegressionTest >> testClassesThatForbidNewAreStillGenerated [
+MateRegressionTest >> testSeedMakesGenerationReproducible [
 
-	| grammar |
+	| generate |
 
-	grammar := self grammarFrom: 'MateSealed -> { value: { type: SmallInteger, between: 1 and: 9 } }'.
+	generate := [ | grammar |
+		grammar := MatePlayerGrammar new.
+		grammar seed: 1234.
+		(1 to: 5) collect: [ :i | | player |
+			player := grammar gen: Player.
+			{ player name . player level . player missingExperienceForNextLevel . player characterClass class } ] ].
 
-	self assert: ((grammar gen: MateSealed) value between: 1 and: 9)
+	self assert: generate value equals: generate value
 ]
 
 { #category : 'tests - generation' }
@@ -393,40 +427,6 @@ MateRegressionTest >> testSelfReferencesSkipObjectsWithoutTheField [
 	(holder array select: [ :each | each class = ReferredObject ]) do: [ :each |
 		self assert: (each instVarNamed: 'ref') identicalTo: holder ].
 	self assert: (grammar parse: holder) notNil
-]
-
-{ #category : 'tests - generation' }
-MateRegressionTest >> testEqualityInvariantsAreEnforcedTogether [
-
-	| grammar |
-
-	grammar := self grammarFrom: 'MateSpan -> {
-		start: { type: SmallInteger, between: 0 and: 1000 },
-		stop: { type: SmallInteger, between: 0 and: 1000 },
-		kind: { type: SmallInteger, between: 0 and: 1000 },
-		invariants: { kind = start, kind = stop, start = stop } }'.
-	grammar seed: 21.
-
-	20 timesRepeat: [ | span |
-		span := grammar gen: MateSpan.
-		self assert: span start equals: span stop.
-		self assert: span kind equals: span start.
-		self assert: (grammar parse: span) notNil ]
-]
-
-{ #category : 'tests - generation' }
-MateRegressionTest >> testSeedMakesGenerationReproducible [
-
-	| generate |
-
-	generate := [ | grammar |
-		grammar := MatePlayerGrammar new.
-		grammar seed: 1234.
-		(1 to: 5) collect: [ :i | | player |
-			player := grammar gen: Player.
-			{ player name . player level . player missingExperienceForNextLevel . player characterClass class } ] ].
-
-	self assert: generate value equals: generate value
 ]
 
 { #category : 'tests - types' }

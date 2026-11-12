@@ -34,6 +34,44 @@ MateGrammarInferrerTest >> inferrerFor: instances [
 ]
 
 { #category : 'helpers' }
+MateGrammarInferrerTest >> mixedTrees [
+
+	^ (1 to: 12) collect: [ :i | | root |
+		root := (i odd ifTrue: [ MateSpecialTreeNode ] ifFalse: [ MateTreeNode ]) new.
+		root label: #a.
+		(root addChild: (MateSpecialTreeNode new label: #b; yourself))
+			addChild: (MateTreeNode new label: #c; yourself).
+		(root addChild: (MateTreeNode new label: #c; yourself))
+			addChild: (MateSpecialTreeNode new label: #a; yourself).
+		root ]
+]
+
+{ #category : 'helpers' }
+MateGrammarInferrerTest >> owners [
+
+	^ (1 to: 12) collect: [ :i | | owner |
+		owner := RefObject new.
+		owner instVarNamed: 'name' put: 'owner ', i printString.
+		owner instVarNamed: 'myLittleObject' put: (ReferredObject new
+			instVarNamed: 'value' put: i;
+			instVarNamed: 'ref' put: owner;
+			yourself).
+		owner ]
+]
+
+{ #category : 'helpers' }
+MateGrammarInferrerTest >> ownersWithTrees [
+
+	^ (1 to: 12) collect: [ :i | | node |
+		node := MateTreeNode new.
+		node label: (MateSpan from: i to: i + 1 kind: #open).
+		RefObject new
+			instVarNamed: 'name' put: node;
+			instVarNamed: 'myLittleObject' put: (ReferredObject new instVarNamed: 'value' put: i; yourself);
+			yourself ]
+]
+
+{ #category : 'helpers' }
 MateGrammarInferrerTest >> players [
 
 	| classes |
@@ -61,51 +99,65 @@ MateGrammarInferrerTest >> spans [
 		MateSpan from: i to: i + (i \\ 4) kind: (#( #open #closed #moved nil ) at: i \\ 4 + 1) ]
 ]
 
-{ #category : 'tests - relationships' }
-MateGrammarInferrerTest >> testDetectsBlocChildParentBackReference [
+{ #category : 'tests - unary' }
+MateGrammarInferrerTest >> testArraysHoldingOnlyNilsGenerate [
 
-	| inferrer grammar |
+	| holders grammar |
 
-	inferrer := self inferrerFor: { self blocElement }.
-	grammar := inferrer grammar.
+	holders := (1 to: 12) collect: [ :i |
+		BlChildrenArray new instVarNamed: 'array' put: (Array new: 3); yourself ].
+	grammar := (self inferrerFor: holders) grammar.
 
-	self assert: (inferrer findings anySatisfy: [ :each |
-		each kind = #backReference and: [ each type = BlBoundsCache and: [ each accepted not ] ] ]).
-	self assert: ((self referencePathsOf: BlElement in: grammar) includes: 'boundsCache.element').
-	self assert: ((self referencePathsOf: BlElement in: grammar) includes: 'children.array[ .parent ]').
-	self assert: ((self referencePathsOf: BlElement in: grammar) includes: 'eventDispatcher.owner').
-	self assert: ((self field: 'parent' of: BlElement in: grammar) isKindOf: MateInstRefVarDecl).
-	self deny: ((self field: 'eventDispatcher' of: BlElement in: grammar) isKindOf: MateInstRefVarDecl).
-	self deny: ((self field: 'boundsCache' of: BlElement in: grammar) isKindOf: MateInstRefVarDecl)
+	self assert: (grammar gen: BlChildrenArray) array equals: #( nil nil nil )
+]
+
+{ #category : 'tests - unary' }
+MateGrammarInferrerTest >> testArraysWithNilElementsKeepNilAsAnElementType [
+
+	| holders grammar decl |
+
+	holders := (1 to: 12) collect: [ :i |
+		BlChildrenArray new instVarNamed: 'array' put: { i. nil. i + 1 }; yourself ].
+	grammar := (self inferrerFor: holders) grammar.
+	decl := self field: 'array' of: BlChildrenArray in: grammar.
+
+	self assert: (decl elementType acceptType: SmallInteger).
+	self assert: (decl elementType acceptType: UndefinedObject).
+	self assert: (grammar parse: (grammar gen: BlChildrenArray)) notNil
 ]
 
 { #category : 'tests - relationships' }
-MateGrammarInferrerTest >> testGeneratedOwnersBuildTheirBackPointingParts [
+MateGrammarInferrerTest >> testBackReferencesAreSharedAcrossAClassHierarchy [
 
 	| grammar |
 
-	grammar := (self inferrerFor: self owners) grammar.
-	grammar seed: 4.
+	grammar := (self inferrerFor: self mixedTrees) grammar.
+	grammar seed: 6.
+	grammar generator maxDerivationHeight: 5.
 
-	20 timesRepeat: [ | owner part |
-		owner := grammar gen: RefObject.
-		part := owner instVarNamed: 'myLittleObject'.
-		self assert: part class equals: ReferredObject.
-		self assert: (part instVarNamed: 'ref') identicalTo: owner.
-		self assert: (grammar parse: owner) notNil ]
+	{ MateTreeNode. MateSpecialTreeNode } do: [ :each |
+		self assert: (self referencePathsOf: each in: grammar) asArray equals: #( 'children[ .parent ]' ).
+		self assert: (self field: 'parent' of: each in: grammar) type equals: MateTreeNode.
+		10 timesRepeat: [ | tree |
+			tree := grammar gen: each.
+			tree children do: [ :child | self assert: child parent identicalTo: tree ].
+			self assert: (grammar parse: tree) notNil ] ]
 ]
 
-{ #category : 'tests - relationships' }
-MateGrammarInferrerTest >> testKeepsOnlyTheDownwardDirectionOfTwoWayReferences [
+{ #category : 'tests - depth' }
+MateGrammarInferrerTest >> testDepthLimitKeepsFieldsOfClassesObservedCloser [
 
-	| grammar |
+	| grammar children |
 
-	grammar := (self inferrerFor: self owners) grammar.
+	grammar := (MateGrammarInferrer new
+		maxDepth: 3;
+		observeAll: self trees;
+		yourself) grammar.
+	children := self field: 'children' of: MateTreeNode in: grammar.
 
-	self assert: (self referencePathsOf: RefObject in: grammar) asArray equals: #( 'myLittleObject.ref' ).
-	self assert: (self referencePathsOf: ReferredObject in: grammar) isEmpty.
-	self assert: ((self field: 'ref' of: ReferredObject in: grammar) isKindOf: MateInstRefVarDecl).
-	self deny: ((self field: 'myLittleObject' of: RefObject in: grammar) isKindOf: MateInstRefVarDecl)
+	self assert: children notNil.
+	self assert: children elementType equals: MateTreeNode.
+	self assert: ((self referencePathsOf: MateTreeNode in: grammar) includes: 'children[ .parent ]')
 ]
 
 { #category : 'tests - depth' }
@@ -127,22 +179,6 @@ MateGrammarInferrerTest >> testDepthLimitLeavesOutFieldsOfUnobservedClasses [
 ]
 
 { #category : 'tests - depth' }
-MateGrammarInferrerTest >> testDepthLimitKeepsFieldsOfClassesObservedCloser [
-
-	| grammar children |
-
-	grammar := (MateGrammarInferrer new
-		maxDepth: 3;
-		observeAll: self trees;
-		yourself) grammar.
-	children := self field: 'children' of: MateTreeNode in: grammar.
-
-	self assert: children notNil.
-	self assert: children elementType equals: MateTreeNode.
-	self assert: ((self referencePathsOf: MateTreeNode in: grammar) includes: 'children[ .parent ]')
-]
-
-{ #category : 'tests - depth' }
 MateGrammarInferrerTest >> testDepthLimitedGrammarsGenerateValidObjects [
 
 	| grammar |
@@ -160,124 +196,22 @@ MateGrammarInferrerTest >> testDepthLimitedGrammarsGenerateValidObjects [
 		self assert: (grammar parse: owner) notNil ]
 ]
 
-{ #category : 'tests - depth' }
-MateGrammarInferrerTest >> testObservationUsesShortestDepths [
-
-	| deep shortcut observer |
-
-	deep := MateTreeNode new.
-	shortcut := RefObject new instVarNamed: 'name' put: deep; yourself.
-	observer := MateObserver new maxDepth: 1; yourself.
-	observer observeAll: { (MateTreeNode new addChild: (MateTreeNode new addChild: deep; yourself); yourself). shortcut }.
-
-	self assert: (observer depthOf: deep) equals: 1.
-	self assert: (observer isObserved: deep)
-]
-
 { #category : 'tests - relationships' }
-MateGrammarInferrerTest >> testBackReferencesAreSharedAcrossAClassHierarchy [
+MateGrammarInferrerTest >> testDetectsBlocChildParentBackReference [
 
-	| grammar |
+	| inferrer grammar |
 
-	grammar := (self inferrerFor: self mixedTrees) grammar.
-	grammar seed: 6.
-	grammar generator maxDerivationHeight: 5.
+	inferrer := self inferrerFor: { self blocElement }.
+	grammar := inferrer grammar.
 
-	{ MateTreeNode. MateSpecialTreeNode } do: [ :each |
-		self assert: (self referencePathsOf: each in: grammar) asArray equals: #( 'children[ .parent ]' ).
-		self assert: (self field: 'parent' of: each in: grammar) type equals: MateTreeNode.
-		10 timesRepeat: [ | tree |
-			tree := grammar gen: each.
-			tree children do: [ :child | self assert: child parent identicalTo: tree ].
-			self assert: (grammar parse: tree) notNil ] ]
-]
-
-{ #category : 'tests - unary' }
-MateGrammarInferrerTest >> testArraysWithNilElementsKeepNilAsAnElementType [
-
-	| holders grammar decl |
-
-	holders := (1 to: 12) collect: [ :i |
-		BlChildrenArray new instVarNamed: 'array' put: { i. nil. i + 1 }; yourself ].
-	grammar := (self inferrerFor: holders) grammar.
-	decl := self field: 'array' of: BlChildrenArray in: grammar.
-
-	self assert: (decl elementType acceptType: SmallInteger).
-	self assert: (decl elementType acceptType: UndefinedObject).
-	self assert: (grammar parse: (grammar gen: BlChildrenArray)) notNil
-]
-
-{ #category : 'tests - unary' }
-MateGrammarInferrerTest >> testArraysHoldingOnlyNilsGenerate [
-
-	| holders grammar |
-
-	holders := (1 to: 12) collect: [ :i |
-		BlChildrenArray new instVarNamed: 'array' put: (Array new: 3); yourself ].
-	grammar := (self inferrerFor: holders) grammar.
-
-	self assert: (grammar gen: BlChildrenArray) array equals: #( nil nil nil )
-]
-
-{ #category : 'tests - invariants' }
-MateGrammarInferrerTest >> testInvariantsImpliedByRangesAreNotReported [
-
-	| spans grammar |
-
-	spans := (0 to: 29) collect: [ :i | MateSpan from: i \\ 6 to: 5 + (i \\ 5) kind: #open ].
-	grammar := (self inferrerFor: spans) grammar.
-
-	self assert: (grammar typeDeclarations at: MateSpan) invariants isEmpty
-]
-
-{ #category : 'tests - relationships' }
-MateGrammarInferrerTest >> testInheritedReferenceFieldsShareOneType [
-
-	| trees grammar |
-
-	trees := (1 to: 12) collect: [ :i | | root |
-		root := (i odd ifTrue: [ MateSpecialTreeNode ] ifFalse: [ MateTreeNode ]) new.
-		root label: #a.
-		root addChild: (MateTreeNode new label: #b; yourself).
-		i odd ifTrue: [ root addChild: (MateSpecialTreeNode new label: #c; yourself) ].
-		root ].
-	grammar := (self inferrerFor: trees) grammar.
-	grammar seed: 12.
-	grammar generator maxDerivationHeight: 5.
-
-	self assert: (self field: 'parent' of: MateSpecialTreeNode in: grammar) type equals: MateTreeNode.
-	self assert: (self field: 'parent' of: MateTreeNode in: grammar) type equals: MateTreeNode.
-	20 timesRepeat: [ self assert: (grammar parse: (grammar gen: MateTreeNode)) notNil ]
-]
-
-{ #category : 'tests - relationships' }
-MateGrammarInferrerTest >> testShortcutsDoNotHideTheDownwardDirection [
-
-	| trees grammar |
-
-	trees := self trees.
-	trees do: [ :each | each label: each children first children first ].
-
-	grammar := (self inferrerFor: trees) grammar.
-
-	self assert: ((self referencePathsOf: MateTreeNode in: grammar) includes: 'children[ .parent ]').
-	self assert: ((self field: 'parent' of: MateTreeNode in: grammar) isKindOf: MateInstRefVarDecl)
-]
-
-{ #category : 'tests - relationships' }
-MateGrammarInferrerTest >> testSampledRelationshipsAreVerifiedOnAllInstances [
-
-	| trees grammar |
-
-	trees := self trees.
-	trees last children last parent: trees first.
-
-	grammar := (MateGrammarInferrer new
-		maxRelationshipSamples: 2;
-		observeAll: trees;
-		yourself) grammar.
-
-	self assert: (self referencePathsOf: MateTreeNode in: grammar) isEmpty
+	self assert: (inferrer findings anySatisfy: [ :each |
+		each kind = #backReference and: [ each type = BlBoundsCache and: [ each accepted not ] ] ]).
+	self assert: ((self referencePathsOf: BlElement in: grammar) includes: 'boundsCache.element').
+	self assert: ((self referencePathsOf: BlElement in: grammar) includes: 'children.array[ .parent ]').
+	self assert: ((self referencePathsOf: BlElement in: grammar) includes: 'eventDispatcher.owner').
+	self assert: ((self field: 'parent' of: BlElement in: grammar) isKindOf: MateInstRefVarDecl).
+	self deny: ((self field: 'eventDispatcher' of: BlElement in: grammar) isKindOf: MateInstRefVarDecl).
+	self deny: ((self field: 'boundsCache' of: BlElement in: grammar) isKindOf: MateInstRefVarDecl)
 ]
 
 { #category : 'tests - relationships' }
@@ -308,6 +242,22 @@ MateGrammarInferrerTest >> testDoesNotInferEnumerationsForManyDistinctValues [
 	self assert: (self field: 'name' of: Player in: grammar) type equals: ByteString.
 	self assert: (inferrer findings anySatisfy: [ :each |
 		each kind = #enumeration and: [ each field = 'name' and: [ each accepted not ] ] ])
+]
+
+{ #category : 'tests - relationships' }
+MateGrammarInferrerTest >> testGeneratedOwnersBuildTheirBackPointingParts [
+
+	| grammar |
+
+	grammar := (self inferrerFor: self owners) grammar.
+	grammar seed: 4.
+
+	20 timesRepeat: [ | owner part |
+		owner := grammar gen: RefObject.
+		part := owner instVarNamed: 'myLittleObject'.
+		self assert: part class equals: ReferredObject.
+		self assert: (part instVarNamed: 'ref') identicalTo: owner.
+		self assert: (grammar parse: owner) notNil ]
 ]
 
 { #category : 'tests - generation' }
@@ -438,6 +388,64 @@ MateGrammarInferrerTest >> testInfersUnionsOfObservedClasses [
 	self deny: (decl acceptType: Player)
 ]
 
+{ #category : 'tests - relationships' }
+MateGrammarInferrerTest >> testInheritedReferenceFieldsShareOneType [
+
+	| trees grammar |
+
+	trees := (1 to: 12) collect: [ :i | | root |
+		root := (i odd ifTrue: [ MateSpecialTreeNode ] ifFalse: [ MateTreeNode ]) new.
+		root label: #a.
+		root addChild: (MateTreeNode new label: #b; yourself).
+		i odd ifTrue: [ root addChild: (MateSpecialTreeNode new label: #c; yourself) ].
+		root ].
+	grammar := (self inferrerFor: trees) grammar.
+	grammar seed: 12.
+	grammar generator maxDerivationHeight: 5.
+
+	self assert: (self field: 'parent' of: MateSpecialTreeNode in: grammar) type equals: MateTreeNode.
+	self assert: (self field: 'parent' of: MateTreeNode in: grammar) type equals: MateTreeNode.
+	20 timesRepeat: [ self assert: (grammar parse: (grammar gen: MateTreeNode)) notNil ]
+]
+
+{ #category : 'tests - invariants' }
+MateGrammarInferrerTest >> testInvariantsImpliedByRangesAreNotReported [
+
+	| spans grammar |
+
+	spans := (0 to: 29) collect: [ :i | MateSpan from: i \\ 6 to: 5 + (i \\ 5) kind: #open ].
+	grammar := (self inferrerFor: spans) grammar.
+
+	self assert: (grammar typeDeclarations at: MateSpan) invariants isEmpty
+]
+
+{ #category : 'tests - relationships' }
+MateGrammarInferrerTest >> testKeepsOnlyTheDownwardDirectionOfTwoWayReferences [
+
+	| grammar |
+
+	grammar := (self inferrerFor: self owners) grammar.
+
+	self assert: (self referencePathsOf: RefObject in: grammar) asArray equals: #( 'myLittleObject.ref' ).
+	self assert: (self referencePathsOf: ReferredObject in: grammar) isEmpty.
+	self assert: ((self field: 'ref' of: ReferredObject in: grammar) isKindOf: MateInstRefVarDecl).
+	self deny: ((self field: 'myLittleObject' of: RefObject in: grammar) isKindOf: MateInstRefVarDecl)
+]
+
+{ #category : 'tests - depth' }
+MateGrammarInferrerTest >> testObservationUsesShortestDepths [
+
+	| deep shortcut observer |
+
+	deep := MateTreeNode new.
+	shortcut := RefObject new instVarNamed: 'name' put: deep; yourself.
+	observer := MateObserver new maxDepth: 1; yourself.
+	observer observeAll: { (MateTreeNode new addChild: (MateTreeNode new addChild: deep; yourself); yourself). shortcut }.
+
+	self assert: (observer depthOf: deep) equals: 1.
+	self assert: (observer isObserved: deep)
+]
+
 { #category : 'tests - reporting' }
 MateGrammarInferrerTest >> testReportListsAcceptedAndRejectedFindings [
 
@@ -465,6 +473,36 @@ MateGrammarInferrerTest >> testReportsSharedObjects [
 		each kind = #sharing and: [ each type = ReferredObject ] ])
 ]
 
+{ #category : 'tests - relationships' }
+MateGrammarInferrerTest >> testSampledRelationshipsAreVerifiedOnAllInstances [
+
+	| trees grammar |
+
+	trees := self trees.
+	trees last children last parent: trees first.
+
+	grammar := (MateGrammarInferrer new
+		maxRelationshipSamples: 2;
+		observeAll: trees;
+		yourself) grammar.
+
+	self assert: (self referencePathsOf: MateTreeNode in: grammar) isEmpty
+]
+
+{ #category : 'tests - relationships' }
+MateGrammarInferrerTest >> testShortcutsDoNotHideTheDownwardDirection [
+
+	| trees grammar |
+
+	trees := self trees.
+	trees do: [ :each | each label: each children first children first ].
+
+	grammar := (self inferrerFor: trees) grammar.
+
+	self assert: ((self referencePathsOf: MateTreeNode in: grammar) includes: 'children[ .parent ]').
+	self assert: ((self field: 'parent' of: MateTreeNode in: grammar) isKindOf: MateInstRefVarDecl)
+]
+
 { #category : 'tests - unary' }
 MateGrammarInferrerTest >> testSkipsUnsupportedFields [
 
@@ -489,44 +527,6 @@ MateGrammarInferrerTest >> testValidationRejectsInvariantViolations [
 	grammar := (self inferrerFor: self spans) grammar.
 
 	self should: [ grammar parse: (MateSpan from: 20 to: 10 kind: #open) ] raise: Error
-]
-
-{ #category : 'helpers' }
-MateGrammarInferrerTest >> owners [
-
-	^ (1 to: 12) collect: [ :i | | owner |
-		owner := RefObject new.
-		owner instVarNamed: 'name' put: 'owner ', i printString.
-		owner instVarNamed: 'myLittleObject' put: (ReferredObject new
-			instVarNamed: 'value' put: i;
-			instVarNamed: 'ref' put: owner;
-			yourself).
-		owner ]
-]
-
-{ #category : 'helpers' }
-MateGrammarInferrerTest >> ownersWithTrees [
-
-	^ (1 to: 12) collect: [ :i | | node |
-		node := MateTreeNode new.
-		node label: (MateSpan from: i to: i + 1 kind: #open).
-		RefObject new
-			instVarNamed: 'name' put: node;
-			instVarNamed: 'myLittleObject' put: (ReferredObject new instVarNamed: 'value' put: i; yourself);
-			yourself ]
-]
-
-{ #category : 'helpers' }
-MateGrammarInferrerTest >> mixedTrees [
-
-	^ (1 to: 12) collect: [ :i | | root |
-		root := (i odd ifTrue: [ MateSpecialTreeNode ] ifFalse: [ MateTreeNode ]) new.
-		root label: #a.
-		(root addChild: (MateSpecialTreeNode new label: #b; yourself))
-			addChild: (MateTreeNode new label: #c; yourself).
-		(root addChild: (MateTreeNode new label: #c; yourself))
-			addChild: (MateSpecialTreeNode new label: #a; yourself).
-		root ]
 ]
 
 { #category : 'helpers' }

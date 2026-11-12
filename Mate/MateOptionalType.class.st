@@ -71,6 +71,12 @@ MateOptionalType >> = anObject [
 	^ optionTypes = anObject types
 ]
 
+{ #category : 'visiting' }
+MateOptionalType >> acceptType: aType [
+
+	^ optionTypes anySatisfy: [ :each | aType includesBehavior: each ]
+]
+
 { #category : 'accessing' }
 MateOptionalType >> addAliases: someAliases [
 
@@ -89,12 +95,6 @@ MateOptionalType >> aliases [
 MateOptionalType >> aliases: someAliases [
 
 	aliases := someAliases asArray
-]
-
-{ #category : 'visiting' }
-MateOptionalType >> acceptType: aType [
-
-	^ optionTypes anySatisfy: [ :each | aType includesBehavior: each ]
 ]
 
 { #category : 'as yet unclassified' }

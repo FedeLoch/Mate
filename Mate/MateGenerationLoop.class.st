@@ -11,14 +11,6 @@ Class {
 	#tag : 'Generation'
 }
 
-{ #category : 'signalling' }
-MateGenerationLoop class >> signalFor: aType objects: anInteger path: aPath reason: aString [
-
-	^ self new
-		setRootType: aType objectCount: anInteger path: aPath;
-		signal: 'Generation of ', aType name, ' does not terminate: ', aString, '. Last steps: ', (self describe: aPath)
-]
-
 { #category : 'printing' }
 MateGenerationLoop class >> describe: aPath [
 
@@ -28,6 +20,14 @@ MateGenerationLoop class >> describe: aPath [
 	names size > 12 ifTrue: [ names := { '...' } , (names last: 12) ].
 
 	^ names asArray joinUsing: ' > '
+]
+
+{ #category : 'signalling' }
+MateGenerationLoop class >> signalFor: aType objects: anInteger path: aPath reason: aString [
+
+	^ self new
+		setRootType: aType objectCount: anInteger path: aPath;
+		signal: 'Generation of ', aType name, ' does not terminate: ', aString, '. Last steps: ', (self describe: aPath)
 ]
 
 { #category : 'accessing' }

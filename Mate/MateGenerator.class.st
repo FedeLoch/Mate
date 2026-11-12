@@ -44,6 +44,28 @@ MateGenerator >> builtInInstance: decl constraint: aConstraint from: context [
 	^ (builtInGenerators at: decl type) generateWithConstraint: aConstraint random: context random
 ]
 
+{ #category : 'looping' }
+MateGenerator >> checkLoopAt: context [
+
+	rootType ifNil: [ ^ self ].
+
+	objectCount := objectCount + 1.
+
+	objectCount > maxObjects ifTrue: [
+		MateGenerationLoop
+			signalFor: rootType
+			objects: objectCount
+			path: context path
+			reason: 'more than ', maxObjects printString, ' objects were generated' ].
+
+	context level > self maxNesting ifTrue: [
+		MateGenerationLoop
+			signalFor: rootType
+			objects: objectCount
+			path: context path
+			reason: 'objects are nested more than ', self maxNesting printString, ' levels deep' ]
+]
+
 { #category : 'visiting' }
 MateGenerator >> cutDerivation: instVarDecl from: context [
 
@@ -88,62 +110,6 @@ MateGenerator >> enforceInvariantsOf: decl on: node from: context [
 		decl invariants do: [ :invariant | self enforce: invariant of: decl on: node from: context ] ]
 ]
 
-{ #category : 'looping' }
-MateGenerator >> checkLoopAt: context [
-
-	rootType ifNil: [ ^ self ].
-
-	objectCount := objectCount + 1.
-
-	objectCount > maxObjects ifTrue: [
-		MateGenerationLoop
-			signalFor: rootType
-			objects: objectCount
-			path: context path
-			reason: 'more than ', maxObjects printString, ' objects were generated' ].
-
-	context level > self maxNesting ifTrue: [
-		MateGenerationLoop
-			signalFor: rootType
-			objects: objectCount
-			path: context path
-			reason: 'objects are nested more than ', self maxNesting printString, ' levels deep' ]
-]
-
-{ #category : 'looping' }
-MateGenerator >> guard: aBlock for: aType [
-
-	rootType ifNotNil: [ ^ aBlock value ].
-
-	rootType := aType.
-	objectCount := 0.
-	^ aBlock ensure: [ rootType := nil ]
-]
-
-{ #category : 'accessing' }
-MateGenerator >> maxNesting [
-
-	^ maxNesting ifNil: [ maxDerivationHeight + (2 * (grammar typeDeclarations size + 1)) ]
-]
-
-{ #category : 'accessing' }
-MateGenerator >> maxNesting: anInteger [
-
-	maxNesting := anInteger
-]
-
-{ #category : 'accessing' }
-MateGenerator >> maxObjects [
-
-	^ maxObjects
-]
-
-{ #category : 'accessing' }
-MateGenerator >> maxObjects: anInteger [
-
-	maxObjects := anInteger
-]
-
 { #category : 'accessing' }
 MateGenerator >> gen: type [
 
@@ -166,6 +132,16 @@ MateGenerator >> genVariant: derivation [
 	^ self
 		guard: [ derivation declaration visit: self from: derivation context constraint: nil ]
 		for: derivation declaration type
+]
+
+{ #category : 'looping' }
+MateGenerator >> guard: aBlock for: aType [
+
+	rootType ifNotNil: [ ^ aBlock value ].
+
+	rootType := aType.
+	objectCount := 0.
+	^ aBlock ensure: [ rootType := nil ]
 ]
 
 { #category : 'initialization' }
@@ -213,6 +189,30 @@ MateGenerator >> maxDerivationHeight [
 MateGenerator >> maxDerivationHeight: height [
 
 	maxDerivationHeight := height
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxNesting [
+
+	^ maxNesting ifNil: [ maxDerivationHeight + (2 * (grammar typeDeclarations size + 1)) ]
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxNesting: anInteger [
+
+	maxNesting := anInteger
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxObjects [
+
+	^ maxObjects
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxObjects: anInteger [
+
+	maxObjects := anInteger
 ]
 
 { #category : 'accessing' }

@@ -20,6 +20,12 @@ MateInstVarDecl >> = anObject [
 	^ name = anObject name and: [ constraint = anObject constraint and: [ self nullable = anObject nullable ] ]
 ]
 
+{ #category : 'as yet unclassified' }
+MateInstVarDecl >> acceptType: aType [
+
+	^ type acceptType: aType
+]
+
 { #category : 'accessing' }
 MateInstVarDecl >> alias [
 
@@ -48,12 +54,6 @@ MateInstVarDecl >> aliases [
 	^ alias
 		ifNil: [ MateOptionalType aliasesOf: type ]
 		ifNotNil: [ { alias } ]
-]
-
-{ #category : 'as yet unclassified' }
-MateInstVarDecl >> acceptType: aType [
-
-	^ type acceptType: aType
 ]
 
 { #category : 'as yet unclassified' }

@@ -14,7 +14,7 @@ MatePaperBlocExperiment >> bechmark: blElement [
 { #category : 'as yet unclassified' }
 MatePaperBlocExperiment >> mateGrammar [
 
-	^ MateBlocGrammarByLang new
+	^ MateBlocCompleteGrammar new
 ]
 
 { #category : 'as yet unclassified' }
