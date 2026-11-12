@@ -50,10 +50,10 @@ BlCompositeSelection -> {
 }
 
 BlCustomVisuals -> {
-	geometry: (BlAnnulusSectorGeometry | BlCircleGeometry | BlRectangleGeometry)?,
-	border: BlBorder?,
-	background: BlPaintBackground?,
-	clipChildren: Boolean?
+	geometry: (BlAnnulusSectorGeometry | BlCircleGeometry | BlRectangleGeometry),
+	border: BlBorder,
+	background: (BlPaintBackground | BlTransparentBackground),
+	clipChildren: Boolean
 }
 
 BlElement -> {
@@ -72,6 +72,30 @@ BlElement -> {
 	visuals: BlCustomVisuals | BlDefaultVisuals,
 	flags: BlElementFlags,
 	selfReferences: { boundsCache.element, eventDispatcher.owner, children.array[ .parent ] }
+}
+
+BlTextElement -> {
+	spaceReference: BlNullSpaceReference | BlAttachedSpaceReference | BlAttachedCachedSpaceReference,
+	parent: { refType: BlElement },
+	children: BlChildrenArray,
+	bounds: BlElementLocalBounds,
+	measuredBounds: BlElementLocalBounds,
+	boundsCache: BlBoundsCache,
+	eventDispatcher: BlElementEventDispatcher,
+	constraints: BlLayoutCommonConstraints,
+	layout: BlBasicLayout,
+	transformation: BlElementCachedExplicitTransformation,
+	taskQueue: BlTaskQueue,
+	errorHandler: BlCompositeErrorHandler,
+	visuals: BlDefaultVisuals,
+	flags: BlElementFlags,
+	text: BlRopedText,
+	selection: BlCompositeSelection,
+	measurement: BlTextElementTightMeasurementStrategy,
+	measurer: BlTextElementHostMeasurer,
+	baselineMeasurer: BlBoundsBaselineMeasurer,
+	tabOffset: { type: SmallInteger, between: 0 and: 10 },
+	selfReferences: { boundsCache.element, eventDispatcher.owner }
 }
 
 BlElementCachedExplicitTransformation -> {
@@ -147,29 +171,5 @@ BlRopedText -> {
 
 BlTaskQueue -> {
 	lock: Monitor
-}
-
-BlTextElement -> {
-	spaceReference: BlNullSpaceReference | BlAttachedSpaceReference | BlAttachedCachedSpaceReference,
-	parent: { refType: BlElement },
-	children: BlChildrenArray,
-	bounds: BlElementLocalBounds,
-	measuredBounds: BlElementLocalBounds,
-	boundsCache: BlBoundsCache,
-	eventDispatcher: BlElementEventDispatcher,
-	constraints: BlLayoutCommonConstraints,
-	layout: BlBasicLayout,
-	transformation: BlElementCachedExplicitTransformation,
-	taskQueue: BlTaskQueue,
-	errorHandler: BlCompositeErrorHandler,
-	visuals: BlDefaultVisuals,
-	flags: BlElementFlags,
-	text: BlRopedText,
-	selection: BlCompositeSelection,
-	measurement: BlTextElementTightMeasurementStrategy,
-	measurer: BlTextElementHostMeasurer,
-	baselineMeasurer: BlBoundsBaselineMeasurer,
-	tabOffset: { type: SmallInteger, between: 0 and: 0 },
-	selfReferences: { boundsCache.element, eventDispatcher.owner }
 }'
 ]
