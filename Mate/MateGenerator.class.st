@@ -45,7 +45,7 @@ MateGenerator >> cutDerivation: instVarDecl from: context [
 
 	| terminals type |
 
-	terminals := instVarDecl types select: [ :each | (self declarationFor: each) isBuiltIn ].
+	terminals := instVarDecl types reject: [ :each | context includes: (self declarationFor: each) ].
 	terminals ifEmpty: [ ^ self nilNode: instVarDecl from: context ].
 
 	type := (terminals asSortedCollection: [ :a :b | a name <= b name ]) asArray atRandom: context random.
@@ -126,6 +126,12 @@ MateGenerator >> insert: node path: path [
 MateGenerator >> invariantAttempts [
 
 	^ 30
+]
+
+{ #category : 'testing' }
+MateGenerator >> isRecursive: instVarDecl from: context [
+
+	^ instVarDecl types anySatisfy: [ :each | context includes: (self declarationFor: each) ]
 ]
 
 { #category : 'testing' }
@@ -270,8 +276,8 @@ MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 	(instVarDecl nullable and: [ context random next < nilProbability ])
 		ifTrue: [ ^ self nilNode: instVarDecl from: context ].
 
-"	context level >= maxDerivationHeight
-		ifTrue: [ ^ self cutDerivation: instVarDecl from: context ]."
+	(context level >= maxDerivationHeight and: [ self isRecursive: instVarDecl from: context ])
+		ifTrue: [ ^ self cutDerivation: instVarDecl from: context ].
 
 	type := instVarDecl chooseOneTypeFrom: context.
 

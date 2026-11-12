@@ -316,6 +316,34 @@ MateRegressionTest >> testParserSupportsNullableFields [
 ]
 
 { #category : 'tests - generation' }
+MateRegressionTest >> testDepthLimitOnlyCutsRecursiveFields [
+
+	| grammar person |
+
+	grammar := MatePersonGrammar new.
+	grammar generator maxDerivationHeight: 0.
+	person := grammar gen: MatePerson.
+
+	self assert: (person instVarNamed: 'age') class equals: MateAge.
+	self assert: person age isInteger
+]
+
+{ #category : 'tests - generation' }
+MateRegressionTest >> testDepthLimitPrefersNonRecursiveOptions [
+
+	| grammar instance |
+
+	grammar := self grammarFrom: 'ReferredObject -> { value: SmallInteger, ref: ReferredObject | MateAge }'.
+	grammar seed: 5.
+	grammar generator maxDerivationHeight: 3.
+
+	20 timesRepeat: [
+		instance := grammar gen: ReferredObject.
+		[ instance class = ReferredObject ] whileTrue: [ instance := instance instVarNamed: 'ref' ].
+		self assert: instance class equals: MateAge ]
+]
+
+{ #category : 'tests - generation' }
 MateRegressionTest >> testRecursiveFieldsTerminate [
 
 	| grammar instance depth |
