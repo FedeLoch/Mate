@@ -57,7 +57,6 @@ BlCustomVisuals -> {
 }
 
 BlElement -> {
-	spaceReference: BlNullSpaceReference | BlAttachedSpaceReference | BlAttachedCachedSpaceReference,
 	parent: { refType: BlElement },
 	children: BlChildrenArray,
 	bounds: BlElementLocalBounds,
@@ -68,14 +67,12 @@ BlElement -> {
 	layout: BlBasicLayout,
 	transformation: BlElementCachedExplicitTransformation | BlElementCachedIdentityTransformation,
 	taskQueue: BlTaskQueue,
-	"errorHandler: BlCompositeErrorHandler,"
 	visuals: BlCustomVisuals | BlDefaultVisuals,
 	flags: BlElementFlags,
 	selfReferences: { boundsCache.element, eventDispatcher.owner, children.array[ .parent ] }
 }
 
 BlTextElement -> {
-	spaceReference: BlNullSpaceReference | BlAttachedSpaceReference | BlAttachedCachedSpaceReference,
 	parent: { refType: BlElement },
 	children: BlChildrenArray,
 	bounds: BlElementLocalBounds,
