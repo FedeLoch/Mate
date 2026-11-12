@@ -5,7 +5,11 @@ Class {
 		'builtInGenerators',
 		'maxDerivationHeight',
 		'random',
-		'nilProbability'
+		'nilProbability',
+		'maxObjects',
+		'maxNesting',
+		'objectCount',
+		'rootType'
 	],
 	#category : 'Mate-Generation',
 	#package : 'Mate',
@@ -84,6 +88,62 @@ MateGenerator >> enforceInvariantsOf: decl on: node from: context [
 		decl invariants do: [ :invariant | self enforce: invariant of: decl on: node from: context ] ]
 ]
 
+{ #category : 'looping' }
+MateGenerator >> checkLoopAt: context [
+
+	rootType ifNil: [ ^ self ].
+
+	objectCount := objectCount + 1.
+
+	objectCount > maxObjects ifTrue: [
+		MateGenerationLoop
+			signalFor: rootType
+			objects: objectCount
+			path: context path
+			reason: 'more than ', maxObjects printString, ' objects were generated' ].
+
+	context level > self maxNesting ifTrue: [
+		MateGenerationLoop
+			signalFor: rootType
+			objects: objectCount
+			path: context path
+			reason: 'objects are nested more than ', self maxNesting printString, ' levels deep' ]
+]
+
+{ #category : 'looping' }
+MateGenerator >> guard: aBlock for: aType [
+
+	rootType ifNotNil: [ ^ aBlock value ].
+
+	rootType := aType.
+	objectCount := 0.
+	^ aBlock ensure: [ rootType := nil ]
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxNesting [
+
+	^ maxNesting ifNil: [ maxDerivationHeight + (2 * (grammar typeDeclarations size + 1)) ]
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxNesting: anInteger [
+
+	maxNesting := anInteger
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxObjects [
+
+	^ maxObjects
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxObjects: anInteger [
+
+	maxObjects := anInteger
+]
+
 { #category : 'accessing' }
 MateGenerator >> gen: type [
 
@@ -95,7 +155,7 @@ MateGenerator >> gen: type from: context [
 
 	context ensureRandom: random.
 
-	^ (self declarationFor: type) visit: self from: context constraint: nil
+	^ self guard: [ (self declarationFor: type) visit: self from: context constraint: nil ] for: type
 ]
 
 { #category : 'accessing' }
@@ -103,7 +163,9 @@ MateGenerator >> genVariant: derivation [
 
 	derivation context ensureRandom: random.
 
-	^ derivation declaration visit: self from: derivation context constraint: nil
+	^ self
+		guard: [ derivation declaration visit: self from: derivation context constraint: nil ]
+		for: derivation declaration type
 ]
 
 { #category : 'initialization' }
@@ -112,6 +174,7 @@ MateGenerator >> initialize [
 	super initialize.
 	maxDerivationHeight := 12.
 	nilProbability := 0.1.
+	maxObjects := 1000000.
 	random := Random new.
 	builtInGenerators := self class defaultBuiltInGenerators
 ]
@@ -223,6 +286,7 @@ MateGenerator >> visitArrayDecl: decl from: context [
 
 	childContext := context copy.
 	childContext push: decl.
+	self checkLoopAt: childContext.
 
 	size := ((childContext level >= maxDerivationHeight) and: [ (self isTerminal: decl elementType) not ])
 		ifTrue: [ 0 ]
@@ -293,6 +357,7 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 
 	childContext := context copy.
 	childContext push: decl.
+	self checkLoopAt: childContext.
 
 	node := MateOGInstanceNode new declaration: decl; context: context.
 	childContext parentNode: node.
