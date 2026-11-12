@@ -268,11 +268,29 @@ Built-in generators are biased toward values that tend to expose bugs, and alway
 
 ### Depth limit and nullable fields
 
-Generation stops at `maxDerivationHeight` (12 by default). At the limit, a field takes a built-in option if its type allows one, otherwise it is set to `nil`. Nullable fields are set to `nil` with probability `nilProbability` (0.1 by default):
+Generation stops recursing at `maxDerivationHeight` (12 by default). At the limit, a field whose type could recurse into an object that is already being built takes a non-recursive option of its type if it has one, otherwise it is set to `nil`; other fields are generated as usual. Nullable fields are set to `nil` with probability `nilProbability` (0.1 by default):
 
 ```smalltalk
 grammar generator maxDerivationHeight: 6; nilProbability: 0.2.
 ```
+
+### Detecting generation that does not terminate
+
+Every call to `gen:`, `gen:from:` or `genVariant:` checks two bounds while it builds the graph, and signals `MateGenerationLoop` (an `Error`) as soon as one is exceeded:
+
+- **Object budget:** at most `maxObjects` objects and collections per generation (1,000,000 by default). This catches graphs that explode and recursion that runs away.
+- **Nesting bound:** objects nested deeper than `maxNesting`. By default it is `maxDerivationHeight` plus two levels per declaration, the deepest a terminating generation can go, so a loop is reported long before the object budget runs out.
+
+```smalltalk
+grammar generator maxObjects: 50000; maxNesting: 40.
+
+[ grammar gen: BlElement ]
+	on: MateGenerationLoop
+	do: [ :error | error messageText ].
+"=> 'Generation of BlElement does not terminate: objects are nested more than 40 levels deep. Last steps: ... > BlElement > BlChildrenArray > array > BlElement'"
+```
+
+The error also answers `rootType`, `objectCount` and `path` (the declarations being built when it stopped). The generator is ready for the next generation afterwards.
 
 ### Coverage
 
