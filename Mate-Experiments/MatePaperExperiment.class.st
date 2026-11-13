@@ -30,13 +30,14 @@ MatePaperExperiment >> bechmark: generated [
 { #category : 'running' }
 MatePaperExperiment >> evalConfiguration: conf condition: condition [
 
-	| collector invalids cases incrCoverageResult isError iterations initialMilliseconds |
+	| collector invalids cases incrCoverageResult isError iterations initialMilliseconds errors |
 	invalids := 0.
 	collector := C2CoverageCollector new methods: self methodsToInstrument.
 	incrCoverageResult := IncrementalCoverageResult for: {  } from: collector.
 	cases := OrderedCollection new.
 	iterations := 0.
 	initialMilliseconds := Time millisecondClockValue.
+	errors := IdentitySet new.
 
 	collector installOn: [
 		[ condition value: iterations value: initialMilliseconds ] whileFalse: [ | generated result diff |
@@ -47,6 +48,7 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 				[
 					generated := self genOne: conf.
 					self bechmark: generated ] onErrorDo: [ :e |
+						errors add: e description.
 						invalids := invalids + 1.
 						isError := true ] ].
 			result := collector collectResult.
@@ -57,15 +59,20 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 			
 			"add the new case with the current code coverage result for this new generated"
 			cases add: {
-				result percentage asFloat.
-				(diff collect: #path).
-				isError }.
+				('caseReachedCoverage' -> (result percentage asFloat)).
+				('newPaths' -> (diff collect: #path)).
+				('isError' -> isError)
+			} asDictionary.
 			incrCoverageResult incrementWith: result.
 			iterations := iterations + 1.
 		]
 	].
 
 	^ {
+		  ('errors' -> (errors inject: Dictionary new into: [ :dict :elem | | key |
+				key := elem takeFirst: 200.
+				dict at: key ifPresent: [ :curr | dict at: key put: (curr + 1) ]  ifAbsentPut: [ 1 ].
+			dict])).
 		  ('configuration' -> conf class name).
 		  ('totalIterations' -> iterations).
 		  ('totalTimeInMilliseconds' -> (Time millisecondClockValue - initialMilliseconds)).
