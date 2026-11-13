@@ -340,8 +340,8 @@ MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 	(instVarDecl nullable and: [ context random next < nilProbability ])
 		ifTrue: [ ^ self nilNode: instVarDecl from: context ].
 
-	(context level >= maxDerivationHeight and: [ self isRecursive: instVarDecl from: context ])
-		ifTrue: [ ^ self cutDerivation: instVarDecl from: context ].
+"	(context level >= maxDerivationHeight and: [ self isRecursive: instVarDecl from: context ])
+		ifTrue: [ ^ self cutDerivation: instVarDecl from: context ]."
 
 	type := instVarDecl chooseOneTypeFrom: context.
 

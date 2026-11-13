@@ -18,8 +18,18 @@ MateBlocCompleteGrammar >> defineObjectGraph [
 }
 
 BlBorder -> {
+	paint: BlColorPaint,
+	style: BlStrokeStyle,
 	width: { type: SmallInteger, between: 10 and: 10 },
 	opacity: { type: SmallFloat64, between: 1.0 and: 1.0 }
+}
+
+BlStrokeStyle -> {
+	lineCap: BlStrokeLineButtCap,
+	lineJoin: BlStrokeLineMiterJoin,
+	miterLimit: { type: SmallFloat64, between: 4.0 and: 4.0 },
+	dashArray: { type: [ SmallFloat64 ], sizeBetween: 1 and: 1 },
+	dashOffset: { type: SmallInteger, between: 5 and: 50 }
 }
 
 BlBoundsCache -> {
@@ -36,7 +46,7 @@ BlCachedBounds -> {
 }
 
 BlChildrenArray -> {
-	array: { type: [ BlElement | BlTextElement ], sizeBetween: 0 and: 10 }
+	array: { type: [ BlElement ], sizeBetween: 0 and: 10 }
 }
 
 BlCircleGeometry -> {
@@ -56,6 +66,14 @@ BlCustomVisuals -> {
 	clipChildren: Boolean
 }
 
+BlPaintBackground -> {
+	paint: BlColorPaint
+}
+
+BlColorPaint -> {
+	color: Color
+}
+
 BlElement -> {
 	parent: { refType: BlElement },
 	children: BlChildrenArray,
@@ -69,7 +87,7 @@ BlElement -> {
 	taskQueue: BlTaskQueue,
 	visuals: BlCustomVisuals | BlDefaultVisuals,
 	flags: BlElementFlags,
-	selfReferences: { boundsCache.element, eventDispatcher.owner, children.array[ .parent ] }
+	selfReferences: { boundsCache.element, bounds.referenceElement, measuredBounds.referenceElement, eventDispatcher.owner, children.array[ .parent ] }
 }
 
 BlTextElement -> {
@@ -92,7 +110,7 @@ BlTextElement -> {
 	measurer: BlTextElementHostMeasurer,
 	baselineMeasurer: BlBoundsBaselineMeasurer,
 	tabOffset: { type: SmallInteger, between: 0 and: 10 },
-	selfReferences: { boundsCache.element, eventDispatcher.owner }
+	selfReferences: { boundsCache.element, bounds.referenceElement, measuredBounds.referenceElement, eventDispatcher.owner }
 }
 
 BlElementCachedExplicitTransformation -> {
@@ -119,7 +137,7 @@ BlElementFlags -> {
 }
 
 BlElementLocalBounds -> {
-	referenceElement: BlElement | BlTextElement,
+	referenceElement:{ refType: BlElement },
 	extent: Point,
 	position: Point
 }
