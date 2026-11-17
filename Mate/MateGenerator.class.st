@@ -300,6 +300,12 @@ MateGenerator >> seed: anInteger [
 	random := Random seed: anInteger
 ]
 
+{ #category : 'accessing' }
+MateGenerator >> instanceGenerator [
+
+	^ instanceGeneator
+]
+
 { #category : 'as yet unclassified' }
 MateGenerator >> selectRandomExistingInstanceWithProb: prob [
 
@@ -410,13 +416,21 @@ MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 { #category : 'visiting' }
 MateGenerator >> visitInstanceDeclaration: decl from: context [
 
-	| childContext node |
+	| childContext node instance |
+
+	node := MateOGInstanceNode new declaration: decl; context: context.
+
+	(instanceGeneator
+		existingInstanceFor: decl
+		random: context random
+		closing: (closing or: [ context level >= maxDerivationHeight ]))
+			ifNotNil: [ :existing | ^ node instance: existing; yourself ].
 
 	childContext := context copy.
 	childContext push: decl.
 	self checkLoopAt: childContext.
 
-	node := MateOGInstanceNode new declaration: decl; context: context.
+	instance := instanceGeneator newInstanceFor: decl.
 	childContext parentNode: node.
 
 	decl instanceVariableDeclarations do: [ :instVarDecl | | edge |
@@ -424,7 +438,7 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 		node addEdge: edge at: instVarDecl name.
 	].
 
-	node instance: (self objectInstance: node constraint: nil).
+	node instance: (instanceGeneator fill: instance from: node).
 
 	self enforceInvariantsOf: decl on: node from: childContext.
 
