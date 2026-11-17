@@ -207,6 +207,7 @@ Example -> {
 | --- | --- |
 | `A \| B` | Union of types, flattened and printed in alphabetical order |
 | `T?` / `nullable: true` | The field may be generated as `nil` (see `nilProbability:`) |
+| `T \| nil` | `nil` is a type (short for `UndefinedObject`), so it is one more option of the union and is chosen like the others. Use it to end chains such as `parent: BlElement \| nil`, where `?` is too rare to stop them |
 | `between: a and: b`, `atLeast:`, `atMost:` | Inclusive numeric bounds |
 | `greaterThan:`, `lessThan:` | Exclusive numeric bounds |
 | `in: [ ... ]` | The value is one of the listed literals |

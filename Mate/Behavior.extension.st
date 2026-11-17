@@ -5,3 +5,9 @@ Behavior >> mateNew [
 
 	^ [ self new ] on: Error do: [ :error | error return: self basicNew ]
 ]
+
+{ #category : '*Mate' }
+Behavior >> mateName [
+
+	^ self name
+]

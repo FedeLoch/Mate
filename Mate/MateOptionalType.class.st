@@ -177,6 +177,12 @@ MateOptionalType >> initialize [
 ]
 
 { #category : 'accessing' }
+MateOptionalType >> mateName [
+
+	^ self name
+]
+
+{ #category : 'accessing' }
 MateOptionalType >> name [
 	
 	| covered names |
@@ -185,7 +191,7 @@ MateOptionalType >> name [
 	self aliases do: [ :each | covered addAll: each types ].
 	
 	names := (self aliases collect: #name) asOrderedCollection.
-	names addAll: ((self orderedTypes reject: [ :each | covered includes: each ]) collect: #name).
+	names addAll: ((self orderedTypes reject: [ :each | covered includes: each ]) collect: #mateName).
 
 	^ (names asSortedCollection: [ :a :b | a <= b ]) asArray joinUsing: ' | '
 ]

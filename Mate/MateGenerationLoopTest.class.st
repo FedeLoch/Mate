@@ -240,3 +240,16 @@ MateGenerationLoopTest >> testTruncationIsDeterministic [
 
 	self assert: sizes first equals: sizes last
 ]
+
+{ #category : 'tests' }
+MateGenerationLoopTest >> testNilOptionEndsChainsOfSingleFields [
+
+	| grammar |
+
+	grammar := self grammarFrom: 'MateTreeNode -> {
+		label: SmallInteger,
+		parent: MateTreeNode | nil,
+		children: { type: [ MateTreeNode ], collection: OrderedCollection, sizeBetween: 0 and: 3 } }'.
+
+	20 timesRepeat: [ self assert: (grammar gen: MateTreeNode) class equals: MateTreeNode ]
+]

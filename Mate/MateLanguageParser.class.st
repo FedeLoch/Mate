@@ -721,6 +721,7 @@ MateLanguageParser >> resolveAlias: aName [
 MateLanguageParser >> resolveClass: aClassName [
 
 	aClassName isString ifFalse: [ ^ aClassName ].
+	aClassName = 'nil' ifTrue: [ ^ UndefinedObject ].
 
 	^ self class environment at: aClassName asSymbol ifAbsent: [
 		self error: 'Class not found: ', aClassName
