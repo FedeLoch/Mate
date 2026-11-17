@@ -15,6 +15,26 @@ MateGenerationLoopTest >> explodingGrammar [
 ]
 
 { #category : 'helpers' }
+MateGenerationLoopTest >> allTreeNodesOf: aNode [
+
+	^ { aNode } , (aNode children asArray flatCollect: [ :each | self allTreeNodesOf: each ])
+]
+
+{ #category : 'helpers' }
+MateGenerationLoopTest >> bushyGrammarBetween: min and: max height: height objects: objects [
+
+	| grammar |
+
+	grammar := self grammarFrom: 'MateTreeNode -> {
+		label: SmallInteger,
+		children: { type: [ MateTreeNode ], collection: OrderedCollection, sizeBetween: ', min printString, ' and: ', max printString, ' } }'.
+	grammar generator
+		maxDerivationHeight: height;
+		maxObjects: objects.
+	^ grammar
+]
+
+{ #category : 'helpers' }
 MateGenerationLoopTest >> grammarFrom: aString [
 
 	^ MateOGGrammar new
@@ -158,4 +178,65 @@ MateGenerationLoopTest >> testRunawayRecursionIsReported [
 	self assert: error rootType equals: ReferredObject.
 	self assert: error objectCount equals: 201.
 	self assert: (error messageText beginsWith: 'Generation of ReferredObject does not terminate: more than 200 objects were generated')
+]
+
+{ #category : 'tests' }
+MateGenerationLoopTest >> testOverflowingCollectionsAreTruncated [
+
+	| grammar tree |
+
+	grammar := self bushyGrammarBetween: 0 and: 8 height: 100 objects: 5000.
+
+	tree := grammar gen: MateTreeNode.
+
+	self assert: tree class equals: MateTreeNode.
+	self assert: grammar generator truncations > 0.
+	self assert: (self allTreeNodesOf: tree) size < 5000
+]
+
+{ #category : 'tests' }
+MateGenerationLoopTest >> testSingleFieldLoopsAreNotTruncated [
+
+	| grammar |
+
+	grammar := self runawayGrammar.
+	grammar generator maxObjects: 200.
+
+	self should: [ grammar gen: ReferredObject ] raise: MateGenerationLoop.
+	self assert: grammar generator truncations equals: 0
+]
+
+{ #category : 'tests' }
+MateGenerationLoopTest >> testSoftLimitDefaultsBelowTheHardLimit [
+
+	| generator |
+
+	generator := MateBlocGrammar new generator.
+
+	self assert: generator softMaxObjects equals: generator maxObjects // 10
+]
+
+{ #category : 'tests' }
+MateGenerationLoopTest >> testTruncatedCollectionsKeepTheirMinimumSize [
+
+	| grammar tree |
+
+	grammar := self bushyGrammarBetween: 2 and: 6 height: 16 objects: 20000.
+
+	tree := grammar gen: MateTreeNode.
+
+	self assert: grammar generator truncations > 0.
+	self assert: ((self allTreeNodesOf: tree) allSatisfy: [ :each |
+		each children isEmpty or: [ each children size between: 2 and: 6 ] ])
+]
+
+{ #category : 'tests' }
+MateGenerationLoopTest >> testTruncationIsDeterministic [
+
+	| sizes |
+
+	sizes := (1 to: 2) collect: [ :i |
+		(self allTreeNodesOf: ((self bushyGrammarBetween: 0 and: 8 height: 100 objects: 5000) gen: MateTreeNode)) size ].
+
+	self assert: sizes first equals: sizes last
 ]

@@ -9,7 +9,10 @@ Class {
 		'maxObjects',
 		'maxNesting',
 		'objectCount',
-		'rootType'
+		'rootType',
+		'softMaxObjects',
+		'closing',
+		'truncations'
 	],
 	#category : 'Mate-Generation',
 	#package : 'Mate',
@@ -63,7 +66,13 @@ MateGenerator >> checkLoopAt: context [
 			signalFor: rootType
 			objects: objectCount
 			path: context path
-			reason: 'objects are nested more than ', self maxNesting printString, ' levels deep' ]
+			reason: 'objects are nested more than ', self maxNesting printString, ' levels deep' ].
+
+	closing ifTrue: [ ^ self ].
+
+	objectCount > self softMaxObjects ifTrue: [
+		closing := true.
+		MateGenerationOverflow new signal ]
 ]
 
 { #category : 'visiting' }
@@ -110,6 +119,21 @@ MateGenerator >> enforceInvariantsOf: decl on: node from: context [
 		decl invariants do: [ :invariant | self enforce: invariant of: decl on: node from: context ] ]
 ]
 
+{ #category : 'visiting' }
+MateGenerator >> fill: decl size: size from: context [
+
+	| node edges |
+
+	node := MateOGDerivationNode new declaration: decl; context: context.
+	edges := (1 to: size) collect: [ :i | | edge |
+		edge := self gen: (decl chooseOneElementTypeFrom: context) from: context.
+		node addEdge: edge at: i.
+		edge ].
+
+	node instance: (decl collectionFrom: (edges collect: #instance)).
+	^ node
+]
+
 { #category : 'accessing' }
 MateGenerator >> gen: type [
 
@@ -141,6 +165,7 @@ MateGenerator >> guard: aBlock for: aType [
 
 	rootType := aType.
 	objectCount := 0.
+	closing := false.
 	^ aBlock ensure: [ rootType := nil ]
 ]
 
@@ -151,6 +176,8 @@ MateGenerator >> initialize [
 	maxDerivationHeight := 12.
 	nilProbability := 0.1.
 	maxObjects := 1000000.
+	closing := false.
+	truncations := 0.
 	random := Random new.
 	builtInGenerators := self class defaultBuiltInGenerators
 ]
@@ -280,28 +307,51 @@ MateGenerator >> set: fieldName to: aValue on: node [
 ]
 
 { #category : 'visiting' }
+MateGenerator >> sizeOf: decl from: context [
+
+	(context level >= maxDerivationHeight and: [ (self isTerminal: decl elementType) not ]) ifTrue: [ ^ 0 ].
+	closing ifTrue: [ ^ decl minSize ].
+
+	^ (decl minSize to: decl maxSize) atRandom: context random
+]
+
+{ #category : 'accessing' }
+MateGenerator >> softMaxObjects [
+
+	^ softMaxObjects ifNil: [ maxObjects // 10 ]
+]
+
+{ #category : 'accessing' }
+MateGenerator >> softMaxObjects: anInteger [
+
+	softMaxObjects := anInteger
+]
+
+{ #category : 'accessing' }
+MateGenerator >> truncations [
+
+	^ truncations
+]
+
+{ #category : 'visiting' }
 MateGenerator >> visitArrayDecl: decl from: context [
 
-	| node size edges childContext |
+	| size count childContext |
 
 	childContext := context copy.
 	childContext push: decl.
 	self checkLoopAt: childContext.
 
-	size := ((childContext level >= maxDerivationHeight) and: [ (self isTerminal: decl elementType) not ])
-		ifTrue: [ 0 ]
-		ifFalse: [ (decl minSize to: decl maxSize) atRandom: context random ].
+	size := self sizeOf: decl from: childContext.
+	count := objectCount.
 
-	node := MateOGDerivationNode new declaration: decl; context: childContext.
-
-	edges := (1 to: size) collect: [ :i | | type edge |
-		type := decl chooseOneElementTypeFrom: childContext.
-		edge := self gen: type from: childContext.
-		node addEdge: edge at: i.
-		edge
-	].
-
-	^ node instance: (decl collectionFrom: (edges collect: #instance))
+	^ [ self fill: decl size: size from: childContext ]
+		on: MateGenerationOverflow
+		do: [ :overflow |
+			size > decl minSize ifFalse: [ overflow pass ].
+			objectCount := count.
+			truncations := truncations + 1.
+			overflow return: (self fill: decl size: decl minSize from: childContext) ]
 ]
 
 { #category : 'visiting' }

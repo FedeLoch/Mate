@@ -292,6 +292,23 @@ grammar generator maxObjects: 50000; maxNesting: 40.
 
 The error also answers `rootType`, `objectCount` and `path` (the declarations being built when it stopped). The generator is ready for the next generation afterwards.
 
+#### Shrinking collections before giving up
+
+Before the object budget runs out, the generator tries to save the generation by shrinking collections. When a generation passes `softMaxObjects` (a tenth of `maxObjects` by default):
+
+1. The innermost collection being built that can still shrink drops the elements it generated so far and is rebuilt with its minimum size (empty when its `sizeBetween:` allows 0).
+2. Every collection built after that point uses its minimum size.
+
+Collections never go below their declared minimum, so truncated graphs stay valid. `grammar generator truncations` counts how many collections were shrunk.
+
+```smalltalk
+grammar generator maxObjects: 50000; softMaxObjects: 2000.
+grammar gen: BlElement.
+grammar generator truncations.
+```
+
+Only collections are shrunk. A loop through single fields, such as a non-nullable `parent: BlElement` that always creates a new parent, means the grammar is not well formed, and it still signals `MateGenerationLoop`.
+
 ### Coverage
 
 ```smalltalk
