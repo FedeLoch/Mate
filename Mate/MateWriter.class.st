@@ -102,7 +102,7 @@ MateWriter >> visitArrayDecl: decl from: context [
 	^ String streamContents: [ :s |
 		s nextPutAll: decl name.
 		s nextPutAll: ': { type: [ '.
-		s nextPutAll: decl elementType name.
+		s nextPutAll: decl elementType mateName.
 		s nextPutAll: ' ], '.
 		decl collectionClass = Array ifFalse: [
 			s nextPutAll: 'collection: '; nextPutAll: decl collectionClass name; nextPutAll: ', ' ].
@@ -266,7 +266,7 @@ MateWriter >> writeType: type constraint: aConstraint nullable: isNullable [
 
 	| typeName |
 	
-	typeName := type name.
+	typeName := type mateName.
 	
 	(aConstraint isNil and: [ isNullable not ]) ifTrue: [ ^ typeName ].
 	(aConstraint isNil and: [ (typeName includes: $|) not ]) ifTrue: [ ^ typeName, '?' ].

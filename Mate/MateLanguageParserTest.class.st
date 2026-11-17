@@ -25,6 +25,33 @@ MateLanguageParserTest >> shouldReject: source [
 ]
 
 { #category : 'tests' }
+MateLanguageParserTest >> testParseNilAsAType [
+
+	self parseTest: 'MateTreeNode -> { parent: MateTreeNode | nil, label: nil }' expect: {
+		MateInstDecl new type: MateTreeNode; instanceVariableDeclarations: {
+			MateInstVarDecl new name: 'parent'; type: MateTreeNode | UndefinedObject.
+			MateInstVarDecl new name: 'label'; type: UndefinedObject } }
+]
+
+{ #category : 'tests' }
+MateLanguageParserTest >> testWriterWritesUndefinedObjectAsNil [
+
+	| grammar text |
+
+	grammar := MateOGGrammar new addTypeDeclarations: (MateLanguageParser parse: 'MateTreeNode -> {
+		parent: MateTreeNode | UndefinedObject,
+		label: nil,
+		children: { type: [ MateTreeNode | nil ], sizeBetween: 0 and: 2 } }'); yourself.
+	text := grammar mateDefinition.
+
+	self assert: (text includesSubstring: 'parent: MateTreeNode | nil').
+	self assert: (text includesSubstring: 'label: nil').
+	self assert: (text includesSubstring: 'type: [ MateTreeNode | nil ]').
+	self deny: (text includesSubstring: 'UndefinedObject').
+	self assert: (MateOGGrammar new addTypeDeclarations: (MateLanguageParser parse: text); yourself) mateDefinition equals: text
+]
+
+{ #category : 'tests' }
 MateLanguageParserTest >> testParseADefinitionWithRelationships [
 
 	self parseTest: 'BlElement -> {
