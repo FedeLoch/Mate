@@ -7,14 +7,6 @@ Class {
 }
 
 { #category : 'helpers' }
-MateGenerationLoopTest >> explodingGrammar [
-
-	^ self grammarFrom: 'MateTreeNode -> {
-		label: SmallInteger,
-		children: { type: [ MateTreeNode ], collection: OrderedCollection, sizeBetween: 5 and: 8 } }'
-]
-
-{ #category : 'helpers' }
 MateGenerationLoopTest >> allTreeNodesOf: aNode [
 
 	^ { aNode } , (aNode children asArray flatCollect: [ :each | self allTreeNodesOf: each ])
@@ -32,6 +24,14 @@ MateGenerationLoopTest >> bushyGrammarBetween: min and: max height: height objec
 		maxDerivationHeight: height;
 		maxObjects: objects.
 	^ grammar
+]
+
+{ #category : 'helpers' }
+MateGenerationLoopTest >> explodingGrammar [
+
+	^ self grammarFrom: 'MateTreeNode -> {
+		label: SmallInteger,
+		children: { type: [ MateTreeNode ], collection: OrderedCollection, sizeBetween: 5 and: 8 } }'
 ]
 
 { #category : 'helpers' }
@@ -165,19 +165,16 @@ MateGenerationLoopTest >> testNestingBeyondTheBoundIsReported [
 ]
 
 { #category : 'tests' }
-MateGenerationLoopTest >> testRunawayRecursionIsReported [
+MateGenerationLoopTest >> testNilOptionEndsChainsOfSingleFields [
 
-	| grammar error |
+	| grammar |
 
-	grammar := self runawayGrammar.
-	grammar generator maxObjects: 200.
+	grammar := self grammarFrom: 'MateTreeNode -> {
+		label: SmallInteger,
+		parent: MateTreeNode | nil,
+		children: { type: [ MateTreeNode ], collection: OrderedCollection, sizeBetween: 0 and: 3 } }'.
 
-	error := self loopErrorFrom: [ grammar gen: ReferredObject ].
-
-	self assert: (error isKindOf: MateGenerationLoop).
-	self assert: error rootType equals: ReferredObject.
-	self assert: error objectCount equals: 201.
-	self assert: (error messageText beginsWith: 'Generation of ReferredObject does not terminate: more than 200 objects were generated')
+	20 timesRepeat: [ self assert: (grammar gen: MateTreeNode) class equals: MateTreeNode ]
 ]
 
 { #category : 'tests' }
@@ -192,6 +189,22 @@ MateGenerationLoopTest >> testOverflowingCollectionsAreTruncated [
 	self assert: tree class equals: MateTreeNode.
 	self assert: grammar generator truncations > 0.
 	self assert: (self allTreeNodesOf: tree) size < 5000
+]
+
+{ #category : 'tests' }
+MateGenerationLoopTest >> testRunawayRecursionIsReported [
+
+	| grammar error |
+
+	grammar := self runawayGrammar.
+	grammar generator maxObjects: 200.
+
+	error := self loopErrorFrom: [ grammar gen: ReferredObject ].
+
+	self assert: (error isKindOf: MateGenerationLoop).
+	self assert: error rootType equals: ReferredObject.
+	self assert: error objectCount equals: 201.
+	self assert: (error messageText beginsWith: 'Generation of ReferredObject does not terminate: more than 200 objects were generated')
 ]
 
 { #category : 'tests' }
@@ -239,17 +252,4 @@ MateGenerationLoopTest >> testTruncationIsDeterministic [
 		(self allTreeNodesOf: ((self bushyGrammarBetween: 0 and: 8 height: 100 objects: 5000) gen: MateTreeNode)) size ].
 
 	self assert: sizes first equals: sizes last
-]
-
-{ #category : 'tests' }
-MateGenerationLoopTest >> testNilOptionEndsChainsOfSingleFields [
-
-	| grammar |
-
-	grammar := self grammarFrom: 'MateTreeNode -> {
-		label: SmallInteger,
-		parent: MateTreeNode | nil,
-		children: { type: [ MateTreeNode ], collection: OrderedCollection, sizeBetween: 0 and: 3 } }'.
-
-	20 timesRepeat: [ self assert: (grammar gen: MateTreeNode) class equals: MateTreeNode ]
 ]
