@@ -12,7 +12,7 @@ MatePaperRegexExperiment >> bechmark: regex [
 ]
 
 { #category : 'as yet unclassified' }
-MatePaperRegexExperiment >> mateGrammar [
+MatePaperRegexExperiment >> mateFullGrammar [
 
 	^ MateRegexGrammar new
 ]

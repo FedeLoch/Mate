@@ -12,7 +12,7 @@ MatePaperMooseExperiment >> bechmark: mooseModel [
 ]
 
 { #category : 'as yet unclassified' }
-MatePaperMooseExperiment >> mateGrammar [
+MatePaperMooseExperiment >> mateFullGrammar [
 
 	^ MateMooseGrammar new
 ]

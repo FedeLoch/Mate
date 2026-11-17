@@ -107,9 +107,12 @@ result := nil.
 MatePaperExperiment >> initialize [ 
 	
 	configurations := {
-		self mateGrammar.
+		self mateFullGrammar.
+		self mateFullWithoutConstraintsGrammar.
+		self mateRandomInstanceSelectionGrammar.
 		self mateGrammarWithoutConstraints.
 	}.
+	
 	timeout := 5 seconds
 ]
 
@@ -120,13 +123,25 @@ MatePaperExperiment >> isValid: anInput [
 ]
 
 { #category : 'running' }
-MatePaperExperiment >> mateGrammar [
+MatePaperExperiment >> mateFullGrammar [
+
+	self subclassResponsibility 
+]
+
+{ #category : 'running' }
+MatePaperExperiment >> mateFullWithoutConstraintsGrammar [
 
 	self subclassResponsibility 
 ]
 
 { #category : 'running' }
 MatePaperExperiment >> mateGrammarWithoutConstraints [
+
+	self subclassResponsibility 
+]
+
+{ #category : 'running' }
+MatePaperExperiment >> mateRandomInstanceSelectionGrammar [
 
 	self subclassResponsibility 
 ]
