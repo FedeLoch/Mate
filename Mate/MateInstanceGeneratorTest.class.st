@@ -34,18 +34,6 @@ MateInstanceGeneratorTest >> recursiveGrammar [
 	^ self grammarFrom: 'ReferredObject -> { value: SmallInteger, ref: ReferredObject }'
 ]
 
-{ #category : 'helpers' }
-MateInstanceGeneratorTest >> treeGrammar [
-
-	| grammar |
-
-	grammar := self grammarFrom: 'MateTreeNode -> {
-		label: SmallInteger,
-		children: { type: [ MateTreeNode ], collection: OrderedCollection, sizeBetween: 0 and: 3 } }'.
-	grammar generator maxDerivationHeight: 6.
-	^ grammar
-]
-
 { #category : 'tests' }
 MateInstanceGeneratorTest >> testClosingForcesReuseOfExistingInstances [
 
@@ -65,22 +53,6 @@ MateInstanceGeneratorTest >> testClosingForcesReuseOfExistingInstances [
 ]
 
 { #category : 'tests' }
-MateInstanceGeneratorTest >> testDepthLimitForcesReuseOfExistingInstances [
-
-	| grammar chain |
-
-	grammar := self recursiveGrammar.
-	grammar generator
-		selectRandomExistingInstanceWithProb: 0;
-		maxDerivationHeight: 5.
-
-	chain := self chainFrom: (grammar gen: ReferredObject).
-
-	self assert: chain size equals: 5.
-	self assert: (chain includes: (chain last instVarNamed: 'ref'))
-]
-
-{ #category : 'tests' }
 MateInstanceGeneratorTest >> testDefaultStrategyNeverReusesInstances [
 
 	| grammar nodes |
@@ -95,6 +67,22 @@ MateInstanceGeneratorTest >> testDefaultStrategyNeverReusesInstances [
 			self deny: (nodes includes: node).
 			nodes add: node.
 			pending addAll: node children ] ]
+]
+
+{ #category : 'tests' }
+MateInstanceGeneratorTest >> testDepthLimitForcesReuseOfExistingInstances [
+
+	| grammar chain |
+
+	grammar := self recursiveGrammar.
+	grammar generator
+		selectRandomExistingInstanceWithProb: 0;
+		maxDerivationHeight: 5.
+
+	chain := self chainFrom: (grammar gen: ReferredObject).
+
+	self assert: chain size equals: 5.
+	self assert: (chain includes: (chain last instVarNamed: 'ref'))
 ]
 
 { #category : 'tests' }
@@ -123,6 +111,19 @@ MateInstanceGeneratorTest >> testPoolIsResetForEachGeneration [
 	second := self chainFrom: (grammar gen: ReferredObject).
 
 	self deny: (second anySatisfy: [ :each | first identityIncludes: each ])
+]
+
+{ #category : 'tests' }
+MateInstanceGeneratorTest >> testRandomReferenceSelectionGrammarTerminates [
+
+	| grammar |
+
+	grammar := MateBlocWithRandomReferenceSelectionGrammar new.
+	grammar seed: 5.
+	grammar generator softMaxObjects: 2000.
+
+	5 timesRepeat: [
+		self assert: ([ grammar gen: BlElement ] valueWithin: 60 seconds onTimeout: [ nil ]) class equals: BlElement ]
 ]
 
 { #category : 'tests' }
@@ -174,15 +175,14 @@ MateInstanceGeneratorTest >> testReusedTreesShareNodes [
 	self assert: shared > 0
 ]
 
-{ #category : 'tests' }
-MateInstanceGeneratorTest >> testRandomReferenceSelectionGrammarTerminates [
+{ #category : 'helpers' }
+MateInstanceGeneratorTest >> treeGrammar [
 
 	| grammar |
 
-	grammar := MateBlocWithRandomReferenceSelectionGrammar new.
-	grammar seed: 5.
-	grammar generator softMaxObjects: 2000.
-
-	5 timesRepeat: [
-		self assert: ([ grammar gen: BlElement ] valueWithin: 60 seconds onTimeout: [ nil ]) class equals: BlElement ]
+	grammar := self grammarFrom: 'MateTreeNode -> {
+		label: SmallInteger,
+		children: { type: [ MateTreeNode ], collection: OrderedCollection, sizeBetween: 0 and: 3 } }'.
+	grammar generator maxDerivationHeight: 6.
+	^ grammar
 ]

@@ -38,10 +38,10 @@ BlBoundsCache -> {
 }
 
 BlCachedBounds -> {
-	left: SmallFloat64,
-	top: SmallFloat64,
-	right: SmallFloat64,
-	bottom: SmallFloat64,
+	left: SmallFloat64 | SmallInteger,
+	top: SmallFloat64 | SmallInteger,
+	right: SmallFloat64 | SmallInteger,
+	bottom: SmallFloat64 | SmallInteger,
 	isValid: Boolean
 }
 
@@ -51,7 +51,7 @@ BlChildrenArray -> {
 
 BlCircleGeometry -> {
 	extent: Point,
-	radius: SmallFloat64,
+	radius: SmallFloat64 | SmallInteger,
 	origin: Point
 }
 
@@ -141,10 +141,10 @@ BlElementLocalBounds -> {
 }
 
 BlInsets -> {
-	top: SmallFloat64,
-	left: SmallFloat64,
-	bottom: SmallFloat64,
-	right: SmallFloat64
+	top: SmallFloat64 | SmallInteger,
+	left: SmallFloat64 | SmallInteger,
+	bottom: SmallFloat64 | SmallInteger,
+	right: SmallFloat64 | SmallInteger
 }
 
 BlLayoutCommonConstraints -> {

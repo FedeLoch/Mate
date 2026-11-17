@@ -193,6 +193,12 @@ MateGenerator >> insert: node path: path [
 ]
 
 { #category : 'accessing' }
+MateGenerator >> instanceGenerator [
+
+	^ instanceGeneator
+]
+
+{ #category : 'accessing' }
 MateGenerator >> invariantAttempts [
 
 	^ 30
@@ -298,12 +304,6 @@ MateGenerator >> regenerate: instVarDecl on: node from: context [
 MateGenerator >> seed: anInteger [
 
 	random := Random seed: anInteger
-]
-
-{ #category : 'accessing' }
-MateGenerator >> instanceGenerator [
-
-	^ instanceGeneator
 ]
 
 { #category : 'as yet unclassified' }

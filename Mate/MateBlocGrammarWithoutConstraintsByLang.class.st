@@ -38,10 +38,10 @@ BlBoundsCache -> {
 }
 
 BlCachedBounds -> {
-	left: SmallFloat64,
-	top: SmallFloat64,
-	right: SmallFloat64,
-	bottom: SmallFloat64,
+	left: SmallFloat64 | SmallInteger,
+	top: SmallFloat64 | SmallInteger,
+	right: SmallFloat64 | SmallInteger,
+	bottom: SmallFloat64 | SmallInteger,
 	isValid: Boolean
 }
 
@@ -142,10 +142,10 @@ BlElementLocalBounds -> {
 }
 
 BlInsets -> {
-	top: SmallFloat64,
-	left: SmallFloat64,
-	bottom: SmallFloat64,
-	right: SmallFloat64
+	top: SmallFloat64 | SmallInteger,
+	left: SmallFloat64 | SmallInteger,
+	bottom: SmallFloat64 | SmallInteger,
+	right: SmallFloat64 | SmallInteger
 }
 
 BlLayoutCommonConstraints -> {

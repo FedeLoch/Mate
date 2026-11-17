@@ -185,10 +185,12 @@ MatePaperExperiment >> run: fileName withBlock: block [
 
 	| results |
 
-	results := configurations collect: block.
-
-	((fileName, '.json') asFileReference) ensureDelete; writeStreamDo: [ :stream |
-		stream nextPutAll: (NeoJSONWriter toStringPretty: results)
+	results := configurations collect: [ :config | | currentResult |
+		currentResult := block value: config.
+		
+		((fileName, '-', config className, '.json') asFileReference) ensureDelete; writeStreamDo: [ :stream |
+			stream nextPutAll: (NeoJSONWriter toStringPretty: currentResult)
+		]
 	].
 
 	^ results
