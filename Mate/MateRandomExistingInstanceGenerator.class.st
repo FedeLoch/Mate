@@ -10,41 +10,47 @@ Class {
 	#tag : 'Generation'
 }
 
+{ #category : 'visiting' }
+MateRandomExistingInstanceGenerator >> existingInstanceFor: decl random: aRandom closing: isClosing [
+
+	| pool |
+
+	pool := instances at: decl type ifAbsent: [ ^ nil ].
+	pool ifEmpty: [ ^ nil ].
+
+	(isClosing or: [ aRandom next < selectionExistingProbability ]) ifFalse: [ ^ nil ].
+
+	^ pool atRandom: aRandom
+]
+
 { #category : 'initialization' }
 MateRandomExistingInstanceGenerator >> initialize [
 
 	super initialize.
 	instances := Dictionary new.
-	selectionExistingProbability := 0.5.
+	selectionExistingProbability := 0.5
+]
+
+{ #category : 'accessing' }
+MateRandomExistingInstanceGenerator >> instancesOf: aClass [
+
+	^ instances at: aClass ifAbsent: [ #() ]
 ]
 
 { #category : 'visiting' }
-MateRandomExistingInstanceGenerator >> objectInstance: node constraint: constraint [
+MateRandomExistingInstanceGenerator >> newInstanceFor: decl [
 
-	| type obj |
-	
-	type := node declaration type.
+	| instance |
 
-	(self shouldSelectAnExistant: type)  ifTrue: [
-		^ (instances at: type) atRandom.
-	].
-
-	obj := type mateNew.
-	instances at: type ifPresent: [
-		(instances at: type) add: obj ] ifAbsentPut: [
-		OrderedCollection newFrom: { obj }
-	].
-	
-	^ node edges keys inject: obj into: [ :inst :edgeName |
-		inst instVarNamed: edgeName put: (node edges at: edgeName) instance.
-		inst
-	]
+	instance := super newInstanceFor: decl.
+	(instances at: decl type ifAbsentPut: [ OrderedCollection new ]) add: instance.
+	^ instance
 ]
 
 { #category : 'initialization' }
 MateRandomExistingInstanceGenerator >> reset [
 
-	instances := Dictionary new.
+	instances := Dictionary new
 ]
 
 { #category : 'accessing' }
@@ -57,13 +63,4 @@ MateRandomExistingInstanceGenerator >> selectionExistingProbability [
 MateRandomExistingInstanceGenerator >> selectionExistingProbability: prob [
 
 	selectionExistingProbability := prob
-]
-
-{ #category : 'visiting' }
-MateRandomExistingInstanceGenerator >> shouldSelectAnExistant: type [
-
-	(instances includesKey: type) ifFalse: [ ^ false ].
-	
-
-	^ ((0 to: 100) atRandom) <= (selectionExistingProbability * 100)
 ]
