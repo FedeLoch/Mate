@@ -40,7 +40,8 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 	errors := IdentitySet new.
 
 	collector installOn: [
-		[ condition value: iterations value: initialMilliseconds ] whileFalse: [ | generated result diff |
+		[ condition value: iterations value: initialMilliseconds ] whileFalse: [ | generated result diff initialCaseTime |
+			initialCaseTime := Time millisecondClockValue.
 			collector resetResult.
 
 			isError := false.
@@ -60,6 +61,7 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 			"add the new case with the current code coverage result for this new generated"
 			cases add: {
 				('caseReachedCoverage' -> (result percentage asFloat)).
+				('elapsedTime' -> (Time millisecondClockValue - initialCaseTime)).
 				('newPaths' -> (diff collect: #path)).
 				('isError' -> isError)
 			} asDictionary.
