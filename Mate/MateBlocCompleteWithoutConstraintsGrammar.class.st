@@ -38,10 +38,10 @@ BlBoundsCache -> {
 }
 
 BlCachedBounds -> {
-	left: SmallFloat64,
-	top: SmallFloat64,
-	right: SmallFloat64,
-	bottom: SmallFloat64,
+	left: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	top: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	right: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	bottom: SmallFloat64 | BoxedFloat64 | SmallInteger,
 	isValid: Boolean
 }
 
@@ -51,7 +51,7 @@ BlChildrenArray -> {
 
 BlCircleGeometry -> {
 	extent: Point,
-	radius: SmallFloat64,
+	radius: SmallFloat64 | BoxedFloat64 | SmallInteger,
 	origin: Point
 }
 
@@ -143,10 +143,10 @@ BlElementLocalBounds -> {
 }
 
 BlInsets -> {
-	top: SmallFloat64,
-	left: SmallFloat64,
-	bottom: SmallFloat64,
-	right: SmallFloat64
+	top: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	left: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	bottom: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	right: SmallFloat64 | BoxedFloat64 | SmallInteger
 }
 
 BlLayoutCommonConstraints -> {
@@ -168,16 +168,16 @@ BlLayoutCommonConstraintsAxis -> {
 }
 
 BlLayoutExactResizer -> {
-	size: SmallFloat64
+	size: SmallFloat64 | BoxedFloat64 | SmallInteger
 }
 
 BlMatrix2D -> {
-	x: SmallFloat64,
-	y: SmallFloat64,
-	shx: SmallFloat64,
-	shy: SmallFloat64,
-	sx: SmallFloat64,
-	sy: SmallFloat64
+	x: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	y: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	shx: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	shy: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	sx: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	sy: SmallFloat64 | BoxedFloat64 | SmallInteger
 }
 
 BlRopedText -> {
