@@ -186,3 +186,10 @@ BlTaskQueue -> {
 	lock: Monitor
 }'
 ]
+
+{ #category : 'accessing' }
+MateBlocWithRandomReferenceSelectionGrammar >> initialize [ 
+
+	super initialize.
+	generator selectRandomExistingInstanceWithProb: 0.5
+]

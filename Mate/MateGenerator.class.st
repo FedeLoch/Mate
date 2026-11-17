@@ -12,7 +12,8 @@ Class {
 		'rootType',
 		'softMaxObjects',
 		'closing',
-		'truncations'
+		'truncations',
+		'instanceGeneator'
 	],
 	#category : 'Mate-Generation',
 	#package : 'Mate',
@@ -137,6 +138,8 @@ MateGenerator >> fill: decl size: size from: context [
 { #category : 'accessing' }
 MateGenerator >> gen: type [
 
+	instanceGeneator reset.
+
 	^ (self gen: type from: self newContext) instance
 ]
 
@@ -179,6 +182,7 @@ MateGenerator >> initialize [
 	closing := false.
 	truncations := 0.
 	random := Random new.
+	instanceGeneator := MateGrammarBaseInstanceGenerator new.
 	builtInGenerators := self class defaultBuiltInGenerators
 ]
 
@@ -269,10 +273,7 @@ MateGenerator >> nilProbability: aProbability [
 { #category : 'visiting' }
 MateGenerator >> objectInstance: node constraint: constraint [
 
-	^ node edges keys inject: node declaration type mateNew into: [ :inst :edgeName |
-		inst instVarNamed: edgeName put: (node edges at: edgeName) instance.
-		inst
-	]
+	^ instanceGeneator objectInstance: node constraint: constraint
 ]
 
 { #category : 'accessing' }
@@ -297,6 +298,12 @@ MateGenerator >> regenerate: instVarDecl on: node from: context [
 MateGenerator >> seed: anInteger [
 
 	random := Random seed: anInteger
+]
+
+{ #category : 'as yet unclassified' }
+MateGenerator >> selectRandomExistingInstanceWithProb: prob [
+
+	instanceGeneator := MateRandomExistingInstanceGenerator new selectionExistingProbability: prob
 ]
 
 { #category : 'visiting' }
