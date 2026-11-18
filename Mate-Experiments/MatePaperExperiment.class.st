@@ -36,19 +36,20 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 	incrCoverageResult := IncrementalCoverageResult for: {  } from: collector.
 	cases := OrderedCollection new.
 	iterations := 0.
-	initialMilliseconds := Time millisecondClockValue.
+	initialMilliseconds := Time primUTCMillisecondsClock.
 	errors := IdentitySet new.
 
 	collector installOn: [
 		[ condition value: iterations value: initialMilliseconds ] whileFalse: [ | generated result diff initialCaseTime |
-			initialCaseTime := Time millisecondClockValue.
+			initialCaseTime := Time primUTCMillisecondsClock.
+			generated := nil.
 			collector resetResult.
 
 			isError := false.
 			collector basicRun: [
 				[
 					generated := self genOne: conf.
-					self bechmark: generated ] onErrorDo: [ :e |
+					self withTimeout: [ self bechmark: generated ] phase: 'render' ] onErrorDo: [ :e |
 						errors add: e description.
 						invalids := invalids + 1.
 						isError := true ] ].
@@ -61,7 +62,7 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 			"add the new case with the current code coverage result for this new generated"
 			cases add: {
 				('caseReachedCoverage' -> (result percentage asFloat)).
-				('elapsedTime' -> (Time millisecondClockValue - initialCaseTime)).
+				('elapsedTime' -> (Time primUTCMillisecondsClock - initialCaseTime)).
 				('newPaths' -> (diff collect: #path)).
 				('isError' -> isError)
 			} asDictionary.
@@ -77,10 +78,10 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 			dict])).
 		  ('configuration' -> conf class name).
 		  ('totalIterations' -> iterations).
-		  ('totalTimeInMilliseconds' -> (Time millisecondClockValue - initialMilliseconds)).
+		  ('totalTimeInMilliseconds' -> (Time primUTCMillisecondsClock - initialMilliseconds)).
 		  ('reachedCoverage' -> incrCoverageResult percentage asFloat).
 		  ('reachedPaths' -> (incrCoverageResult nodes collect: #path)).
-		  ('validityRate' -> (iterations - invalids / iterations) asFloat).
+		  ('validityRate' -> (iterations = 0 ifTrue: [ 0.0 ] ifFalse: [ (iterations - invalids / iterations) asFloat ])).
 		  ('cases' -> cases) } asDictionary
 ]
 
@@ -92,15 +93,8 @@ MatePaperExperiment >> feed: conf input: generated diff: diff [
 
 { #category : 'running' }
 MatePaperExperiment >> genOne: conf [
-	
-	| result |
 
-result := nil.
-	[ result := conf gen: self rootType ] valueWithin: timeout onTimeout: [
-   	Error signal: 'Timeout!'
-].
-
-	^ result
+	^ self withTimeout: [ conf gen: self rootType ] phase: 'generation'
 ]
 
 { #category : 'running' }
@@ -167,7 +161,7 @@ MatePaperExperiment >> run: fileName duration: duration [
 	
 	^ self run: fileName withBlock: [ :conf |
 		self evalConfiguration: conf condition: [ :its :initialTimeMill |
-			(Time millisecondClockValue - initialTimeMill) >= maxMilliseconds
+			(Time primUTCMillisecondsClock - initialTimeMill) >= maxMilliseconds
 		]
 	]
 ]
@@ -194,4 +188,15 @@ MatePaperExperiment >> run: fileName withBlock: block [
 	].
 
 	^ results
+]
+
+{ #category : 'running' }
+MatePaperExperiment >> withTimeout: aBlock phase: phaseName [
+	"Run aBlock for at most timeout. When it takes longer, signal an Error naming the phase, so the errors tell generation and rendering timeouts apart."
+
+	| result |
+	result := nil.
+	[ result := aBlock value ] valueWithin: timeout onTimeout: [
+		Error signal: 'Timeout! (' , phaseName , ')' ].
+	^ result
 ]
