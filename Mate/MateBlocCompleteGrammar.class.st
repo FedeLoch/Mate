@@ -17,6 +17,8 @@ MateBlocCompleteGrammar >> defineObjectGraph [
 	outerRadius: { type: SmallFloat64, between: 0.5060581297148019 and: 0.999853702262044 }
 }
 
+OptionalCustomNumber = SmallFloat64 | BoxedFloat64 | SmallInteger
+
 BlBorder -> {
 	paint: BlColorPaint,
 	style: BlStrokeStyle,
@@ -38,10 +40,10 @@ BlBoundsCache -> {
 }
 
 BlCachedBounds -> {
-	left: { type: SmallFloat64, between: 0.0 and: 1000 },
-	top: { type: SmallFloat64, between: 0.0 and: 1000 },
-	right: { type: SmallFloat64, between: 0.0 and: 1000 },
-	bottom: { type: SmallFloat64, between: 0.0 and: 1000 },
+	left: { type: OptionalCustomNumber, between: 0.0 and: 1000 },
+	top: { type: OptionalCustomNumber, between: 0.0 and: 1000 },
+	right: { type: OptionalCustomNumber, between: 0.0 and: 1000 },
+	bottom: { type: OptionalCustomNumber, between: 0.0 and: 1000 },
 	isValid: Boolean
 }
 
@@ -51,7 +53,7 @@ BlChildrenArray -> {
 
 BlCircleGeometry -> {
 	extent: Point,
-	radius: { type: SmallFloat64, between: 0.0 and: 1000 },
+	radius: { type: OptionalCustomNumber, between: 0.0 and: 1000 },
 	origin: Point
 }
 
@@ -143,10 +145,10 @@ BlElementLocalBounds -> {
 }
 
 BlInsets -> {
-	top: { type: SmallFloat64, atLeast: 0 },
-	left: { type: SmallFloat64, atLeast: 0 },
-	bottom: { type: SmallFloat64, atLeast: 0 },
-	right: { type: SmallFloat64, atLeast: 0 }
+	top: { type: OptionalCustomNumber, atLeast: 0 },
+	left: { type: OptionalCustomNumber, atLeast: 0 },
+	bottom: { type: OptionalCustomNumber, atLeast: 0 },
+	right: { type: OptionalCustomNumber, atLeast: 0 }
 }
 
 BlLayoutCommonConstraints -> {
@@ -172,12 +174,12 @@ BlLayoutExactResizer -> {
 }
 
 BlMatrix2D -> {
-	x: { type: SmallFloat64, atLeast: 0 },
-	y: { type: SmallFloat64, atLeast: 0 },
-	shx: { type: SmallFloat64, atLeast: 0 },
-	shy: { type: SmallFloat64, atLeast: 0 },
-	sx: { type: SmallFloat64, atLeast: 1 },
-	sy: { type: SmallFloat64, atLeast: 1 }
+	x: { type: OptionalCustomNumber, atLeast: 0 },
+	y: { type: OptionalCustomNumber, atLeast: 0 },
+	shx: { type: OptionalCustomNumber, atLeast: 0 },
+	shy: { type: OptionalCustomNumber, atLeast: 0 },
+	sx: { type: OptionalCustomNumber, atLeast: 1 },
+	sy: { type: OptionalCustomNumber, atLeast: 1 }
 }
 
 BlRopedText -> {

@@ -38,10 +38,10 @@ BlBoundsCache -> {
 }
 
 BlCachedBounds -> {
-	left: SmallFloat64 | BoxedFloat64 | SmallInteger,
-	top: SmallFloat64 | BoxedFloat64 | SmallInteger,
-	right: SmallFloat64 | BoxedFloat64 | SmallInteger,
-	bottom: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	left: OptionalCustomNumber,
+	top: OptionalCustomNumber,
+	right: OptionalCustomNumber,
+	bottom: OptionalCustomNumber,
 	isValid: Boolean
 }
 
@@ -51,7 +51,7 @@ BlChildrenArray -> {
 
 BlCircleGeometry -> {
 	extent: Point,
-	radius: SmallFloat64 | BoxedFloat64 | SmallInteger,
+	radius: OptionalCustomNumber,
 	origin: Point
 }
 
@@ -142,11 +142,13 @@ BlElementLocalBounds -> {
 	position: Point
 }
 
+OptionalCustomNumber = SmallFloat64 | BoxedFloat64 | SmallInteger
+
 BlInsets -> {
-	top: SmallFloat64 | BoxedFloat64 | SmallInteger,
-	left: SmallFloat64 | BoxedFloat64 | SmallInteger,
-	bottom: SmallFloat64 | BoxedFloat64 | SmallInteger,
-	right: SmallFloat64 | BoxedFloat64 | SmallInteger
+	top: OptionalCustomNumber,
+	left: OptionalCustomNumber,
+	bottom: OptionalCustomNumber,
+	right: OptionalCustomNumber
 }
 
 BlLayoutCommonConstraints -> {
@@ -168,16 +170,16 @@ BlLayoutCommonConstraintsAxis -> {
 }
 
 BlLayoutExactResizer -> {
-	size: SmallFloat64 | BoxedFloat64 | SmallInteger
+	size: OptionalCustomNumber
 }
 
 BlMatrix2D -> {
-	x: SmallFloat64 | BoxedFloat64 | SmallInteger,
-	y: SmallFloat64 | BoxedFloat64 | SmallInteger,
-	shx: SmallFloat64 | BoxedFloat64 | SmallInteger,
-	shy: SmallFloat64 | BoxedFloat64 | SmallInteger,
-	sx: SmallFloat64 | BoxedFloat64 | SmallInteger,
-	sy: SmallFloat64 | BoxedFloat64 | SmallInteger
+	x: OptionalCustomNumber,
+	y: OptionalCustomNumber,
+	shx: OptionalCustomNumber,
+	shy: OptionalCustomNumber,
+	sx: OptionalCustomNumber,
+	sy: OptionalCustomNumber
 }
 
 BlRopedText -> {
