@@ -113,7 +113,7 @@ MatePaperExperiment >> initialize [
 		self mateGrammarWithoutConstraints.
 	}.
 	
-	timeout := 5 seconds
+	timeout := 10 seconds
 ]
 
 { #category : 'testing' }
