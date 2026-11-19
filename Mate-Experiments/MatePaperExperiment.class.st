@@ -49,7 +49,7 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 			collector basicRun: [
 				[
 					generated := self genOne: conf.
-					self withTimeout: [ self bechmark: generated ] phase: 'render' ] onErrorDo: [ :e |
+					self withTimeout: [ self bechmark: generated ] phase: 'benchmark' ] onErrorDo: [ :e |
 						errors add: e description.
 						invalids := invalids + 1.
 						isError := true ] ].
