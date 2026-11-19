@@ -94,7 +94,13 @@ MatePaperExperiment >> feed: conf input: generated diff: diff [
 { #category : 'running' }
 MatePaperExperiment >> genOne: conf [
 
-	^ self withTimeout: [ conf gen: self rootType ] phase: 'generation'
+	| obj |
+
+	self withTimeout: [ obj := conf gen: self rootType ] phase: 'generation'.
+	
+	self saveDerivation: (conf parse: obj).
+	
+	^ obj
 ]
 
 { #category : 'running' }
@@ -188,6 +194,13 @@ MatePaperExperiment >> run: fileName withBlock: block [
 	].
 
 	^ results
+]
+
+{ #category : 'as yet unclassified' }
+MatePaperExperiment >> saveDerivation: derivation [
+
+	derivation saveAs: 'lastDerivation.fuel'.
+
 ]
 
 { #category : 'running' }

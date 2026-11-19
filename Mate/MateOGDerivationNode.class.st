@@ -13,6 +13,12 @@ Class {
 	#tag : 'Derivation Tree'
 }
 
+{ #category : 'instance creation' }
+MateOGDerivationNode class >> readFrom: fileName [
+
+	^ FLMaterializer materializeFromFileNamed: fileName
+]
+
 { #category : 'initialization' }
 MateOGDerivationNode >> addEdge: anEdge at: key [
 
@@ -169,6 +175,12 @@ MateOGDerivationNode >> rootParent [
 	].
 
 	^ current
+]
+
+{ #category : 'saving' }
+MateOGDerivationNode >> saveAs: fileName [
+
+	FLSerializer serialize: self toFileNamed: fileName
 ]
 
 { #category : 'accessing' }
