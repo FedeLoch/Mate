@@ -36,12 +36,12 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 	incrCoverageResult := IncrementalCoverageResult for: {  } from: collector.
 	cases := OrderedCollection new.
 	iterations := 0.
-	initialMilliseconds := Time primUTCMillisecondsClock.
+	initialMilliseconds := Time primMillisecondClock.
 	errors := IdentitySet new.
 
 	collector installOn: [
 		[ condition value: iterations value: initialMilliseconds ] whileFalse: [ | generated result diff initialCaseTime |
-			initialCaseTime := Time primUTCMillisecondsClock.
+			initialCaseTime := Time primMillisecondClock.
 			generated := nil.
 			collector resetResult.
 
@@ -62,7 +62,7 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 			"add the new case with the current code coverage result for this new generated"
 			cases add: {
 				('caseReachedCoverage' -> (result percentage asFloat)).
-				('elapsedTime' -> (Time primUTCMillisecondsClock - initialCaseTime)).
+				('elapsedTime' -> (Time primMillisecondClock - initialCaseTime)).
 				('newPaths' -> (diff collect: #path)).
 				('isError' -> isError)
 			} asDictionary.
@@ -78,7 +78,7 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 			dict])).
 		  ('configuration' -> conf class name).
 		  ('totalIterations' -> iterations).
-		  ('totalTimeInMilliseconds' -> (Time primUTCMillisecondsClock - initialMilliseconds)).
+		  ('totalTimeInMilliseconds' -> (Time primMillisecondClock - initialMilliseconds)).
 		  ('reachedCoverage' -> incrCoverageResult percentage asFloat).
 		  ('reachedPaths' -> (incrCoverageResult nodes collect: #path)).
 		  ('validityRate' -> (iterations = 0 ifTrue: [ 0.0 ] ifFalse: [ (iterations - invalids / iterations) asFloat ])).
@@ -161,7 +161,7 @@ MatePaperExperiment >> run: fileName duration: duration [
 	
 	^ self run: fileName withBlock: [ :conf |
 		self evalConfiguration: conf condition: [ :its :initialTimeMill |
-			(Time primUTCMillisecondsClock - initialTimeMill) >= maxMilliseconds
+			(Time primMillisecondClock - initialTimeMill) >= maxMilliseconds
 		]
 	]
 ]
