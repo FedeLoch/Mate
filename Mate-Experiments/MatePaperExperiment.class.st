@@ -102,9 +102,9 @@ MatePaperExperiment >> initialize [
 	
 	configurations := {
 		self mateFullGrammar.
-		self mateFullWithoutConstraintsGrammar.
-		self mateRandomInstanceSelectionGrammar.
-		self mateGrammarWithoutConstraints.
+		self mateWithRefsWithoutConstraintsGrammar.
+		self mateRandomInstanceSelectionWithoutConstraintsGrammar.
+		self mateWithoutRefsAndOptionalNilGrammarWithoutConstraints.
 	}.
 	
 	timeout := 10 seconds
@@ -123,19 +123,19 @@ MatePaperExperiment >> mateFullGrammar [
 ]
 
 { #category : 'running' }
-MatePaperExperiment >> mateFullWithoutConstraintsGrammar [
+MatePaperExperiment >> mateRandomInstanceSelectionWithoutConstraintsGrammar [
 
 	self subclassResponsibility 
 ]
 
 { #category : 'running' }
-MatePaperExperiment >> mateGrammarWithoutConstraints [
+MatePaperExperiment >> mateWithRefsWithoutConstraintsGrammar [
 
 	self subclassResponsibility 
 ]
 
 { #category : 'running' }
-MatePaperExperiment >> mateRandomInstanceSelectionGrammar [
+MatePaperExperiment >> mateWithoutRefsAndOptionalNilGrammarWithoutConstraints [
 
 	self subclassResponsibility 
 ]

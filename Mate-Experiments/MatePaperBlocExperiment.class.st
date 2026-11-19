@@ -18,21 +18,21 @@ MatePaperBlocExperiment >> mateFullGrammar [
 ]
 
 { #category : 'as yet unclassified' }
-MatePaperBlocExperiment >> mateFullWithoutConstraintsGrammar [
+MatePaperBlocExperiment >> mateRandomInstanceSelectionWithoutConstraintsGrammar [
+
+	^ MateBlocWithRandomReferenceSelectionGrammar new
+]
+
+{ #category : 'as yet unclassified' }
+MatePaperBlocExperiment >> mateWithRefsWithoutConstraintsGrammar [
 
 	^ MateBlocCompleteWithoutConstraintsGrammar new
 ]
 
 { #category : 'as yet unclassified' }
-MatePaperBlocExperiment >> mateGrammarWithoutConstraints [
+MatePaperBlocExperiment >> mateWithoutRefsAndOptionalNilGrammarWithoutConstraints [
 
 	^ MateBlocGrammarWithoutConstraintsByLang new
-]
-
-{ #category : 'as yet unclassified' }
-MatePaperBlocExperiment >> mateRandomInstanceSelectionGrammar [
-
-	^ MateBlocWithRandomReferenceSelectionGrammar new
 ]
 
 { #category : 'running' }
