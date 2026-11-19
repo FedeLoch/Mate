@@ -17,6 +17,8 @@ MateBlocCompleteWithoutConstraintsGrammar >> defineObjectGraph [
 	outerRadius: SmallFloat64
 }
 
+OptionalCustomNumber = SmallFloat64 | BoxedFloat64 | SmallInteger
+
 BlBorder -> {
 	paint: BlColorPaint,
 	style: BlStrokeStyle,
@@ -28,7 +30,7 @@ BlStrokeStyle -> {
 	lineCap: BlStrokeLineButtCap,
 	lineJoin: BlStrokeLineMiterJoin,
 	miterLimit: SmallFloat64,
-	dashArray: { type: [ SmallFloat64 ], sizeBetween: 0 and: 1 },
+	dashArray: { type: [ SmallFloat64 ], sizeBetween: 1 and: 1 },
 	dashOffset: SmallInteger
 }
 
@@ -142,8 +144,6 @@ BlElementLocalBounds -> {
 	position: Point
 }
 
-OptionalCustomNumber = SmallFloat64 | BoxedFloat64 | SmallInteger
-
 BlInsets -> {
 	top: OptionalCustomNumber,
 	left: OptionalCustomNumber,
@@ -170,7 +170,7 @@ BlLayoutCommonConstraintsAxis -> {
 }
 
 BlLayoutExactResizer -> {
-	size: OptionalCustomNumber
+	size: SmallFloat64
 }
 
 BlMatrix2D -> {

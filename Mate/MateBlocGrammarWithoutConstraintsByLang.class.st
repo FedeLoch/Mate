@@ -17,6 +17,8 @@ MateBlocGrammarWithoutConstraintsByLang >> defineObjectGraph [
 	outerRadius: SmallFloat64
 }
 
+OptionalCustomNumber = SmallFloat64 | BoxedFloat64 | SmallInteger
+
 BlBorder -> {
 	paint: BlColorPaint,
 	style: BlStrokeStyle,
@@ -38,10 +40,10 @@ BlBoundsCache -> {
 }
 
 BlCachedBounds -> {
-	left: SmallFloat64 | SmallInteger,
-	top: SmallFloat64 | SmallInteger,
-	right: SmallFloat64 | SmallInteger,
-	bottom: SmallFloat64 | SmallInteger,
+	left: OptionalCustomNumber,
+	top: OptionalCustomNumber,
+	right: OptionalCustomNumber,
+	bottom: OptionalCustomNumber,
 	isValid: Boolean
 }
 
@@ -51,7 +53,7 @@ BlChildrenArray -> {
 
 BlCircleGeometry -> {
 	extent: Point,
-	radius: SmallFloat64,
+	radius: OptionalCustomNumber,
 	origin: Point
 }
 
@@ -90,7 +92,7 @@ BlElement -> {
 }
 
 BlTextElement -> {
-	parent: BlElement,
+	parent: BlElement | nil,
 	children: BlChildrenArray,
 	bounds: BlElementLocalBounds,
 	measuredBounds: BlElementLocalBounds,
@@ -108,8 +110,7 @@ BlTextElement -> {
 	measurement: BlTextElementTightMeasurementStrategy,
 	measurer: BlTextElementHostMeasurer,
 	baselineMeasurer: BlBoundsBaselineMeasurer,
-	tabOffset: SmallInteger,
-	selfReferences: { boundsCache.element, bounds.referenceElement, measuredBounds.referenceElement, eventDispatcher.owner }
+	tabOffset: SmallInteger
 }
 
 BlElementCachedExplicitTransformation -> {
@@ -142,10 +143,10 @@ BlElementLocalBounds -> {
 }
 
 BlInsets -> {
-	top: SmallFloat64 | SmallInteger,
-	left: SmallFloat64 | SmallInteger,
-	bottom: SmallFloat64 | SmallInteger,
-	right: SmallFloat64 | SmallInteger
+	top: OptionalCustomNumber,
+	left: OptionalCustomNumber,
+	bottom: OptionalCustomNumber,
+	right: OptionalCustomNumber
 }
 
 BlLayoutCommonConstraints -> {
@@ -171,12 +172,12 @@ BlLayoutExactResizer -> {
 }
 
 BlMatrix2D -> {
-	x: SmallFloat64,
-	y: SmallFloat64,
-	shx: SmallFloat64,
-	shy: SmallFloat64,
-	sx: SmallFloat64,
-	sy: SmallFloat64
+	x: OptionalCustomNumber,
+	y: OptionalCustomNumber,
+	shx: OptionalCustomNumber,
+	shy: OptionalCustomNumber,
+	sx: OptionalCustomNumber,
+	sy: OptionalCustomNumber
 }
 
 BlRopedText -> {
