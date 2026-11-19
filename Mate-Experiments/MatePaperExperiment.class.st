@@ -98,7 +98,7 @@ MatePaperExperiment >> genOne: conf [
 
 	self withTimeout: [ obj := conf gen: self rootType ] phase: 'generation'.
 	
-	self saveDerivation: (conf parse: obj).
+	"self saveDerivation: (conf parse: obj)."
 	
 	^ obj
 ]
