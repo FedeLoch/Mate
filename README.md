@@ -207,6 +207,7 @@ Example -> {
 | --- | --- |
 | `A \| B` | Union of types, flattened and printed in alphabetical order |
 | `T?` / `nullable: true` | The field may be generated as `nil` (see `nilProbability:`) |
+| `T \| nil` | `nil` is a type (short for `UndefinedObject`), so it is one more option of the union and is chosen like the others. Use it to end chains such as `parent: BlElement \| nil`, where `?` is too rare to stop them |
 | `between: a and: b`, `atLeast:`, `atMost:` | Inclusive numeric bounds |
 | `greaterThan:`, `lessThan:` | Exclusive numeric bounds |
 | `in: [ ... ]` | The value is one of the listed literals |
@@ -218,6 +219,30 @@ Example -> {
 | `invariants: { a <= b }` | A relation between two numeric fields of the same object (`<`, `<=`, `=`, `>`, `>=`); generation retries or repairs the fields until it holds, and validation rejects objects that break it |
 
 Identifiers may contain letters, digits and `_`. Numbers may be negative and use decimals or exponents. Malformed input raises an error that includes the position where parsing failed.
+
+### Type aliases
+
+An alias gives a name to a type or to a whole field description, so you write it once and use it in many fields:
+
+```smalltalk
+Geometry = BlRectangleGeometry | BlEllipseGeometry | BlTriangleGeometry
+Shape = Geometry | BlPolygonGeometry
+Level = { type: SmallInteger, between: 0 and: 99 }
+Tags = { type: [ ByteSymbol ], sizeBetween: 0 and: 5 }
+
+BlCustomVisuals -> { geometry: Geometry, clipChildren: Boolean }
+Player -> { level: Level, maxLevel: Level, bonus: Level?, tags: Tags }
+Canvas -> { shapes: { type: [ Shape ], sizeBetween: 0 and: 10 }, selected: (Shape | Player)? }
+```
+
+- An alias is written `Name = definition`, with no `->`. It can be defined before or after the rules that use it.
+- A **type alias** (a class or a union) can be used wherever a type is expected: as a field type, inside a union, or as the element type of a collection.
+- A **field alias** (a `{ ... }` description with constraints, a collection or a `oneOf`) can only be used as the whole type of a field.
+- A field can make either kind nullable with `?`; the alias definition itself cannot be nullable.
+- Aliases can use other aliases. An alias that ends up defined in terms of itself is an error.
+- An alias cannot have the name of an existing class, and cannot be defined twice.
+- Aliases only exist in the grammar: generation and validation see the types they stand for. Each use gets its own copy, so every field keeps its own rewards and visit counts during guided fuzzing.
+- `mateDefinition` writes the aliases first, sorted by name, keeps their names in the rules, and its output parses back into the same grammar.
 
 ## Fuzzing
 
@@ -244,11 +269,46 @@ Built-in generators are biased toward values that tend to expose bugs, and alway
 
 ### Depth limit and nullable fields
 
-Generation stops at `maxDerivationHeight` (12 by default). At the limit, a field takes a built-in option if its type allows one, otherwise it is set to `nil`. Nullable fields are set to `nil` with probability `nilProbability` (0.1 by default):
+Generation stops recursing at `maxDerivationHeight` (12 by default). At the limit, a field whose type could recurse into an object that is already being built takes a non-recursive option of its type if it has one, otherwise it is set to `nil`; other fields are generated as usual. Nullable fields are set to `nil` with probability `nilProbability` (0.1 by default):
 
 ```smalltalk
 grammar generator maxDerivationHeight: 6; nilProbability: 0.2.
 ```
+
+### Detecting generation that does not terminate
+
+Every call to `gen:`, `gen:from:` or `genVariant:` checks two bounds while it builds the graph, and signals `MateGenerationLoop` (an `Error`) as soon as one is exceeded:
+
+- **Object budget:** at most `maxObjects` objects and collections per generation (1,000,000 by default). This catches graphs that explode and recursion that runs away.
+- **Nesting bound:** objects nested deeper than `maxNesting`. By default it is `maxDerivationHeight` plus two levels per declaration, the deepest a terminating generation can go, so a loop is reported long before the object budget runs out.
+
+```smalltalk
+grammar generator maxObjects: 50000; maxNesting: 40.
+
+[ grammar gen: BlElement ]
+	on: MateGenerationLoop
+	do: [ :error | error messageText ].
+"=> 'Generation of BlElement does not terminate: objects are nested more than 40 levels deep. Last steps: ... > BlElement > BlChildrenArray > array > BlElement'"
+```
+
+The error also answers `rootType`, `objectCount` and `path` (the declarations being built when it stopped). The generator is ready for the next generation afterwards.
+
+#### Shrinking collections before giving up
+
+Before the object budget runs out, the generator tries to save the generation by shrinking collections. When a generation passes `softMaxObjects` (a tenth of `maxObjects` by default):
+
+1. The innermost collection being built that can still shrink drops the elements it generated so far and is rebuilt with its minimum size (empty when its `sizeBetween:` allows 0).
+2. Every collection built after that point uses its minimum size.
+
+Collections never go below their declared minimum, so truncated graphs stay valid. `grammar generator truncations` counts how many collections were shrunk.
+
+```smalltalk
+grammar generator maxObjects: 50000; softMaxObjects: 2000.
+grammar gen: BlElement.
+grammar generator truncations.
+```
+
+Only collections are shrunk. A loop through single fields, such as a non-nullable `parent: BlElement` that always creates a new parent, means the grammar is not well formed, and it still signals `MateGenerationLoop`.
 
 ### Coverage
 
@@ -383,8 +443,8 @@ What it infers:
 | Nullability | `T?` when a field is sometimes `nil` |
 | Numeric ranges | `between:and:` with enough observations, otherwise only the sign (`greaterThan: 0` or `atLeast: 0`) |
 | Enumerations | `oneOf:` for symbols, strings and characters with few distinct values seen many times, and for fields that hold classes |
-| Collections | element types, size ranges, and the collection class (`Array`, `OrderedCollection`, `Set`, `IdentitySet`, `Bag`), observed through their elements rather than their private slots |
-| Back-references | paths of up to three steps where an object always reaches itself, such as `children[ .parent ]` or Bloc's `children.array[ .parent ]`; the closing field becomes a `refType` |
+| Collections | element types (including `nil` when collections have empty slots), the collection class (`Array`, `OrderedCollection`, `Set`, `IdentitySet`, `Bag`) and size ranges, observed through their elements rather than their private slots. Collections of plain values keep their observed minimum size (a polygon needs its vertices); collections of objects always allow 0 elements, so recursive structures can end |
+| Back-references | paths of up to three steps where an object always reaches itself, such as `children[ .parent ]` or Bloc's `children.array[ .parent ]`; the closing field becomes a `refType`. When two objects point at each other (an element and its event dispatcher), only the direction that starts from the object nearer the observed roots is kept, so generation, which builds graphs from the root down, creates both objects. A path found for one class is shared with the other classes of its hierarchy where it also holds, and an inherited closing field (such as `parent`) gets one reference type for the whole hierarchy |
 | Invariants | `<`, `<=` or `=` between numeric fields of the same object, unless the ranges already imply them |
 
 Every decision is recorded, including the rejected ones, so you can review them:
@@ -394,6 +454,7 @@ inferrer := MateGrammarInferrer new
 	minimumSupport: 20;
 	maxEnumerationSize: 5;
 	maxPathLength: 3;
+	maxRelationshipSamples: 200;
 	observeAll: players;
 	yourself.
 
@@ -405,6 +466,19 @@ inferrer report.
 ```
 
 The report also flags objects that are shared by several others: generated graphs hold separate copies of them, because the grammar language does not express sharing yet.
+
+To keep the grammar about your domain rather than everything your objects reach (event handlers, announcers, weak message sends), limit how far observation goes:
+
+```smalltalk
+inferrer := MateGrammarInferrer new
+	maxDepth: 4;
+	observeAll: elements;
+	yourself.
+```
+
+The given objects are at depth 0, and each field or collection element adds one level. Observation is breadth-first, so every object is reached through its shortest path. Set `maxDepth:` before `observeAll:`. Classes found only beyond the limit get no declaration. A field that only holds such classes is left out of the grammar and reported as `#depthLimit`: generated objects keep the value `new` gives it. A field that also holds classes observed closer to the roots is kept, with only those classes in its type.
+
+Back-reference candidates are first tested on a sample of each class's instances (`maxRelationshipSamples:`, 200 by default) and then verified on all of them, so large inputs such as benchmark scenes with thousands of elements stay fast without accepting a reference that only holds on the sample.
 
 ### What inference cannot know
 

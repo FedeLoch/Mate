@@ -38,7 +38,8 @@ MateFieldProfile >> distinctValues [
 { #category : 'accessing' }
 MateFieldProfile >> elements [
 
-	^ self nonNilValues flatCollect: [ :each | observer elementsOf: each ]
+	^ (self nonNilValues flatCollect: [ :each | observer elementsOf: each ])
+		select: [ :each | observer covers: each ]
 ]
 
 { #category : 'testing' }

@@ -8,7 +8,16 @@ Class {
 		'nilProbability',
 		'injector',
 		'violationsPerObject',
-		'invalidDerivations'
+		'invalidDerivations',
+		'maxObjects',
+		'maxNesting',
+		'objectCount',
+		'rootType',
+		'softMaxObjects',
+		'closing',
+		'truncations',
+		'instanceGeneator',
+		'heapLimit'
 	],
 	#category : 'Mate-Generation',
 	#package : 'Mate',
@@ -43,12 +52,40 @@ MateGenerator >> builtInInstance: decl constraint: aConstraint from: context [
 	^ (builtInGenerators at: decl type) generateWithConstraint: aConstraint random: context random
 ]
 
+{ #category : 'looping' }
+MateGenerator >> checkLoopAt: context [
+
+	rootType ifNil: [ ^ self ].
+
+	objectCount := objectCount + 1.
+
+	objectCount > maxObjects ifTrue: [
+		MateGenerationLoop
+			signalFor: rootType
+			objects: objectCount
+			path: context path
+			reason: 'more than ', maxObjects printString, ' objects were generated' ].
+
+	context level > self maxNesting ifTrue: [
+		MateGenerationLoop
+			signalFor: rootType
+			objects: objectCount
+			path: context path
+			reason: 'objects are nested more than ', self maxNesting printString, ' levels deep' ].
+
+	closing ifTrue: [ ^ self ].
+
+	objectCount > self softMaxObjects ifTrue: [
+		closing := true.
+		MateGenerationOverflow new signal ]
+]
+
 { #category : 'visiting' }
 MateGenerator >> cutDerivation: instVarDecl from: context [
 
 	| terminals type |
 
-	terminals := instVarDecl types select: [ :each | (self declarationFor: each) isBuiltIn ].
+	terminals := instVarDecl types reject: [ :each | context includes: (self declarationFor: each) ].
 	terminals ifEmpty: [ ^ self nilNode: instVarDecl from: context ].
 
 	type := (terminals asSortedCollection: [ :a :b | a name <= b name ]) asArray atRandom: context random.
@@ -61,7 +98,7 @@ MateGenerator >> enforce: invariant of: decl on: node from: context [
 
 	| attempts |
 
-	attempts := 0.
+	attempts := invariant operator = '=' ifTrue: [ self invariantAttempts ] ifFalse: [ 0 ].
 	[ (invariant holdsFor: node instance) or: [ attempts >= self invariantAttempts ] ] whileFalse: [
 		attempts := attempts + 1.
 		self
@@ -87,8 +124,25 @@ MateGenerator >> enforceInvariantsOf: decl on: node from: context [
 		decl invariants do: [ :invariant | self enforce: invariant of: decl on: node from: context ] ]
 ]
 
+{ #category : 'visiting' }
+MateGenerator >> fill: decl size: size from: context [
+
+	| node edges |
+
+	node := MateOGDerivationNode new declaration: decl; context: context.
+	edges := (1 to: size) collect: [ :i | | edge |
+		edge := self gen: (decl chooseOneElementTypeFrom: context) from: context.
+		node addEdge: edge at: i.
+		edge ].
+
+	node instance: (decl collectionFrom: (edges collect: #instance)).
+	^ node
+]
+
 { #category : 'accessing' }
 MateGenerator >> gen: type [
+
+	instanceGeneator reset.
 
 	^ (self gen: type from: self newContext) instance
 ]
@@ -98,7 +152,7 @@ MateGenerator >> gen: type from: context [
 
 	context ensureRandom: random.
 
-	^ (self declarationFor: type) visit: self from: context constraint: nil
+	^ self guard: [ (self declarationFor: type) visit: self from: context constraint: nil ] for: type
 ]
 
 { #category : 'accessing' }
@@ -152,7 +206,35 @@ MateGenerator >> genVariant: derivation [
 
 	derivation context ensureRandom: random.
 
-	^ derivation declaration visit: self from: derivation context constraint: nil
+	^ self
+		guard: [ derivation declaration visit: self from: derivation context constraint: nil ]
+		for: derivation declaration type
+]
+
+{ #category : 'looping' }
+MateGenerator >> guard: aBlock for: aType [
+
+	rootType ifNotNil: [ ^ aBlock value ].
+
+	rootType := aType.
+	objectCount := 0.
+	closing := false.
+	^ [ heapLimit
+			ifNil: [ aBlock value ]
+			ifNotNil: [ (MateHeapGuard limit: heapLimit) run: aBlock ] ]
+		ensure: [ rootType := nil ]
+]
+
+{ #category : 'accessing' }
+MateGenerator >> heapLimit [
+
+	^ heapLimit
+]
+
+{ #category : 'accessing' }
+MateGenerator >> heapLimit: bytes [
+
+	heapLimit := bytes
 ]
 
 { #category : 'initialization' }
@@ -161,9 +243,13 @@ MateGenerator >> initialize [
 	super initialize.
 	maxDerivationHeight := 12.
 	nilProbability := 0.1.
+	maxObjects := 1000000.
+	closing := false.
+	truncations := 0.
 	random := Random new.
 	violationsPerObject := 1.
 	invalidDerivations := WeakIdentityKeyDictionary new.
+	instanceGeneator := MateGrammarBaseInstanceGenerator new.
 	builtInGenerators := self class defaultBuiltInGenerators
 ]
 
@@ -174,9 +260,21 @@ MateGenerator >> insert: node path: path [
 ]
 
 { #category : 'accessing' }
+MateGenerator >> instanceGenerator [
+
+	^ instanceGeneator
+]
+
+{ #category : 'accessing' }
 MateGenerator >> invariantAttempts [
 
 	^ 30
+]
+
+{ #category : 'testing' }
+MateGenerator >> isRecursive: instVarDecl from: context [
+
+	^ instVarDecl types anySatisfy: [ :each | context includes: (self declarationFor: each) ]
 ]
 
 { #category : 'testing' }
@@ -195,6 +293,30 @@ MateGenerator >> maxDerivationHeight [
 MateGenerator >> maxDerivationHeight: height [
 
 	maxDerivationHeight := height
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxNesting [
+
+	^ maxNesting ifNil: [ maxDerivationHeight + (2 * (grammar typeDeclarations size + 1)) ]
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxNesting: anInteger [
+
+	maxNesting := anInteger
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxObjects [
+
+	^ maxObjects
+]
+
+{ #category : 'accessing' }
+MateGenerator >> maxObjects: anInteger [
+
+	maxObjects := anInteger
 ]
 
 { #category : 'accessing' }
@@ -224,10 +346,7 @@ MateGenerator >> nilProbability: aProbability [
 { #category : 'visiting' }
 MateGenerator >> objectInstance: node constraint: constraint [
 
-	^ node edges keys inject: node declaration type new into: [ :inst :edgeName |
-		inst instVarNamed: edgeName put: (node edges at: edgeName) instance.
-		inst
-	]
+	^ instanceGeneator objectInstance: node constraint: constraint
 ]
 
 { #category : 'accessing' }
@@ -254,6 +373,12 @@ MateGenerator >> seed: anInteger [
 	random := Random seed: anInteger
 ]
 
+{ #category : 'as yet unclassified' }
+MateGenerator >> selectRandomExistingInstanceWithProb: prob [
+
+	instanceGeneator := MateRandomExistingInstanceGenerator new selectionExistingProbability: prob
+]
+
 { #category : 'visiting' }
 MateGenerator >> set: fieldName to: aValue on: node [
 
@@ -262,27 +387,51 @@ MateGenerator >> set: fieldName to: aValue on: node [
 ]
 
 { #category : 'visiting' }
+MateGenerator >> sizeOf: decl from: context [
+
+	(context level >= maxDerivationHeight and: [ (self isTerminal: decl elementType) not ]) ifTrue: [ ^ 0 ].
+	closing ifTrue: [ ^ decl minSize ].
+
+	^ (decl minSize to: decl maxSize) atRandom: context random
+]
+
+{ #category : 'accessing' }
+MateGenerator >> softMaxObjects [
+
+	^ softMaxObjects ifNil: [ maxObjects // 10 ]
+]
+
+{ #category : 'accessing' }
+MateGenerator >> softMaxObjects: anInteger [
+
+	softMaxObjects := anInteger
+]
+
+{ #category : 'accessing' }
+MateGenerator >> truncations [
+
+	^ truncations
+]
+
+{ #category : 'visiting' }
 MateGenerator >> visitArrayDecl: decl from: context [
 
-	| node size edges childContext |
+	| size count childContext |
 
 	childContext := context copy.
 	childContext push: decl.
+	self checkLoopAt: childContext.
 
-	size := ((childContext level >= maxDerivationHeight) and: [ (self isTerminal: decl elementType) not ])
-		ifTrue: [ 0 ]
-		ifFalse: [ (decl minSize to: decl maxSize) atRandom: context random ].
+	size := self sizeOf: decl from: childContext.
+	count := objectCount.
 
-	node := MateOGDerivationNode new declaration: decl; context: childContext.
-
-	edges := (1 to: size) collect: [ :i | | type edge |
-		type := decl chooseOneElementTypeFrom: childContext.
-		edge := self gen: type from: childContext.
-		node addEdge: edge at: i.
-		edge
-	].
-
-	^ node instance: (decl collectionFrom: (edges collect: #instance))
+	^ [ self fill: decl size: size from: childContext ]
+		on: MateGenerationOverflow
+		do: [ :overflow |
+			size > decl minSize ifFalse: [ overflow pass ].
+			objectCount := count.
+			truncations := truncations + 1.
+			overflow return: (self fill: decl size: decl minSize from: childContext) ]
 ]
 
 { #category : 'visiting' }
@@ -321,8 +470,8 @@ MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 	(instVarDecl nullable and: [ context random next < nilProbability ])
 		ifTrue: [ ^ self nilNode: instVarDecl from: context ].
 
-	context level >= maxDerivationHeight
-		ifTrue: [ ^ self cutDerivation: instVarDecl from: context ].
+"	(context level >= maxDerivationHeight and: [ self isRecursive: instVarDecl from: context ])
+		ifTrue: [ ^ self cutDerivation: instVarDecl from: context ]."
 
 	type := instVarDecl chooseOneTypeFrom: context.
 
@@ -334,12 +483,21 @@ MateGenerator >> visitInstVarDecl: instVarDecl from: context [
 { #category : 'visiting' }
 MateGenerator >> visitInstanceDeclaration: decl from: context [
 
-	| childContext node |
+	| childContext node instance |
+
+	node := MateOGInstanceNode new declaration: decl; context: context.
+
+	(instanceGeneator
+		existingInstanceFor: decl
+		random: context random
+		closing: (closing or: [ context level >= maxDerivationHeight ]))
+			ifNotNil: [ :existing | ^ node instance: existing; yourself ].
 
 	childContext := context copy.
 	childContext push: decl.
+	self checkLoopAt: childContext.
 
-	node := MateOGInstanceNode new declaration: decl; context: context.
+	instance := instanceGeneator newInstanceFor: decl.
 	childContext parentNode: node.
 
 	decl instanceVariableDeclarations do: [ :instVarDecl | | edge |
@@ -347,7 +505,7 @@ MateGenerator >> visitInstanceDeclaration: decl from: context [
 		node addEdge: edge at: instVarDecl name.
 	].
 
-	node instance: (self objectInstance: node constraint: nil).
+	node instance: (instanceGeneator fill: instance from: node).
 
 	self enforceInvariantsOf: decl on: node from: childContext.
 

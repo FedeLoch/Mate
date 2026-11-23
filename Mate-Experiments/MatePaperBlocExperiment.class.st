@@ -9,14 +9,30 @@ Class {
 MatePaperBlocExperiment >> bechmark: blElement [
 
 	UmeBlocRender render: blElement
-
-	
 ]
 
 { #category : 'as yet unclassified' }
-MatePaperBlocExperiment >> mateGrammar [
+MatePaperBlocExperiment >> mateFullGrammar [
 
-	^ MateBlocGrammarByLang new
+	^ MateBlocCompleteGrammar new
+]
+
+{ #category : 'as yet unclassified' }
+MatePaperBlocExperiment >> mateRandomInstanceSelectionWithoutConstraintsGrammar [
+
+	^ MateBlocWithRandomReferenceSelectionGrammar new
+]
+
+{ #category : 'as yet unclassified' }
+MatePaperBlocExperiment >> mateWithRefsWithoutConstraintsGrammar [
+
+	^ MateBlocCompleteWithoutConstraintsGrammar new
+]
+
+{ #category : 'as yet unclassified' }
+MatePaperBlocExperiment >> mateWithoutRefsAndOptionalNilGrammarWithoutConstraints [
+
+	^ MateBlocGrammarWithoutConstraintsByLang new
 ]
 
 { #category : 'running' }

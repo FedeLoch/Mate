@@ -4,7 +4,9 @@ Class {
 	#instVars : [
 		'instancesByClass',
 		'visited',
-		'maxDepth'
+		'maxDepth',
+		'roots',
+		'depths'
 	],
 	#category : 'Mate-Inference',
 	#package : 'Mate',
@@ -15,6 +17,48 @@ Class {
 MateObserver >> collectionClasses [
 
 	^ { Array. OrderedCollection. Set. IdentitySet. Bag }
+]
+
+{ #category : 'depths' }
+MateObserver >> computeDepths [
+
+	| queue |
+
+	depths := IdentityDictionary new.
+	queue := OrderedCollection new.
+
+	roots do: [ :each |
+		(depths includesKey: each) ifFalse: [
+			depths at: each put: 0.
+			queue add: each ] ].
+
+	[ queue isEmpty ] whileFalse: [ | current depth |
+		current := queue removeFirst.
+		depth := depths at: current.
+		(self neighboursOf: current) do: [ :each |
+			(depths includesKey: each) ifFalse: [
+				depths at: each put: depth + 1.
+				queue add: each ] ] ]
+]
+
+{ #category : 'testing' }
+MateObserver >> covers: aValue [
+
+	aValue ifNil: [ ^ true ].
+	(self isLeaf: aValue) ifTrue: [ ^ true ].
+	(self isUnsupported: aValue) ifTrue: [ ^ true ].
+
+	(self isCollectionValue: aValue) ifTrue: [
+		^ (self elementsOf: aValue) allSatisfy: [ :each | self covers: each ] ].
+
+	^ (self instancesOf: aValue class) notEmpty
+]
+
+{ #category : 'depths' }
+MateObserver >> depthOf: anObject [
+
+	depths ifNil: [ self computeDepths ].
+	^ depths at: anObject ifAbsent: [ SmallInteger maxVal ]
 ]
 
 { #category : 'accessing' }
@@ -28,7 +72,8 @@ MateObserver >> initialize [
 
 	super initialize.
 	instancesByClass := Dictionary new.
-	visited := IdentitySet new
+	visited := IdentitySet new.
+	roots := OrderedCollection new
 ]
 
 { #category : 'accessing' }
@@ -55,10 +100,7 @@ MateObserver >> isLeaf: object [
 { #category : 'testing' }
 MateObserver >> isObserved: anObject [
 
-	^ anObject notNil and: [
-			  (instancesByClass at: anObject class ifAbsent: [ #(  ) ])
-				  identityIncludes: anObject
-	]
+	^ anObject notNil and: [ (visited includes: anObject) and: [ (self isCollectionValue: anObject) not ] ]
 ]
 
 { #category : 'testing' }
@@ -81,36 +123,39 @@ MateObserver >> maxDepth: anInteger [
 	maxDepth := anInteger
 ]
 
-{ #category : 'observing' }
-MateObserver >> observe: anObject [
+{ #category : 'depths' }
+MateObserver >> neighboursOf: anObject [
 
-	self observe: anObject depth: 0
+	^ (self valuesOf: anObject) select: [ :each | each notNil and: [ visited includes: each ] ]
 ]
 
 { #category : 'observing' }
-MateObserver >> observe: anObject depth: depth [
+MateObserver >> observe: anObject [
 
-	(maxDepth notNil and: [ depth > maxDepth ]) ifTrue: [ ^ self ].
-	(self isLeaf: anObject) ifTrue: [ ^ self ].
-	(self isUnsupported: anObject) ifTrue: [ ^ self ].
-	(visited includes: anObject) ifTrue: [ ^ self ].
-
-	visited add: anObject.
-
-	(self isCollectionValue: anObject) ifTrue: [
-		(self elementsOf: anObject) do: [ :each | self observe: each depth: depth + 1 ].
-		^ self ].
-
-	(instancesByClass at: anObject class ifAbsentPut: [ OrderedCollection new ]) add: anObject.
-
-	anObject class allInstVarNames do: [ :name |
-		self observe: (anObject instVarNamed: name) depth: depth + 1 ]
+	self observeAll: { anObject }
 ]
 
 { #category : 'observing' }
 MateObserver >> observeAll: aCollection [
 
-	aCollection do: [ :each | self observe: each ]
+	| queue |
+
+	depths := nil.
+	queue := OrderedCollection new.
+
+	aCollection do: [ :each |
+		(roots identityIncludes: each) ifFalse: [ roots add: each ].
+		queue add: each -> 0 ].
+
+	[ queue isEmpty ] whileFalse: [ | entry object depth |
+		entry := queue removeFirst.
+		object := entry key.
+		depth := entry value.
+		(self shouldVisit: object at: depth) ifTrue: [
+			visited add: object.
+			(self isCollectionValue: object) ifFalse: [
+				(instancesByClass at: object class ifAbsentPut: [ OrderedCollection new ]) add: object ].
+			(self valuesOf: object) do: [ :each | queue add: each -> (depth + 1) ] ] ]
 ]
 
 { #category : 'accessing' }
@@ -119,8 +164,26 @@ MateObserver >> observedClasses [
 	^ (instancesByClass keys asSortedCollection: [ :a :b | a name <= b name ]) asArray
 ]
 
+{ #category : 'observing' }
+MateObserver >> shouldVisit: anObject at: depth [
+
+	(maxDepth notNil and: [ depth > maxDepth ]) ifTrue: [ ^ false ].
+	(self isLeaf: anObject) ifTrue: [ ^ false ].
+	(self isUnsupported: anObject) ifTrue: [ ^ false ].
+
+	^ (visited includes: anObject) not
+]
+
 { #category : 'accessing' }
 MateObserver >> unsupportedClasses [
 
 	^ { BlockClosure. CompiledCode. Context. Process. SystemDictionary. Semaphore. Mutex }
+]
+
+{ #category : 'observing' }
+MateObserver >> valuesOf: anObject [
+
+	^ (self isCollectionValue: anObject)
+		ifTrue: [ self elementsOf: anObject ]
+		ifFalse: [ anObject class allInstVarNames collect: [ :each | anObject instVarNamed: each ] ]
 ]

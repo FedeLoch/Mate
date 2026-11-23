@@ -1,6 +1,12 @@
 Class {
 	#name : 'MateLanguageParser',
 	#superclass : 'Object',
+	#instVars : [
+		'source',
+		'aliases',
+		'aliasPositions',
+		'resolving'
+	],
 	#category : 'Mate-Grammar',
 	#package : 'Mate',
 	#tag : 'Grammar'
@@ -10,6 +16,18 @@ Class {
 MateLanguageParser class >> parse: aMateDescription [
 
 	^ self new parse: aMateDescription
+]
+
+{ #category : 'aliases' }
+MateLanguageParser >> aliasNamed: aName [
+
+	^ aliases at: aName ifAbsent: [ self resolveAlias: aName ]
+]
+
+{ #category : 'aliases' }
+MateLanguageParser >> aliases [
+
+	^ aliases
 ]
 
 { #category : 'creation' }
@@ -124,6 +142,34 @@ MateLanguageParser >> expectNotAtEnd: stream [
 	stream atEnd ifTrue: [ self error: 'Unexpected end of input' at: stream ]
 ]
 
+{ #category : 'aliases' }
+MateLanguageParser >> fieldAliasAt: stream [
+
+	| position identifier |
+
+	position := stream position.
+	identifier := self parseIdentifier: stream.
+
+	((aliasPositions includesKey: identifier) and: [ (self aliasNamed: identifier) isTypeAlias not ])
+		ifTrue: [ ^ self aliasNamed: identifier ].
+
+	stream position: position.
+	^ nil
+]
+
+{ #category : 'aliases' }
+MateLanguageParser >> isAliasDefinitionAt: stream [
+
+	| position isAlias |
+
+	position := stream position.
+	self parseIdentifier: stream.
+	self skipWhitespace: stream.
+	isAlias := stream peek = $=.
+	stream position: position.
+	^ isAlias
+]
+
 { #category : 'testing' }
 MateLanguageParser >> isIdentifierCharacter: aCharacter [
 
@@ -150,12 +196,22 @@ MateLanguageParser >> parse: aString [
 
 	| stream declarations |
 
-	stream := aString readStream.
+	source := aString.
+	aliases := Dictionary new.
+	aliasPositions := Dictionary new.
+	resolving := OrderedCollection new.
+	self scanAliases.
+
+	stream := source readStream.
 	declarations := OrderedCollection new.
 
 	[ self skipWhitespace: stream. stream atEnd ] whileFalse: [
-		declarations add: (self parseRule: stream)
+		(self isAliasDefinitionAt: stream)
+			ifTrue: [ self skipAliasDefinition: stream ]
+			ifFalse: [ declarations add: (self parseRule: stream) ]
 	].
+
+	(aliasPositions keys asSortedCollection: [ :a :b | a <= b ]) do: [ :each | self aliasNamed: each ].
 
 	^ declarations
 ]
@@ -539,7 +595,9 @@ MateLanguageParser >> parseTypeDescription: stream [
 
 	stream peek = ${ ifTrue: [ ^ self declarationFrom: (self parseComplexType: stream) ].
 
-	decl := MateInstVarDecl new type: (self parseType: stream).
+	decl := (self fieldAliasAt: stream)
+		ifNil: [ MateInstVarDecl new type: (self parseType: stream) ]
+		ifNotNil: [ :alias | alias instantiateField ].
 
 	self skipWhitespace: stream.
 	(self match: '?' from: stream) ifTrue: [ decl nullable: true ].
@@ -550,7 +608,18 @@ MateLanguageParser >> parseTypeDescription: stream [
 { #category : 'parsing' }
 MateLanguageParser >> parseTypeName: stream [
 
-	^ self parseClassSuffix: (self resolveClass: (self requireIdentifier: stream)) from: stream
+	| identifier alias |
+
+	identifier := self requireIdentifier: stream.
+
+	(aliasPositions includesKey: identifier) ifFalse: [
+		^ self parseClassSuffix: (self resolveClass: identifier) from: stream ].
+
+	alias := self aliasNamed: identifier.
+	alias isTypeAlias ifFalse: [
+		self error: 'Alias ', identifier, ' describes a field, so it can only be used as the whole type of a field' at: stream ].
+
+	^ alias instantiateType
 ]
 
 { #category : 'parsing' }
@@ -592,6 +661,17 @@ MateLanguageParser >> readDigitsFrom: stream into: aWriteStream [
 	[ stream peek notNil and: [ stream peek isDigit ] ] whileTrue: [ aWriteStream nextPut: stream next ]
 ]
 
+{ #category : 'aliases' }
+MateLanguageParser >> registerAlias: aName at: stream [
+
+	(self class environment includesKey: aName asSymbol) ifTrue: [
+		self error: 'Alias ', aName, ' has the name of an existing class' at: stream ].
+	(aliasPositions includesKey: aName) ifTrue: [
+		self error: 'Alias ', aName, ' is defined twice' at: stream ].
+
+	aliasPositions at: aName put: stream position
+]
+
 { #category : 'parsing' }
 MateLanguageParser >> requireIdentifier: stream [
 
@@ -606,10 +686,42 @@ MateLanguageParser >> requireIdentifier: stream [
 	^ identifier
 ]
 
+{ #category : 'aliases' }
+MateLanguageParser >> resolveAlias: aName [
+
+	| stream definition alias |
+
+	(resolving includes: aName) ifTrue: [
+		self error: 'Alias ', aName, ' is defined in terms of itself: ', ((resolving copyWith: aName) joinUsing: ' -> ') ].
+
+	resolving add: aName.
+	stream := source readStream.
+	stream position: (aliasPositions at: aName).
+	self skipWhitespace: stream.
+
+	definition := stream peek = ${
+		ifTrue: [ (self declarationFrom: (self parseComplexType: stream)) name: aName; yourself ]
+		ifFalse: [ | type |
+			type := self parseType: stream.
+			(MateOptionalType options: (MateOptionalType typesOf: type))
+				addAliases: (MateOptionalType aliasesOf: type);
+				yourself ].
+
+	self skipWhitespace: stream.
+	stream peek = $? ifTrue: [
+		self error: 'Alias ', aName, ' cannot be nullable; mark the fields that use it with ? instead' at: stream ].
+
+	resolving removeLast.
+	alias := MateAlias name: aName definition: definition.
+	aliases at: aName put: alias.
+	^ alias
+]
+
 { #category : 'resolving' }
 MateLanguageParser >> resolveClass: aClassName [
 
 	aClassName isString ifFalse: [ ^ aClassName ].
+	aClassName = 'nil' ifTrue: [ ^ UndefinedObject ].
 
 	^ self class environment at: aClassName asSymbol ifAbsent: [
 		self error: 'Class not found: ', aClassName
@@ -622,6 +734,79 @@ MateLanguageParser >> resolveType: typeOrIdentifier [
 	^ typeOrIdentifier isString
 		ifTrue: [ self resolveClass: typeOrIdentifier ]
 		ifFalse: [ typeOrIdentifier ]
+]
+
+{ #category : 'aliases' }
+MateLanguageParser >> scanAliases [
+
+	| stream |
+
+	stream := source readStream.
+
+	[ self skipWhitespace: stream. stream atEnd ] whileFalse: [ | name |
+		name := self parseIdentifier: stream.
+		name ifEmpty: [ ^ self ].
+		self skipWhitespace: stream.
+		(self match: '->' from: stream)
+			ifTrue: [ (self skipBlock: stream) ifFalse: [ ^ self ] ]
+			ifFalse: [
+				(self match: '=' from: stream) ifFalse: [ ^ self ].
+				self registerAlias: name at: stream.
+				self skipAliasBody: stream ] ]
+]
+
+{ #category : 'aliases' }
+MateLanguageParser >> skipAliasBody: stream [
+
+	self skipWhitespace: stream.
+	stream peek = ${ ifTrue: [ ^ self skipBlock: stream ].
+
+	[ self skipWhitespace: stream. stream atEnd ] whileFalse: [ | position |
+		position := stream position.
+		(self isIdentifierCharacter: stream peek)
+			ifTrue: [
+				self parseIdentifier: stream.
+				self skipWhitespace: stream.
+				((self match: '->' from: stream) or: [ stream peek = $= ]) ifTrue: [
+					stream position: position.
+					^ self ] ]
+			ifFalse: [
+				('|()?' includes: stream peek) ifFalse: [ ^ self ].
+				stream next ] ]
+]
+
+{ #category : 'aliases' }
+MateLanguageParser >> skipAliasDefinition: stream [
+
+	self requireIdentifier: stream.
+	self skipWhitespace: stream.
+	self expect: '=' from: stream.
+	self skipAliasBody: stream
+]
+
+{ #category : 'aliases' }
+MateLanguageParser >> skipBlock: stream [
+
+	| depth |
+
+	self skipWhitespace: stream.
+	stream peek = ${ ifFalse: [ ^ false ].
+
+	depth := 0.
+	[ stream atEnd ] whileFalse: [ | character |
+		self skipWhitespace: stream.
+		stream atEnd ifTrue: [ ^ false ].
+		character := stream peek.
+		character = $'
+			ifTrue: [ self parseString: stream ]
+			ifFalse: [
+				stream next.
+				character = ${ ifTrue: [ depth := depth + 1 ].
+				character = $} ifTrue: [
+					depth := depth - 1.
+					depth = 0 ifTrue: [ ^ true ] ] ] ].
+
+	^ false
 ]
 
 { #category : 'parsing' }

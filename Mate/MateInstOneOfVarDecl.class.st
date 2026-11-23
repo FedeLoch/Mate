@@ -24,6 +24,14 @@ MateInstOneOfVarDecl >> acceptOption: option [
 	^ options includes: option
 ]
 
+{ #category : 'copying' }
+MateInstOneOfVarDecl >> aliasCopy [
+
+	^ super aliasCopy
+		options: options copy;
+		yourself
+]
+
 { #category : 'as yet unclassified' }
 MateInstOneOfVarDecl >> explorationPercentage [
 

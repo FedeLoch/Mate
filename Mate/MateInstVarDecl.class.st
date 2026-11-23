@@ -4,7 +4,8 @@ Class {
 	#instVars : [
 		'name',
 		'constraint',
-		'nullable'
+		'nullable',
+		'alias'
 	],
 	#category : 'Mate-Grammar',
 	#package : 'Mate',
@@ -23,6 +24,36 @@ MateInstVarDecl >> = anObject [
 MateInstVarDecl >> acceptType: aType [
 
 	^ type acceptType: aType
+]
+
+{ #category : 'accessing' }
+MateInstVarDecl >> alias [
+
+	^ alias
+]
+
+{ #category : 'accessing' }
+MateInstVarDecl >> alias: anAlias [
+
+	alias := anAlias
+]
+
+{ #category : 'copying' }
+MateInstVarDecl >> aliasCopy [
+
+	^ self class new
+		type: (MateOptionalType freshCopyOf: type);
+		constraint: constraint;
+		nullable: self nullable;
+		yourself
+]
+
+{ #category : 'accessing' }
+MateInstVarDecl >> aliases [
+
+	^ alias
+		ifNil: [ MateOptionalType aliasesOf: type ]
+		ifNotNil: [ { alias } ]
 ]
 
 { #category : 'as yet unclassified' }

@@ -12,7 +12,7 @@ MatePaperASTExperiment >> bechmark: blElement [
 ]
 
 { #category : 'as yet unclassified' }
-MatePaperASTExperiment >> mateGrammar [
+MatePaperASTExperiment >> mateFullGrammar [
 
 	^ MateASTGrammar new
 ]
