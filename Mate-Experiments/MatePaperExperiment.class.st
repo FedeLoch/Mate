@@ -3,7 +3,8 @@ Class {
 	#superclass : 'Object',
 	#instVars : [
 		'configurations',
-		'timeout'
+		'timeout',
+		'heapLimit'
 	],
 	#category : 'Mate-Experiments',
 	#package : 'Mate-Experiments'
@@ -48,8 +49,10 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 			isError := false.
 			collector basicRun: [
 				[
-					generated := self genOne: conf.
-					self withTimeout: [ self bechmark: generated ] phase: 'benchmark' ] onErrorDo: [ :e |
+					self withHeapLimit: [
+						generated := self genOne: conf.
+						self withTimeout: [ self bechmark: generated ] phase: 'benchmark' ] ] onErrorDo: [ :e |
+						(e isKindOf: MateHeapLimitReached) ifTrue: [ generated := nil ].
 						errors add: e description.
 						invalids := invalids + 1.
 						isError := true ] ].
@@ -57,7 +60,13 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 			diff := result nodes difference: incrCoverageResult nodes.
 			
 			"feed the generator"
-			generated ifNotNil: [ self feed: conf input: generated diff: diff ].
+			generated ifNotNil: [
+				[ self withHeapLimit: [ self feed: conf input: generated diff: diff ] ]
+					on: MateHeapLimitReached
+					do: [ :e |
+						generated := nil.
+						errors add: e description.
+						isError := true ] ].
 			
 			"add the new case with the current code coverage result for this new generated"
 			cases add: {
@@ -113,7 +122,8 @@ MatePaperExperiment >> initialize [
 		self mateWithoutRefsAndOptionalNilGrammarWithoutConstraints.
 	}.
 	
-	timeout := 10 seconds
+	timeout := 10 seconds.
+	heapLimit := 8 * 1024 * 1024 * 1024
 ]
 
 { #category : 'testing' }
@@ -201,6 +211,20 @@ MatePaperExperiment >> saveDerivation: derivation [
 
 	derivation saveAs: 'lastDerivation.fuel'.
 
+]
+
+{ #category : 'running' }
+MatePaperExperiment >> heapLimit: bytes [
+
+	heapLimit := bytes
+]
+
+{ #category : 'running' }
+MatePaperExperiment >> withHeapLimit: aBlock [
+
+	heapLimit ifNil: [ ^ aBlock value ].
+
+	^ (MateHeapGuard limit: heapLimit) run: aBlock
 ]
 
 { #category : 'running' }

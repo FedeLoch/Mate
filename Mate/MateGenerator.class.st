@@ -13,7 +13,8 @@ Class {
 		'softMaxObjects',
 		'closing',
 		'truncations',
-		'instanceGeneator'
+		'instanceGeneator',
+		'heapLimit'
 	],
 	#category : 'Mate-Generation',
 	#package : 'Mate',
@@ -169,7 +170,22 @@ MateGenerator >> guard: aBlock for: aType [
 	rootType := aType.
 	objectCount := 0.
 	closing := false.
-	^ aBlock ensure: [ rootType := nil ]
+	^ [ heapLimit
+			ifNil: [ aBlock value ]
+			ifNotNil: [ (MateHeapGuard limit: heapLimit) run: aBlock ] ]
+		ensure: [ rootType := nil ]
+]
+
+{ #category : 'accessing' }
+MateGenerator >> heapLimit [
+
+	^ heapLimit
+]
+
+{ #category : 'accessing' }
+MateGenerator >> heapLimit: bytes [
+
+	heapLimit := bytes
 ]
 
 { #category : 'initialization' }
