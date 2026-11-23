@@ -19,6 +19,12 @@ MateViolationInjector class >> allKinds [
 	^ #( #range #oneOf #type #nil #size #element #reference #invariant )
 ]
 
+{ #category : 'accessing' }
+MateViolationInjector >> arrayDeclarationsOf: decl [
+
+	^ decl instanceVariableDeclarations select: [ :each | each isKindOf: MateInstArrayVarDecl ]
+]
+
 { #category : 'selecting' }
 MateViolationInjector >> chooseKindFrom: kinds [
 
@@ -107,17 +113,6 @@ MateViolationInjector >> inject: count into: derivation kinds: kinds random: aRa
 	^ violations asArray
 ]
 
-{ #category : 'sites' }
-MateViolationInjector >> invariantSitesFor: owner declaration: decl [
-
-	^ decl invariants inject: OrderedCollection new into: [ :sites :invariant | | left right |
-		left := owner instVarNamed: invariant left.
-		right := owner instVarNamed: invariant right.
-		(left isNumber and: [ right isNumber ]) ifTrue: [
-			sites add: (self site: owner field: invariant left block: [ self violate: invariant on: owner ]) ].
-		sites ]
-]
-
 { #category : 'values' }
 MateViolationInjector >> invalidOptionFor: options [
 
@@ -132,6 +127,17 @@ MateViolationInjector >> invalidValueFor: isInvalid [
 	^ { 'mate invalid'. 42. #mateInvalid. 3.5. true. Object new }
 		detect: isInvalid
 		ifNone: [ nil ]
+]
+
+{ #category : 'sites' }
+MateViolationInjector >> invariantSitesFor: owner declaration: decl [
+
+	^ decl invariants inject: OrderedCollection new into: [ :sites :invariant | | left right |
+		left := owner instVarNamed: invariant left.
+		right := owner instVarNamed: invariant right.
+		(left isNumber and: [ right isNumber ]) ifTrue: [
+			sites add: (self site: owner field: invariant left block: [ self violate: invariant on: owner ]) ].
+		sites ]
 ]
 
 { #category : 'testing' }
@@ -202,12 +208,6 @@ MateViolationInjector >> rangeSitesFor: owner declaration: decl [
 							kind: #range
 							description: 'outside ', each constraint printString ]) ] ].
 			sites ]
-]
-
-{ #category : 'accessing' }
-MateViolationInjector >> arrayDeclarationsOf: decl [
-
-	^ decl instanceVariableDeclarations select: [ :each | each isKindOf: MateInstArrayVarDecl ]
 ]
 
 { #category : 'sites' }

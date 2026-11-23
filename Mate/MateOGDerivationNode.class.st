@@ -76,24 +76,6 @@ MateOGDerivationNode >> derivationPath [
 	^ derivationPath
 ]
 
-{ #category : 'testing' }
-MateOGDerivationNode >> isValid [
-
-	^ self violations isEmpty
-]
-
-{ #category : 'accessing' }
-MateOGDerivationNode >> violations [
-
-	^ violations ifNil: [ #() ]
-]
-
-{ #category : 'accessing' }
-MateOGDerivationNode >> violations: aCollection [
-
-	violations := aCollection asArray
-]
-
 { #category : 'accessing' }
 MateOGDerivationNode >> edges [
 
@@ -117,6 +99,12 @@ MateOGDerivationNode >> instance [
 MateOGDerivationNode >> instance: anInstance [
 
 	instance := anInstance 
+]
+
+{ #category : 'testing' }
+MateOGDerivationNode >> isValid [
+
+	^ self violations isEmpty
 ]
 
 { #category : 'rendering' }
@@ -267,4 +255,16 @@ MateOGDerivationNode >> updateAllReferences [
 			]
 		]
 	]
+]
+
+{ #category : 'accessing' }
+MateOGDerivationNode >> violations [
+
+	^ violations ifNil: [ #() ]
+]
+
+{ #category : 'accessing' }
+MateOGDerivationNode >> violations: aCollection [
+
+	violations := aCollection asArray
 ]

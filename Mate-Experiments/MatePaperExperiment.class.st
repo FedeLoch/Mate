@@ -113,10 +113,17 @@ MatePaperExperiment >> genOne: conf [
 ]
 
 { #category : 'running' }
+MatePaperExperiment >> heapLimit: bytes [
+
+	heapLimit := bytes
+]
+
+{ #category : 'running' }
 MatePaperExperiment >> initialize [ 
 	
 	configurations := {
 		self mateFullGrammar.
+		self mateFullBreaksGrammar.
 		self mateWithRefsWithoutConstraintsGrammar.
 		self mateRandomInstanceSelectionWithoutConstraintsGrammar.
 		self mateWithoutRefsAndOptionalNilGrammarWithoutConstraints.
@@ -130,6 +137,12 @@ MatePaperExperiment >> initialize [
 MatePaperExperiment >> isValid: anInput [
 	
 	^ true
+]
+
+{ #category : 'running' }
+MatePaperExperiment >> mateFullBreaksGrammar [
+
+	self subclassResponsibility 
 ]
 
 { #category : 'running' }
@@ -211,12 +224,6 @@ MatePaperExperiment >> saveDerivation: derivation [
 
 	derivation saveAs: 'lastDerivation.fuel'.
 
-]
-
-{ #category : 'running' }
-MatePaperExperiment >> heapLimit: bytes [
-
-	heapLimit := bytes
 ]
 
 { #category : 'running' }

@@ -56,6 +56,18 @@ MateParser >> parse: obj [
 ]
 
 { #category : 'parsing' }
+MateParser >> parse: type from: context [
+
+	| decl |
+
+	decl := grammar typeDeclarations at: type ifAbsent: [
+		self error: 'No declaration found for ', type name
+	].
+
+	^ decl visit: self from: context constraint: nil
+]
+
+{ #category : 'parsing' }
 MateParser >> parse: obj strict: aBoolean [
 
 	| previous |
@@ -70,18 +82,6 @@ MateParser >> rejectNilIn: decl [
 
 	(strict and: [ decl nullable not ]) ifTrue: [
 		self error: 'Field ', decl name asString, ' must not be nil' ]
-]
-
-{ #category : 'parsing' }
-MateParser >> parse: type from: context [
-
-	| decl |
-
-	decl := grammar typeDeclarations at: type ifAbsent: [
-		self error: 'No declaration found for ', type name
-	].
-
-	^ decl visit: self from: context constraint: nil
 ]
 
 { #category : 'visiting' }

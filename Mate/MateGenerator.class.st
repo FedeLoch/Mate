@@ -178,30 +178,6 @@ MateGenerator >> gen: type validity: aValidity violating: kinds [
 ]
 
 { #category : 'accessing' }
-MateGenerator >> injector [
-
-	^ injector ifNil: [ injector := MateViolationInjector new generator: self; yourself ]
-]
-
-{ #category : 'accessing' }
-MateGenerator >> invalidDerivationOf: anInstance [
-
-	^ invalidDerivations at: anInstance ifAbsent: [ nil ]
-]
-
-{ #category : 'accessing' }
-MateGenerator >> violationsPerObject [
-
-	^ violationsPerObject
-]
-
-{ #category : 'accessing' }
-MateGenerator >> violationsPerObject: anInteger [
-
-	violationsPerObject := anInteger
-]
-
-{ #category : 'accessing' }
 MateGenerator >> genVariant: derivation [
 
 	derivation context ensureRandom: random.
@@ -253,6 +229,12 @@ MateGenerator >> initialize [
 	builtInGenerators := self class defaultBuiltInGenerators
 ]
 
+{ #category : 'accessing' }
+MateGenerator >> injector [
+
+	^ injector ifNil: [ injector := MateViolationInjector new generator: self; yourself ]
+]
+
 { #category : 'visiting' }
 MateGenerator >> insert: node path: path [
 
@@ -263,6 +245,12 @@ MateGenerator >> insert: node path: path [
 MateGenerator >> instanceGenerator [
 
 	^ instanceGeneator
+]
+
+{ #category : 'accessing' }
+MateGenerator >> invalidDerivationOf: anInstance [
+
+	^ invalidDerivations at: anInstance ifAbsent: [ nil ]
 ]
 
 { #category : 'accessing' }
@@ -411,6 +399,18 @@ MateGenerator >> softMaxObjects: anInteger [
 MateGenerator >> truncations [
 
 	^ truncations
+]
+
+{ #category : 'accessing' }
+MateGenerator >> violationsPerObject [
+
+	^ violationsPerObject
+]
+
+{ #category : 'accessing' }
+MateGenerator >> violationsPerObject: anInteger [
+
+	violationsPerObject := anInteger
 ]
 
 { #category : 'visiting' }
