@@ -6,7 +6,8 @@ Class {
 		'edges',
 		'context',
 		'instance',
-		'derivationPath'
+		'derivationPath',
+		'violations'
 	],
 	#category : 'Mate-Derivation Tree',
 	#package : 'Mate',
@@ -98,6 +99,12 @@ MateOGDerivationNode >> instance [
 MateOGDerivationNode >> instance: anInstance [
 
 	instance := anInstance 
+]
+
+{ #category : 'testing' }
+MateOGDerivationNode >> isValid [
+
+	^ self violations isEmpty
 ]
 
 { #category : 'rendering' }
@@ -248,4 +255,16 @@ MateOGDerivationNode >> updateAllReferences [
 			]
 		]
 	]
+]
+
+{ #category : 'accessing' }
+MateOGDerivationNode >> violations [
+
+	^ violations ifNil: [ #() ]
+]
+
+{ #category : 'accessing' }
+MateOGDerivationNode >> violations: aCollection [
+
+	violations := aCollection asArray
 ]

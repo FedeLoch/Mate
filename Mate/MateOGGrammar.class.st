@@ -105,10 +105,10 @@ MateOGGrammar >> addTypeDeclarations: declarations [
 
 { #category : 'as yet unclassified' }
 MateOGGrammar >> backPropagate: improvement from: instance [
-	
+
 	| node |
-	
-	node := self parse: instance.
+
+	node := (generator invalidDerivationOf: instance) ifNil: [ self parse: instance ].
 
 	self backpropagate: node improvement: improvement
 ]
@@ -116,7 +116,8 @@ MateOGGrammar >> backPropagate: improvement from: instance [
 { #category : 'as yet unclassified' }
 MateOGGrammar >> backpropagate: node improvement: improvement [
 
-	node recursiveBackPropagate: improvement seen: Set new
+	node recursiveBackPropagate: improvement seen: Set new.
+	node violations do: [ :each | generator injector reward: each kind with: improvement ]
 ]
 
 { #category : 'accessing' }
@@ -220,6 +221,30 @@ MateOGGrammar >> gen: type from: context [
 ]
 
 { #category : 'as yet unclassified' }
+MateOGGrammar >> gen: type from: context validity: aValidity [
+
+	^ self gen: type from: context validity: aValidity violating: MateViolationInjector allKinds
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> gen: type from: context validity: aValidity violating: kinds [
+
+	^ generator gen: type from: context validity: aValidity violating: kinds
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> gen: type validity: aValidity [
+
+	^ self gen: type validity: aValidity violating: MateViolationInjector allKinds
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> gen: type validity: aValidity violating: kinds [
+
+	^ generator gen: type validity: aValidity violating: kinds
+]
+
+{ #category : 'as yet unclassified' }
 MateOGGrammar >> genVariant: derivation [
 
 	^ generator genVariant: derivation
@@ -298,6 +323,12 @@ MateOGGrammar >> mateDefinition: type [
 MateOGGrammar >> parse: object [
 
 	^ parser parse: object
+]
+
+{ #category : 'as yet unclassified' }
+MateOGGrammar >> parse: object strict: aBoolean [
+
+	^ parser parse: object strict: aBoolean
 ]
 
 { #category : 'accessing' }

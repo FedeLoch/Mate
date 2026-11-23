@@ -11,6 +11,12 @@ MatePaperBlocExperiment >> bechmark: blElement [
 	UmeBlocRender render: blElement
 ]
 
+{ #category : 'running' }
+MatePaperBlocExperiment >> mateFullBreaksGrammar [
+
+	^ MateBlocCompleteBreaksGrammar new
+]
+
 { #category : 'as yet unclassified' }
 MatePaperBlocExperiment >> mateFullGrammar [
 

@@ -23,12 +23,6 @@ MateHeapGuardTest >> guardAllowing: megabytes [
 		yourself
 ]
 
-{ #category : 'helpers' }
-MateHeapGuardTest >> watchdogs [
-
-	^ Process allInstances select: [ :each | each name = 'MateHeapGuard watchdog' and: [ each isTerminated not ] ]
-]
-
 { #category : 'tests' }
 MateHeapGuardTest >> testAllocatingPastTheLimitSignalsAnError [
 
@@ -120,4 +114,10 @@ MateHeapGuardTest >> testWatchdogStopsWhenTheBlockEnds [
 		do: [ :e | e return: nil ].
 
 	self assert: self watchdogs size equals: before
+]
+
+{ #category : 'helpers' }
+MateHeapGuardTest >> watchdogs [
+
+	^ Process allInstances select: [ :each | each name = 'MateHeapGuard watchdog' and: [ each isTerminated not ] ]
 ]

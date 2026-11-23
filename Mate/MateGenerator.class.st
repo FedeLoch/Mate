@@ -6,6 +6,9 @@ Class {
 		'maxDerivationHeight',
 		'random',
 		'nilProbability',
+		'injector',
+		'violationsPerObject',
+		'invalidDerivations',
 		'maxObjects',
 		'maxNesting',
 		'objectCount',
@@ -153,6 +156,28 @@ MateGenerator >> gen: type from: context [
 ]
 
 { #category : 'accessing' }
+MateGenerator >> gen: type from: context validity: aValidity violating: kinds [
+
+	| derivation |
+
+	(aValidity between: 0 and: 1) ifFalse: [ self error: 'Validity must be between 0 and 1' ].
+
+	derivation := self gen: type from: context.
+
+	context random next >= aValidity ifTrue: [
+		derivation violations: (self injector inject: violationsPerObject into: derivation kinds: kinds random: context random).
+		derivation isValid ifFalse: [ invalidDerivations at: derivation instance put: derivation ] ].
+
+	^ derivation
+]
+
+{ #category : 'accessing' }
+MateGenerator >> gen: type validity: aValidity violating: kinds [
+
+	^ (self gen: type from: self newContext validity: aValidity violating: kinds) instance
+]
+
+{ #category : 'accessing' }
 MateGenerator >> genVariant: derivation [
 
 	derivation context ensureRandom: random.
@@ -198,8 +223,16 @@ MateGenerator >> initialize [
 	closing := false.
 	truncations := 0.
 	random := Random new.
+	violationsPerObject := 1.
+	invalidDerivations := WeakIdentityKeyDictionary new.
 	instanceGeneator := MateGrammarBaseInstanceGenerator new.
 	builtInGenerators := self class defaultBuiltInGenerators
+]
+
+{ #category : 'accessing' }
+MateGenerator >> injector [
+
+	^ injector ifNil: [ injector := MateViolationInjector new generator: self; yourself ]
 ]
 
 { #category : 'visiting' }
@@ -212,6 +245,12 @@ MateGenerator >> insert: node path: path [
 MateGenerator >> instanceGenerator [
 
 	^ instanceGeneator
+]
+
+{ #category : 'accessing' }
+MateGenerator >> invalidDerivationOf: anInstance [
+
+	^ invalidDerivations at: anInstance ifAbsent: [ nil ]
 ]
 
 { #category : 'accessing' }
@@ -360,6 +399,18 @@ MateGenerator >> softMaxObjects: anInteger [
 MateGenerator >> truncations [
 
 	^ truncations
+]
+
+{ #category : 'accessing' }
+MateGenerator >> violationsPerObject [
+
+	^ violationsPerObject
+]
+
+{ #category : 'accessing' }
+MateGenerator >> violationsPerObject: anInteger [
+
+	violationsPerObject := anInteger
 ]
 
 { #category : 'visiting' }
