@@ -9,67 +9,50 @@ Class {
 { #category : 'accessing' }
 MateRegexGrammar >> defineObjectGraph [
 
-	^ 'RxmLink -> {
-	next: RxmSubstring | RxmPredicate
-}
-
-RxMatcher -> {
+	^ 'RxMatcher -> {
 	matcher: RxmMarker,
 	ignoreCase: Boolean,
 	startOptimizer: RxMatchOptimizer,
-	markerPositions: { type: [ OrderedCollection ], sizeBetween: 0 and: 16 },
-	markerCount: SmallInteger,
-	lastResult: Boolean
-}
-
-Set -> {
-	tally: SmallInteger,
-	array: { type: [ Character ], sizeBetween: 0 and: 16 }
+	markerCount: { type: SmallInteger, between: 2 and: 2 }
 }
 
 RxMatchOptimizer -> {
 	ignoreCase: Boolean,
-	prefixes: Set,
-	nonPrefixes: Set,
-	conditions: Set,
-	testBlock: CleanBlockClosure | FullBlockClosure,
-	methodPredicates: Set,
-	nonMethodPredicates: Set,
-	predicates: Set,
-	nonPredicates: Set,
-	lookarounds: Set
-}
-
-RxmSubstring -> {
-	next: RxmSpecial | RxmMarker | RxmBranch | RxmPredicate,
-	sample: ByteString,
-	compare: CleanBlockClosure
-}
-
-RxmSpecial -> {
-	next: RxmMarker | RxmSubstring | RxmPredicate,
-	matchSelector: ByteSymbol
-}
-
-RxmPredicate -> {
-	next: RxmLink | RxmMarker | RxmBranch | RxmPredicate,
-	predicate: CleanBlockClosure | FullBlockClosure
-}
-
-RxmMarker -> {
-	next: RxmTerminator | RxmLink | RxmBranch,
-	index: SmallInteger
-}
-
-OrderedCollection -> {
-	array: { type: [ Object ], sizeBetween: 0 and: 0 },
-	firstIndex: SmallInteger,
-	lastIndex: SmallInteger
+	prefixes: { type: [ Character ], collection: Set, sizeBetween: 0 and: 5 },
+	nonPrefixes: { type: [ Object ], collection: Set, sizeBetween: 0 and: 0 },
+	conditions: { type: [ ByteSymbol ], collection: Set, sizeBetween: 0 and: 2 },
+	methodPredicates: { type: [ Object ], collection: Set, sizeBetween: 0 and: 0 },
+	nonMethodPredicates: { type: [ Object ], collection: Set, sizeBetween: 0 and: 0 },
+	nonPredicates: { type: [ Object ], collection: Set, sizeBetween: 0 and: 0 },
+	lookarounds: { type: [ Object ], collection: Set, sizeBetween: 0 and: 0 }
 }
 
 RxmBranch -> {
-	next: RxmSpecial | RxmMarker | RxmSubstring | RxmPredicate,
+	next: RxmPredicate | RxmSpecial | RxmSubstring,
 	loopback: Boolean,
-	alternative: RxmLink | RxmMarker | RxmBranch | RxmSubstring
+	alternative: (RxmLink | RxmMarker | RxmSubstring)?
+}
+
+RxmLink -> {
+	next: RxmPredicate | RxmSubstring
+}
+
+RxmMarker -> {
+	next: RxmBranch | RxmTerminator,
+	index: { type: SmallInteger, between: 1 and: 2 }
+}
+
+RxmPredicate -> {
+	next: RxmBranch | RxmLink | RxmMarker | RxmPredicate
+}
+
+RxmSpecial -> {
+	next: RxmMarker | RxmPredicate | RxmSubstring,
+	matchSelector: ByteSymbol
+}
+
+RxmSubstring -> {
+	next: RxmMarker | RxmSpecial,
+	sample: ByteString
 }'
 ]
