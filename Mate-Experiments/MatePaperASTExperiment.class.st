@@ -6,9 +6,9 @@ Class {
 }
 
 { #category : 'running' }
-MatePaperASTExperiment >> bechmark: blElement [
+MatePaperASTExperiment >> bechmark: ast [
 
-	1 halt.
+	^ OpalCompiler new ast: ast; compileOrFail
 ]
 
 { #category : 'as yet unclassified' }
