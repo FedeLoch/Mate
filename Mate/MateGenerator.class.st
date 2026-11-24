@@ -377,7 +377,9 @@ MateGenerator >> set: fieldName to: aValue on: node [
 { #category : 'visiting' }
 MateGenerator >> sizeOf: decl from: context [
 
-	(context level >= maxDerivationHeight and: [ (self isTerminal: decl elementType) not ]) ifTrue: [ ^ 0 ].
+	"At the depth limit, collections of composite elements take their minimum size,
+	so the recursion stops without breaking the grammar (a minimum of 0 still ends it)."
+	(context level >= maxDerivationHeight and: [ (self isTerminal: decl elementType) not ]) ifTrue: [ ^ decl minSize ].
 	closing ifTrue: [ ^ decl minSize ].
 
 	^ (decl minSize to: decl maxSize) atRandom: context random
