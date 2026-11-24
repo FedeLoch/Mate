@@ -4,7 +4,9 @@ Class {
 	#instVars : [
 		'min',
 		'max',
-		'options'
+		'options',
+		'pattern',
+		'excluded'
 	],
 	#category : 'Mate-Constraints',
 	#package : 'Mate',
@@ -42,6 +44,12 @@ MateConstraint class >> lessThan: aValue [
 ]
 
 { #category : 'instance creation' }
+MateConstraint class >> matching: aString [
+
+	^ self new matching: aString
+]
+
+{ #category : 'instance creation' }
 MateConstraint class >> oneOf: aCollection [
 
 	^ self new options: aCollection
@@ -53,7 +61,10 @@ MateConstraint >> = anObject [
 	self == anObject ifTrue: [ ^ true ].
 	self class = anObject class ifFalse: [ ^ false ].
 
-	^ min = anObject min and: [ max = anObject max and: [ options = anObject options ] ]
+	^ min = anObject min and: [
+		  max = anObject max and: [
+			  options = anObject options and: [
+				  pattern = anObject pattern and: [ excluded = anObject excluded ] ] ] ]
 ]
 
 { #category : 'accessing' }
@@ -85,13 +96,15 @@ MateConstraint >> hasOptions [
 { #category : 'comparing' }
 MateConstraint >> hash [
 
-	^ (min hash bitXor: max hash) bitXor: options hash
+	^ (((min hash bitXor: max hash) bitXor: options hash) bitXor: pattern hash) bitXor: excluded hash
 ]
 
 { #category : 'testing' }
 MateConstraint >> includes: aValue [
 
+	(excluded notNil and: [ excluded includes: aValue ]) ifTrue: [ ^ false ].
 	options ifNotNil: [ ^ options includes: aValue ].
+	pattern ifNotNil: [ (aValue isString and: [ aValue matchesRegex: pattern ]) ifFalse: [ ^ false ] ].
 	(min isNil and: [ max isNil ]) ifTrue: [ ^ true ].
 	aValue isNumber ifFalse: [ ^ false ].
 	(min notNil and: [ (aValue >= min) not ]) ifTrue: [ ^ false ].
@@ -102,7 +115,7 @@ MateConstraint >> includes: aValue [
 { #category : 'testing' }
 MateConstraint >> isUnconstrained [
 
-	^ min isNil and: [ max isNil and: [ options isNil ] ]
+	^ min isNil and: [ max isNil and: [ options isNil and: [ pattern isNil and: [ excluded isNil ] ] ] ]
 ]
 
 { #category : 'accessing' }
@@ -142,7 +155,41 @@ MateConstraint >> printOn: aStream [
 
 	aStream nextPutAll: 'MateConstraint('.
 	options ifNotNil: [ aStream nextPutAll: 'in: '; print: options ].
+	pattern ifNotNil: [ aStream nextPutAll: ' matching: '; print: pattern ].
+	excluded ifNotNil: [ aStream nextPutAll: ' except: '; print: excluded ].
 	min ifNotNil: [ aStream nextPutAll: ' min: '; print: min ].
 	max ifNotNil: [ aStream nextPutAll: ' max: '; print: max ].
 	aStream nextPut: $)
+]
+
+{ #category : 'accessing' }
+MateConstraint >> except: aCollection [
+	"Values that the constrained value must never take, even when they match the rest of the constraint."
+
+	excluded := aCollection asArray
+]
+
+{ #category : 'accessing' }
+MateConstraint >> excluded [
+
+	^ excluded
+]
+
+{ #category : 'testing' }
+MateConstraint >> hasPattern [
+
+	^ pattern notNil
+]
+
+{ #category : 'accessing' }
+MateConstraint >> matching: aString [
+	"A regular expression that the whole string or symbol must match."
+
+	pattern := aString
+]
+
+{ #category : 'accessing' }
+MateConstraint >> pattern [
+
+	^ pattern
 ]

@@ -64,6 +64,8 @@ MateLanguageParser >> constraintFrom: dict [
 	(dict includesKey: 'greaterThan') ifTrue: [ constraint greaterThan: (dict at: 'greaterThan') ].
 	(dict includesKey: 'lessThan') ifTrue: [ constraint lessThan: (dict at: 'lessThan') ].
 	(dict includesKey: 'in') ifTrue: [ constraint options: (dict at: 'in') ].
+	(dict includesKey: 'matching') ifTrue: [ constraint matching: (self patternFrom: (dict at: 'matching')) ].
+	(dict includesKey: 'except') ifTrue: [ constraint except: (dict at: 'except') ].
 
 	^ constraint isUnconstrained ifTrue: [ nil ] ifFalse: [ constraint ]
 ]
@@ -362,18 +364,39 @@ MateLanguageParser >> parseIdentifier: stream [
 
 { #category : 'parsing' }
 MateLanguageParser >> parseInvariant: stream [
+	"Either a relation between two numeric fields (start <= stop),
+	or the size of a collection field computed from a path (selector value numArgs = arguments size)."
 
 	| left operator right |
 
-	left := self requireIdentifier: stream.
+	left := self parseInvariantSide: stream.
 	self skipWhitespace: stream.
 	operator := #( '<=' '>=' '<' '>' '=' )
 		detect: [ :each | self match: each from: stream ]
 		ifNone: [ self error: 'Expected a comparison operator' at: stream ].
-	self skipWhitespace: stream.
-	right := self requireIdentifier: stream.
+	right := self parseInvariantSide: stream.
 
-	^ MateInvariant left: left operator: operator right: right
+	(left size = 1 and: [ right size = 1 ]) ifTrue: [
+		^ MateInvariant left: left first operator: operator right: right first ].
+
+	operator = '=' ifTrue: [
+		(right size = 2 and: [ right last = 'size' ]) ifTrue: [ ^ MateSizeInvariant path: left field: right first ].
+		(left size = 2 and: [ left last = 'size' ]) ifTrue: [ ^ MateSizeInvariant path: right field: left first ] ].
+
+	^ self error: 'An invariant compares two fields, or a path with the size of a collection field (path = field size)' at: stream
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> parseInvariantSide: stream [
+	"A field name followed by fields or unary messages, separated by spaces."
+
+	| steps |
+
+	steps := OrderedCollection new.
+	[ self skipWhitespace: stream. self isIdentifierCharacter: stream peek ]
+		whileTrue: [ steps add: (self parseIdentifier: stream) ].
+	steps ifEmpty: [ self error: 'Expected a field name' at: stream ].
+	^ steps asArray
 ]
 
 { #category : 'parsing' }
@@ -486,6 +509,7 @@ MateLanguageParser >> parseRule: stream [
 	selfRefs := result second.
 
 	type := self resolveClass: className.
+	self checkSizeInvariants: result third of: className fields: definition.
 
 	^ MateInstDecl new
 		type: type;
@@ -818,4 +842,32 @@ MateLanguageParser >> skipWhitespace: stream [
 				stream next.
 				[ self expectNotAtEnd: stream. stream next = $" ] whileFalse ]
 			ifFalse: [ stream next ] ]
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> checkSizeInvariants: invariants of: className fields: fieldDeclarations [
+	"The collection of a size invariant is built from the path, so the field the path starts from
+	must be declared, and generated, before the collection."
+
+	| names |
+
+	names := fieldDeclarations collect: [ :each | each name ].
+
+	(invariants select: [ :each | each isSizeInvariant ]) do: [ :invariant | | source target |
+		source := names indexOf: invariant sourceField.
+		target := names indexOf: invariant field.
+		source = 0 ifTrue: [ self error: className, ': invariant ', invariant printString, ' starts from an unknown field ', invariant sourceField ].
+		target = 0 ifTrue: [ self error: className, ': invariant ', invariant printString, ' constrains an unknown field ', invariant field ].
+		((fieldDeclarations at: target) isKindOf: MateInstArrayVarDecl) ifFalse: [
+			self error: className, ': invariant ', invariant printString, ' needs ', invariant field, ' to be a collection' ].
+		source > target ifTrue: [
+			self error: className, ': declare ', invariant sourceField, ' before ', invariant field, ', which invariant ', invariant printString, ' computes from it' ] ]
+]
+
+{ #category : 'parsing' }
+MateLanguageParser >> patternFrom: aString [
+
+	aString isString ifFalse: [ self error: 'matching: expects a regular expression between quotes' ].
+	[ RxParser parse: aString ] on: Error do: [ :e | self error: 'Invalid regular expression ', aString printString, ': ', e messageText ].
+	^ aString
 ]

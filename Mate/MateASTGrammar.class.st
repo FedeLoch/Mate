@@ -9,7 +9,10 @@ Class {
 { #category : 'accessing' }
 MateASTGrammar >> defineObjectGraph [
 
-	^ 'Interval -> {
+	^ '"A selector: unary, binary, or 1 to 3 keywords (methods take at most 3 arguments in this grammar)."
+AnySelector = { type: ByteSymbol, matching: ''[a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_][a-zA-Z0-9_]*\:([a-zA-Z_][a-zA-Z0-9_]*\:)?([a-zA-Z_][a-zA-Z0-9_]*\:)?|[-+*/\\<>=~@%|&?,]+'' }
+
+Interval -> {
 	start: { type: SmallInteger, between: 0 and: 30229 },
 	stop: { type: SmallInteger, between: 0 and: 30482 },
 	step: { type: SmallInteger, between: 0 and: 1 },
@@ -98,39 +101,39 @@ OCMessageNode -> {
 	parentheses: { type: [ Interval ], collection: OrderedCollection, sizeBetween: 0 and: 2 },
 	receiver: OCArrayNode | OCAssignmentNode | OCBlockNode | OCCascadeNode | OCLiteralArrayNode | OCLiteralValueNode | OCMessageNode | OCVariableNode,
 	selector: OCSelectorNode,
-	"TEMPORARY: every message takes exactly 1 argument, because the grammar cannot yet say that
-	 the number of arguments equals the selector''s arity (selector value numArgs = arguments size).
-	 Remove once Mate supports that invariant."
-	arguments: { type: [ OCArrayNode | OCVariableNode | OCLiteralArrayNode | OCLiteralValueNode | OCBlockNode | OCMessageNode ], collection: OrderedCollection, size: 1 },
+	arguments: { type: [ OCArrayNode | OCVariableNode | OCLiteralArrayNode | OCLiteralValueNode | OCBlockNode | OCMessageNode ], collection: OrderedCollection, sizeBetween: 0 and: 3 },
 	keywordsPositions: IntegerArray,
+	"A message takes as many arguments as its selector declares."
+	invariants: { selector value numArgs = arguments size },
 	selfReferences: { selector.parent, receiver.parent, arguments[ .parent ] }
 }
 
 OCMethodNode -> {
 	properties: SmallDictionary?,
-	"TEMPORARY: a fixed 1-argument selector and exactly 1 argument, because the grammar cannot yet say that
-	 the number of arguments equals the selector''s arity (selector numArgs = arguments size).
-	 TEMPORARY: a hardcoded selector, because Mate cannot yet generate strings of a given shape (regex)."
-	selector: { oneOf: { #fuzzed: } },
+	selector: AnySelector,
 	keywordsPositions: IntegerArray,
-	arguments: { type: [ OCVariableNode ], collection: OrderedCollection, size: 1 },
+	arguments: { type: [ OCVariableNode ], collection: OrderedCollection, sizeBetween: 0 and: 3 },
 	pragmas: { type: [ OCPragmaNode ], collection: OrderedCollection, sizeBetween: 0 and: 2 },
 	body: OCSequenceNode,
 	source: ByteString | WideString,
 	replacements: SortedCollection,
 	nodeReplacements: IdentityDictionary,
+	"A method takes as many arguments as its selector declares."
+	invariants: { selector numArgs = arguments size },
 	selfReferences: { arguments[ .parent ], pragmas[ .parent ], body.parent }
 }
 
 OCPragmaNode -> {
 	parent: { refType: OCProgramNode },
-	"TEMPORARY: hardcoded unary pragmas, because Mate cannot yet generate selectors of a given shape (regex),
-	 and pragma arguments would need the arity invariant."
-	selector: { oneOf: { #generated . #fuzzed . #mate } },
+	"Pragmas that Opal interprets (primitives) need specific arguments, so they are left out."
+	selector: { type: ByteSymbol, matching: ''[a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_][a-zA-Z0-9_]*\:([a-zA-Z_][a-zA-Z0-9_]*\:)?([a-zA-Z_][a-zA-Z0-9_]*\:)?|[-+*/\\<>=~@%|&?,]+'',
+		except: { #primitive: . #primitive:module: . #primitive:error: . #primitive:module:error: . #primitive:error:module: } },
 	keywordsPositions: IntegerArray,
+	arguments: { type: [ OCLiteralValueNode ], sizeBetween: 0 and: 3 },
 	left: { type: SmallInteger, between: 0 and: 1902 },
 	right: { type: SmallInteger, between: 0 and: 1960 },
-	invariants: { left < right }
+	invariants: { left < right, selector numArgs = arguments size },
+	selfReferences: { arguments[ .parent ] }
 }
 
 OCReturnNode -> {
@@ -143,10 +146,10 @@ OCReturnNode -> {
 
 OCSelectorNode -> {
 	parent: { refType: OCProgramNode },
-	"TEMPORARY: hardcoded 1-argument selectors (binary and one-keyword), because Mate cannot yet generate
-	 selectors of a given shape (regex), nor match the selector''s arity to the number of arguments.
-	 Selectors that Opal inlines (ifTrue:, and:, whileTrue:, ...) are left out: they require literal blocks."
-	value: { oneOf: { #''+'' . #''-'' . #''*'' . #''='' . #''=='' . #''<'' . #''>'' . #'','' . #''@'' . #''->'' . #at: . #add: . #value: . #includes: . #remove: . #printOn: } }
+	"Any well-formed selector except the ones Opal inlines, which require literal blocks as arguments."
+	value: { type: ByteSymbol, matching: ''[a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_][a-zA-Z0-9_]*\:([a-zA-Z_][a-zA-Z0-9_]*\:)?([a-zA-Z_][a-zA-Z0-9_]*\:)?|[-+*/\\<>=~@%|&?,]+'',
+		except: { #ifTrue: . #ifFalse: . #ifTrue:ifFalse: . #ifFalse:ifTrue: . #and: . #or: . #ifNil: . #ifNotNil: . #ifNil:ifNotNil: . #ifNotNil:ifNil: .
+			#whileTrue: . #whileFalse: . #whileTrue . #whileFalse . #to:do: . #to:by:do: . #timesRepeat: . #repeat . #caseOf: . #caseOf:otherwise: } }
 }
 
 OCSequenceNode -> {

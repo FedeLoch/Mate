@@ -263,3 +263,43 @@ MateViolationTest >> treeGrammar [
 	grammar generator maxDerivationHeight: 4.
 	^ grammar
 ]
+
+{ #category : 'helpers' }
+MateViolationTest >> sendGrammar [
+
+	^ self grammarFrom: 'MateSend -> {
+		selector: { type: ByteSymbol, matching: ''[a-z]+|[a-z]+\:|[a-z]+\:[a-z]+\:'', except: { #value } },
+		arguments: { type: [ SmallInteger ], collection: OrderedCollection, sizeBetween: 0 and: 3 },
+		invariants: { selector numArgs = arguments size } }'
+]
+
+{ #category : 'tests' }
+MateViolationTest >> testPatternViolationsLeaveTheExpression [
+
+	| grammar derivation violation |
+
+	grammar := self sendGrammar.
+	derivation := self derivationWith: #pattern in: grammar of: MateSend.
+	violation := derivation violations first.
+
+	self assert: violation kind equals: #pattern.
+	self assert: violation field equals: 'selector'.
+	self deny: ((violation after matchesRegex: '[a-z]+|[a-z]+\:|[a-z]+\:[a-z]+\:') and: [ violation after ~= #value ]).
+	self should: [ grammar parse: derivation instance ] raise: Error
+]
+
+{ #category : 'tests' }
+MateViolationTest >> testSizeInvariantViolationsChangeTheSizeByOne [
+
+	| grammar derivation violation send |
+
+	grammar := self sendGrammar.
+	derivation := self derivationWith: #invariant in: grammar of: MateSend.
+	violation := derivation violations first.
+	send := derivation instance.
+
+	self assert: violation kind equals: #invariant.
+	self assert: violation field equals: 'arguments'.
+	self assert: (send arguments size - send selector numArgs) abs equals: 1.
+	self should: [ grammar parse: send ] raise: Error
+]

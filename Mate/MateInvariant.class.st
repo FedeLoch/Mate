@@ -85,3 +85,9 @@ MateInvariant >> setLeft: leftField operator: anOperator right: rightField [
 	operator := anOperator.
 	right := rightField
 ]
+
+{ #category : 'testing' }
+MateInvariant >> isSizeInvariant [
+
+	^ false
+]

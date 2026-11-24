@@ -26,3 +26,9 @@ MateByteSymbolGenerator >> initialize [
 	super initialize.
 	stringGenerator := MateByteStringGenerator new type: ByteString
 ]
+
+{ #category : 'translating' }
+MateByteSymbolGenerator >> fromString: aString [
+
+	^ aString asSymbol
+]
