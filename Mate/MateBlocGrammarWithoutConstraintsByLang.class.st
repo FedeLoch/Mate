@@ -36,7 +36,7 @@ BlStrokeStyle -> {
 
 BlBoundsCache -> {
 	boundsInLocal: BlCachedBounds?,
-	element: nil
+	element: nil | BlElement
 }
 
 BlCachedBounds -> {
@@ -123,7 +123,7 @@ BlElementCachedIdentityTransformation -> {
 }
 
 BlElementEventDispatcher -> {
-	owner: nil,
+	owner: nil | BlElement,
 	shortcutHandler: BlShortcutHandlerWithoutShortcuts,
 	activatedElementEvents: BlElementEventDispatcherActivatedEvents
 }
@@ -137,7 +137,7 @@ BlElementFlags -> {
 }
 
 BlElementLocalBounds -> {
-	referenceElement: nil,
+	referenceElement: nil | BlElement,
 	extent: Point,
 	position: Point
 }
