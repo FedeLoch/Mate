@@ -11,6 +11,12 @@ MatePaperASTExperiment >> bechmark: ast [
 	^ OpalCompiler new ast: ast; compileOrFail
 ]
 
+{ #category : 'running' }
+MatePaperASTExperiment >> mateFullBreaksGrammar [
+
+	^ MateASTBreaksGrammar new
+]
+
 { #category : 'as yet unclassified' }
 MatePaperASTExperiment >> mateFullGrammar [
 

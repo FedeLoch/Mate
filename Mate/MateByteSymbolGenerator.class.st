@@ -10,6 +10,12 @@ Class {
 }
 
 { #category : 'translating' }
+MateByteSymbolGenerator >> fromString: aString [
+
+	^ aString asSymbol
+]
+
+{ #category : 'translating' }
 MateByteSymbolGenerator >> generate: aRandom [
 
 	| string |
@@ -25,10 +31,4 @@ MateByteSymbolGenerator >> initialize [
 	
 	super initialize.
 	stringGenerator := MateByteStringGenerator new type: ByteString
-]
-
-{ #category : 'translating' }
-MateByteSymbolGenerator >> fromString: aString [
-
-	^ aString asSymbol
 ]

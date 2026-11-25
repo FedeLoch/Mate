@@ -80,6 +80,19 @@ MateConstraint >> atMost: aValue [
 ]
 
 { #category : 'accessing' }
+MateConstraint >> except: aCollection [
+	"Values that the constrained value must never take, even when they match the rest of the constraint."
+
+	excluded := aCollection asArray
+]
+
+{ #category : 'accessing' }
+MateConstraint >> excluded [
+
+	^ excluded
+]
+
+{ #category : 'accessing' }
 MateConstraint >> greaterThan: aValue [
 
 	min := aValue isInteger
@@ -91,6 +104,12 @@ MateConstraint >> greaterThan: aValue [
 MateConstraint >> hasOptions [
 
 	^ options notNil
+]
+
+{ #category : 'testing' }
+MateConstraint >> hasPattern [
+
+	^ pattern notNil
 ]
 
 { #category : 'comparing' }
@@ -127,6 +146,13 @@ MateConstraint >> lessThan: aValue [
 ]
 
 { #category : 'accessing' }
+MateConstraint >> matching: aString [
+	"A regular expression that the whole string or symbol must match."
+
+	pattern := aString
+]
+
+{ #category : 'accessing' }
 MateConstraint >> max [
 
 	^ max
@@ -150,6 +176,12 @@ MateConstraint >> options: aCollection [
 	options := aCollection asArray
 ]
 
+{ #category : 'accessing' }
+MateConstraint >> pattern [
+
+	^ pattern
+]
+
 { #category : 'printing' }
 MateConstraint >> printOn: aStream [
 
@@ -160,36 +192,4 @@ MateConstraint >> printOn: aStream [
 	min ifNotNil: [ aStream nextPutAll: ' min: '; print: min ].
 	max ifNotNil: [ aStream nextPutAll: ' max: '; print: max ].
 	aStream nextPut: $)
-]
-
-{ #category : 'accessing' }
-MateConstraint >> except: aCollection [
-	"Values that the constrained value must never take, even when they match the rest of the constraint."
-
-	excluded := aCollection asArray
-]
-
-{ #category : 'accessing' }
-MateConstraint >> excluded [
-
-	^ excluded
-]
-
-{ #category : 'testing' }
-MateConstraint >> hasPattern [
-
-	^ pattern notNil
-]
-
-{ #category : 'accessing' }
-MateConstraint >> matching: aString [
-	"A regular expression that the whole string or symbol must match."
-
-	pattern := aString
-]
-
-{ #category : 'accessing' }
-MateConstraint >> pattern [
-
-	^ pattern
 ]

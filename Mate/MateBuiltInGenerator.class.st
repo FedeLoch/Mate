@@ -10,6 +10,17 @@ Class {
 }
 
 { #category : 'translating' }
+MateBuiltInGenerator >> fromString: aString [
+	"Convert a string generated from a regular expression into a value of my type."
+
+	(type includesBehavior: String) ifFalse: [
+		^ self error: 'matching: only applies to strings and symbols, not to ', type name ].
+	^ type = WideString
+		ifTrue: [ aString asWideString ]
+		ifFalse: [ aString asString ]
+]
+
+{ #category : 'translating' }
 MateBuiltInGenerator >> generate [
 
 	^ self generate: SharedRandom globalGenerator
@@ -19,6 +30,16 @@ MateBuiltInGenerator >> generate [
 MateBuiltInGenerator >> generate: aRandom [
 
 	self subclassResponsibility 
+]
+
+{ #category : 'translating' }
+MateBuiltInGenerator >> generateMatching: aConstraint random: aRandom [
+	"A value matching the regular expression of aConstraint and not among its excluded values."
+
+	100 timesRepeat: [ | value |
+		value := self fromString: (MateRegexGenerator generate: aConstraint pattern random: aRandom).
+		(aConstraint includes: value) ifTrue: [ ^ value ] ].
+	^ self error: 'Unable to generate a ', type name, ' satisfying ', aConstraint printString
 ]
 
 { #category : 'translating' }
@@ -59,25 +80,4 @@ MateBuiltInGenerator >> type [
 MateBuiltInGenerator >> type: aClass [
 
 	type := aClass
-]
-
-{ #category : 'translating' }
-MateBuiltInGenerator >> fromString: aString [
-	"Convert a string generated from a regular expression into a value of my type."
-
-	(type includesBehavior: String) ifFalse: [
-		^ self error: 'matching: only applies to strings and symbols, not to ', type name ].
-	^ type = WideString
-		ifTrue: [ aString asWideString ]
-		ifFalse: [ aString asString ]
-]
-
-{ #category : 'translating' }
-MateBuiltInGenerator >> generateMatching: aConstraint random: aRandom [
-	"A value matching the regular expression of aConstraint and not among its excluded values."
-
-	100 timesRepeat: [ | value |
-		value := self fromString: (MateRegexGenerator generate: aConstraint pattern random: aRandom).
-		(aConstraint includes: value) ifTrue: [ ^ value ] ].
-	^ self error: 'Unable to generate a ', type name, ' satisfying ', aConstraint printString
 ]

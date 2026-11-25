@@ -54,6 +54,13 @@ MateGenerator >> builtInInstance: decl constraint: aConstraint from: context [
 	^ (builtInGenerators at: decl type) generateWithConstraint: aConstraint random: context random
 ]
 
+{ #category : 'depth limit' }
+MateGenerator >> canFinish: aType [
+	"Whether some option of aType can be built with finitely many objects."
+
+	^ self type: aType finishesWith: self finishableTypes
+]
+
 { #category : 'looping' }
 MateGenerator >> checkLoopAt: context [
 
@@ -82,6 +89,23 @@ MateGenerator >> checkLoopAt: context [
 		MateGenerationOverflow new signal ]
 ]
 
+{ #category : 'depth limit' }
+MateGenerator >> computeFinishableTypes [
+	"The declared types that have a finite instance: a least fixed point over the grammar."
+
+	| finishable changed |
+
+	finishable := IdentitySet new.
+	[
+		changed := false.
+		grammar typeDeclarations keysAndValuesDo: [ :type :decl |
+			((finishable includes: type) not and: [ self declaration: decl finishesWith: finishable ]) ifTrue: [
+				finishable add: type.
+				changed := true ] ].
+		changed ] whileTrue.
+	^ finishable
+]
+
 { #category : 'visiting' }
 MateGenerator >> cutDerivation: instVarDecl from: context [
 
@@ -93,6 +117,37 @@ MateGenerator >> cutDerivation: instVarDecl from: context [
 	type := (terminals asSortedCollection: [ :a :b | a name <= b name ]) asArray atRandom: context random.
 
 	^ ((self declarationFor: type) visit: self from: context constraint: instVarDecl constraint) declaration: instVarDecl
+]
+
+{ #category : 'depth limit' }
+MateGenerator >> declaration: decl finishesWith: finishable [
+
+	decl isBuiltIn ifTrue: [ ^ true ].
+	(decl respondsTo: #instanceVariableDeclarations) ifFalse: [ ^ true ].
+	^ decl instanceVariableDeclarations allSatisfy: [ :field | self field: field finishesWith: finishable ]
+]
+
+{ #category : 'invariants' }
+MateGenerator >> deriveSizeOf: instVarDecl in: decl on: node from: context [
+	"When a size invariant constrains this collection field, compute its size from the fields already built.
+	A size outside the bounds of the collection regenerates the field the invariant starts from."
+
+	| invariant attempts size |
+
+	invariant := decl invariants
+		detect: [ :each | each isSizeInvariant and: [ each field = instVarDecl name ] ]
+		ifNone: [ ^ self ].
+
+	attempts := 0.
+	[
+		size := invariant sizeFrom: [ :name | (node edges at: name ifAbsent: [ nil ]) ifNotNil: [ :edge | edge instance ] ].
+		size isNil or: [ size isInteger and: [ instVarDecl acceptSize: size ] ] ] whileFalse: [
+			attempts >= self invariantAttempts ifTrue: [
+				^ self error: 'Cannot satisfy ', invariant printString, ' in ', decl type name, ': ', size printString, ' is not an allowed size of ', instVarDecl name ].
+			attempts := attempts + 1.
+			self regenerateField: invariant sourceField of: decl on: node from: context ].
+
+	size ifNotNil: [ derivedSizes at: instVarDecl put: size ]
 ]
 
 { #category : 'visiting' }
@@ -129,6 +184,16 @@ MateGenerator >> enforceInvariantsOf: decl on: node from: context [
 		decl invariants do: [ :invariant | self enforce: invariant of: decl on: node from: context ] ]
 ]
 
+{ #category : 'depth limit' }
+MateGenerator >> field: field finishesWith: finishable [
+
+	(field isKindOf: MateInstRefVarDecl) ifTrue: [ ^ true ].
+	(field isKindOf: MateInstOneOfVarDecl) ifTrue: [ ^ true ].
+	(field isKindOf: MateInstArrayVarDecl) ifTrue: [
+		^ field minSize = 0 or: [ self type: field elementType finishesWith: finishable ] ].
+	^ field nullable or: [ self type: field type finishesWith: finishable ]
+]
+
 { #category : 'visiting' }
 MateGenerator >> fill: decl size: size from: context [
 
@@ -142,6 +207,12 @@ MateGenerator >> fill: decl size: size from: context [
 
 	node instance: (decl collectionFrom: (edges collect: #instance)).
 	^ node
+]
+
+{ #category : 'depth limit' }
+MateGenerator >> finishableTypes [
+
+	^ finishableTypes ifNil: [ finishableTypes := self computeFinishableTypes ]
 ]
 
 { #category : 'accessing' }
@@ -363,6 +434,16 @@ MateGenerator >> regenerate: instVarDecl on: node from: context [
 	node instance instVarNamed: instVarDecl name put: edge instance
 ]
 
+{ #category : 'invariants' }
+MateGenerator >> regenerateField: fieldName of: decl on: node from: context [
+	"Generate a field again while its owner is being built (its instance is not filled yet)."
+
+	| fieldDecl |
+
+	fieldDecl := decl instanceVariableDeclarationNamed: fieldName.
+	node addEdge: (fieldDecl visit: self from: context constraint: nil) at: fieldName
+]
+
 { #category : 'accessing' }
 MateGenerator >> seed: anInteger [
 
@@ -416,6 +497,28 @@ MateGenerator >> softMaxObjects: anInteger [
 MateGenerator >> truncations [
 
 	^ truncations
+]
+
+{ #category : 'depth limit' }
+MateGenerator >> type: aType finishesWith: finishable [
+
+	^ (MateOptionalType typesOf: aType) anySatisfy: [ :each |
+		(grammar typeDeclarations at: each ifAbsent: [ nil ])
+			ifNil: [ true ]
+			ifNotNil: [ :decl | decl isBuiltIn or: [ finishable includes: each ] ] ]
+]
+
+{ #category : 'depth limit' }
+MateGenerator >> typeOf: aType at: context ifNotClosing: aBlock [
+	"Past the depth limit, a union with built-in options (values, nil) takes one of them, so the derivation ends;
+	otherwise the option is chosen as usual."
+
+	| leaves |
+
+	context level >= maxDerivationHeight ifFalse: [ ^ aBlock value ].
+	leaves := (MateOptionalType typesOf: aType) select: [ :each | self isTerminal: each ].
+	(leaves isEmpty or: [ leaves size = (MateOptionalType typesOf: aType) size ]) ifTrue: [ ^ aBlock value ].
+	^ leaves atRandom: context random
 ]
 
 { #category : 'accessing' }
@@ -545,107 +648,4 @@ MateGenerator >> visitOneOfDecl: decl from: context [
 	instance := decl getOne: context.
 
 	^ MateOGBuiltInNode new declaration: decl; instance: instance; context: context
-]
-
-{ #category : 'depth limit' }
-MateGenerator >> canFinish: aType [
-	"Whether some option of aType can be built with finitely many objects."
-
-	^ self type: aType finishesWith: self finishableTypes
-]
-
-{ #category : 'depth limit' }
-MateGenerator >> computeFinishableTypes [
-	"The declared types that have a finite instance: a least fixed point over the grammar."
-
-	| finishable changed |
-
-	finishable := IdentitySet new.
-	[
-		changed := false.
-		grammar typeDeclarations keysAndValuesDo: [ :type :decl |
-			((finishable includes: type) not and: [ self declaration: decl finishesWith: finishable ]) ifTrue: [
-				finishable add: type.
-				changed := true ] ].
-		changed ] whileTrue.
-	^ finishable
-]
-
-{ #category : 'depth limit' }
-MateGenerator >> declaration: decl finishesWith: finishable [
-
-	decl isBuiltIn ifTrue: [ ^ true ].
-	(decl respondsTo: #instanceVariableDeclarations) ifFalse: [ ^ true ].
-	^ decl instanceVariableDeclarations allSatisfy: [ :field | self field: field finishesWith: finishable ]
-]
-
-{ #category : 'invariants' }
-MateGenerator >> deriveSizeOf: instVarDecl in: decl on: node from: context [
-	"When a size invariant constrains this collection field, compute its size from the fields already built.
-	A size outside the bounds of the collection regenerates the field the invariant starts from."
-
-	| invariant attempts size |
-
-	invariant := decl invariants
-		detect: [ :each | each isSizeInvariant and: [ each field = instVarDecl name ] ]
-		ifNone: [ ^ self ].
-
-	attempts := 0.
-	[
-		size := invariant sizeFrom: [ :name | (node edges at: name ifAbsent: [ nil ]) ifNotNil: [ :edge | edge instance ] ].
-		size isNil or: [ size isInteger and: [ instVarDecl acceptSize: size ] ] ] whileFalse: [
-			attempts >= self invariantAttempts ifTrue: [
-				^ self error: 'Cannot satisfy ', invariant printString, ' in ', decl type name, ': ', size printString, ' is not an allowed size of ', instVarDecl name ].
-			attempts := attempts + 1.
-			self regenerateField: invariant sourceField of: decl on: node from: context ].
-
-	size ifNotNil: [ derivedSizes at: instVarDecl put: size ]
-]
-
-{ #category : 'depth limit' }
-MateGenerator >> field: field finishesWith: finishable [
-
-	(field isKindOf: MateInstRefVarDecl) ifTrue: [ ^ true ].
-	(field isKindOf: MateInstOneOfVarDecl) ifTrue: [ ^ true ].
-	(field isKindOf: MateInstArrayVarDecl) ifTrue: [
-		^ field minSize = 0 or: [ self type: field elementType finishesWith: finishable ] ].
-	^ field nullable or: [ self type: field type finishesWith: finishable ]
-]
-
-{ #category : 'depth limit' }
-MateGenerator >> finishableTypes [
-
-	^ finishableTypes ifNil: [ finishableTypes := self computeFinishableTypes ]
-]
-
-{ #category : 'invariants' }
-MateGenerator >> regenerateField: fieldName of: decl on: node from: context [
-	"Generate a field again while its owner is being built (its instance is not filled yet)."
-
-	| fieldDecl |
-
-	fieldDecl := decl instanceVariableDeclarationNamed: fieldName.
-	node addEdge: (fieldDecl visit: self from: context constraint: nil) at: fieldName
-]
-
-{ #category : 'depth limit' }
-MateGenerator >> type: aType finishesWith: finishable [
-
-	^ (MateOptionalType typesOf: aType) anySatisfy: [ :each |
-		(grammar typeDeclarations at: each ifAbsent: [ nil ])
-			ifNil: [ true ]
-			ifNotNil: [ :decl | decl isBuiltIn or: [ finishable includes: each ] ] ]
-]
-
-{ #category : 'depth limit' }
-MateGenerator >> typeOf: aType at: context ifNotClosing: aBlock [
-	"Past the depth limit, a union with built-in options (values, nil) takes one of them, so the derivation ends;
-	otherwise the option is chosen as usual."
-
-	| leaves |
-
-	context level >= maxDerivationHeight ifFalse: [ ^ aBlock value ].
-	leaves := (MateOptionalType typesOf: aType) select: [ :each | self isTerminal: each ].
-	(leaves isEmpty or: [ leaves size = (MateOptionalType typesOf: aType) size ]) ifTrue: [ ^ aBlock value ].
-	^ leaves atRandom: context random
 ]

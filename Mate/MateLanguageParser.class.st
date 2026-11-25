@@ -50,6 +50,26 @@ MateLanguageParser >> at: key in: dict for: ownerKey [
 	^ dict at: key ifAbsent: [ self error: ownerKey, ': requires ', key, ':' ]
 ]
 
+{ #category : 'parsing' }
+MateLanguageParser >> checkSizeInvariants: invariants of: className fields: fieldDeclarations [
+	"The collection of a size invariant is built from the path, so the field the path starts from
+	must be declared, and generated, before the collection."
+
+	| names |
+
+	names := fieldDeclarations collect: [ :each | each name ].
+
+	(invariants select: [ :each | each isSizeInvariant ]) do: [ :invariant | | source target |
+		source := names indexOf: invariant sourceField.
+		target := names indexOf: invariant field.
+		source = 0 ifTrue: [ self error: className, ': invariant ', invariant printString, ' starts from an unknown field ', invariant sourceField ].
+		target = 0 ifTrue: [ self error: className, ': invariant ', invariant printString, ' constrains an unknown field ', invariant field ].
+		((fieldDeclarations at: target) isKindOf: MateInstArrayVarDecl) ifFalse: [
+			self error: className, ': invariant ', invariant printString, ' needs ', invariant field, ' to be a collection' ].
+		source > target ifTrue: [
+			self error: className, ': declare ', invariant sourceField, ' before ', invariant field, ', which invariant ', invariant printString, ' computes from it' ] ]
+]
+
 { #category : 'creation' }
 MateLanguageParser >> constraintFrom: dict [
 
@@ -667,6 +687,14 @@ MateLanguageParser >> parseValue: stream [
 ]
 
 { #category : 'parsing' }
+MateLanguageParser >> patternFrom: aString [
+
+	aString isString ifFalse: [ self error: 'matching: expects a regular expression between quotes' ].
+	[ RxParser parse: aString ] on: Error do: [ :e | self error: 'Invalid regular expression ', aString printString, ': ', e messageText ].
+	^ aString
+]
+
+{ #category : 'parsing' }
 MateLanguageParser >> peekSecond: stream [
 
 	| pos second |
@@ -842,32 +870,4 @@ MateLanguageParser >> skipWhitespace: stream [
 				stream next.
 				[ self expectNotAtEnd: stream. stream next = $" ] whileFalse ]
 			ifFalse: [ stream next ] ]
-]
-
-{ #category : 'parsing' }
-MateLanguageParser >> checkSizeInvariants: invariants of: className fields: fieldDeclarations [
-	"The collection of a size invariant is built from the path, so the field the path starts from
-	must be declared, and generated, before the collection."
-
-	| names |
-
-	names := fieldDeclarations collect: [ :each | each name ].
-
-	(invariants select: [ :each | each isSizeInvariant ]) do: [ :invariant | | source target |
-		source := names indexOf: invariant sourceField.
-		target := names indexOf: invariant field.
-		source = 0 ifTrue: [ self error: className, ': invariant ', invariant printString, ' starts from an unknown field ', invariant sourceField ].
-		target = 0 ifTrue: [ self error: className, ': invariant ', invariant printString, ' constrains an unknown field ', invariant field ].
-		((fieldDeclarations at: target) isKindOf: MateInstArrayVarDecl) ifFalse: [
-			self error: className, ': invariant ', invariant printString, ' needs ', invariant field, ' to be a collection' ].
-		source > target ifTrue: [
-			self error: className, ': declare ', invariant sourceField, ' before ', invariant field, ', which invariant ', invariant printString, ' computes from it' ] ]
-]
-
-{ #category : 'parsing' }
-MateLanguageParser >> patternFrom: aString [
-
-	aString isString ifFalse: [ self error: 'matching: expects a regular expression between quotes' ].
-	[ RxParser parse: aString ] on: Error do: [ :e | self error: 'Invalid regular expression ', aString printString, ': ', e messageText ].
-	^ aString
 ]

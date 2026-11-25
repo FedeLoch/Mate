@@ -19,7 +19,6 @@ Class {
 	#tag : 'Inference'
 }
 
-
 { #category : 'shapes' }
 MateGrammarInferrer class >> symbolShapes [
 	"Shapes of symbols, from the most specific to the most general, as regular expressions."
@@ -50,6 +49,30 @@ MateGrammarInferrer >> acceptBackReference: steps for: aClass ownerClasses: owne
 		description: (MateWriter new writeReferencePath: path)
 		support: support
 		accepted: true
+]
+
+{ #category : 'size invariants' }
+MateGrammarInferrer >> candidateSizePathsFor: target among: fields in: instances [
+	"Paths whose value could be the size of the collection field target:
+	an integer field, the number of arguments of a symbol field, the size of an earlier collection field,
+	or one of these one field further, inside the objects a field holds."
+
+	| paths |
+
+	paths := OrderedCollection new.
+	fields do: [ :field |
+		field = target ifFalse: [ | values |
+			values := instances collect: [ :each | each instVarNamed: field ].
+			(values allSatisfy: [ :each | each isInteger ]) ifTrue: [ paths add: { field } ].
+			(values allSatisfy: [ :each | each isSymbol ]) ifTrue: [ paths add: { field. 'numArgs' } ].
+			((values allSatisfy: [ :each | self isPlainCollection: each ]) and: [ (fields indexOf: field) < (fields indexOf: target) ])
+				ifTrue: [ paths add: { field. 'size' } ].
+			(values allSatisfy: [ :each | self isComposite: each ]) ifTrue: [
+				(self commonFieldsOf: values) do: [ :inner | | innerValues |
+					innerValues := values collect: [ :each | each instVarNamed: inner ].
+					(innerValues allSatisfy: [ :each | each isSymbol ]) ifTrue: [ paths add: { field. inner. 'numArgs' } ].
+					(innerValues allSatisfy: [ :each | each isInteger ]) ifTrue: [ paths add: { field. inner } ] ] ] ] ].
+	^ paths
 ]
 
 { #category : 'relationships' }
@@ -129,6 +152,16 @@ MateGrammarInferrer >> collectionDeclarationFor: profile in: aClass [
 			self record: #size on: aClass field: profile name description: 'minimum size ', sizes min printString, ' generalized to 0, because there are few observations or the elements are objects that may recurse' support: sizes size accepted: false ].
 
 	^ decl
+]
+
+{ #category : 'size invariants' }
+MateGrammarInferrer >> commonFieldsOf: objects [
+
+	| common |
+
+	common := objects first class allInstVarNames.
+	objects do: [ :each | common := common select: [ :name | each class allInstVarNames includes: name ] ].
+	^ common
 ]
 
 { #category : 'relationships' }
@@ -452,6 +485,13 @@ MateGrammarInferrer >> invariantsFor: aClass [
 	^ (invariants , (self sizeInvariantsFor: aClass in: instances)) asArray
 ]
 
+{ #category : 'size invariants' }
+MateGrammarInferrer >> isComposite: anObject [
+
+	^ anObject notNil and: [
+		  (anObject isNumber or: [ anObject isString or: [ anObject isCollection or: [ anObject isBehavior ] ] ]) not ]
+]
+
 { #category : 'declarations' }
 MateGrammarInferrer >> isEnumeration: profile in: aClass [
 
@@ -473,6 +513,12 @@ MateGrammarInferrer >> isEnumeration: profile in: aClass [
 		accepted: false.
 
 	^ false
+]
+
+{ #category : 'size invariants' }
+MateGrammarInferrer >> isPlainCollection: anObject [
+
+	^ anObject notNil and: [ anObject isCollection and: [ anObject isString not ] ]
 ]
 
 { #category : 'accessing' }
@@ -570,6 +616,23 @@ MateGrammarInferrer >> oneOfDeclarationFor: profile in: aClass [
 	^ MateInstOneOfVarDecl new name: profile name; options: options asArray
 ]
 
+{ #category : 'size invariants' }
+MateGrammarInferrer >> order: fieldDeclarations for: invariants [
+	"Generation builds fields in order, and a size invariant computes its collection from its path:
+	move each collection after the field its path starts from."
+
+	| ordered |
+
+	ordered := fieldDeclarations asOrderedCollection.
+	(invariants select: [ :each | each isSizeInvariant ]) do: [ :invariant | | source target |
+		source := ordered detect: [ :each | each name = invariant sourceField ].
+		target := ordered detect: [ :each | each name = invariant field ].
+		(ordered indexOf: source) > (ordered indexOf: target) ifTrue: [
+			ordered remove: target.
+			ordered add: target afterIndex: (ordered indexOf: source) ] ].
+	^ ordered asArray
+]
+
 { #category : 'relationships' }
 MateGrammarInferrer >> pathsFrom: aClass length: length [
 
@@ -635,130 +698,6 @@ MateGrammarInferrer >> sampleOf: aClass [
 
 	step := instances size / maxRelationshipSamples.
 	^ (0 to: maxRelationshipSamples - 1) collect: [ :index | instances at: (index * step) floor + 1 ]
-]
-
-{ #category : 'relationships' }
-MateGrammarInferrer >> statesFrom: values [
-
-	| objectClasses elementClasses states |
-
-	objectClasses := (values select: [ :each | observer isObserved: each ]) collect: #class as: Set.
-	elementClasses := ((values select: [ :each | observer isCollectionValue: each ])
-		flatCollect: [ :each | (observer elementsOf: each) select: [ :element | observer isObserved: element ] ])
-		collect: #class as: Set.
-
-	states := OrderedCollection new.
-	objectClasses ifNotEmpty: [ states add: { #objects. objectClasses asArray } ].
-	elementClasses ifNotEmpty: [ states add: { #collections. elementClasses asArray } ].
-	^ states
-]
-
-{ #category : 'declarations' }
-MateGrammarInferrer >> typeOf: anObject [
-
-	^ (anObject class includesBehavior: Boolean)
-		ifTrue: [ Boolean ]
-		ifFalse: [ anObject class ]
-]
-
-{ #category : 'relationships' }
-MateGrammarInferrer >> unifyReferenceFields [
-
-	| definitions |
-
-	definitions := Set new.
-	referenceFields keysDo: [ :key |
-		definitions add: { key first withAllSuperclasses detect: [ :each | each instVarNames includes: key second ]. key second } ].
-
-	definitions do: [ :definition | | holders type |
-		holders := observer observedClasses select: [ :each | each includesBehavior: definition first ].
-		type := nil.
-		holders do: [ :holder |
-			referenceFields at: { holder. definition second } ifPresent: [ :each | type := self widen: type with: each ].
-			(observer instancesOf: holder) do: [ :instance | | value |
-				value := instance instVarNamed: definition second.
-				(observer isObserved: value) ifTrue: [ type := self widen: type with: value class ] ] ].
-		holders do: [ :holder | referenceFields at: { holder. definition second } put: type ] ]
-]
-
-{ #category : 'declarations' }
-MateGrammarInferrer >> unionOf: values [
-
-	^ values
-		inject: nil
-		into: [ :union :each | MateOptionalType union: union with: (self typeOf: each) ]
-]
-
-{ #category : 'relationships' }
-MateGrammarInferrer >> widen: aClassOrNil with: aClass [
-
-	^ aClassOrNil
-		ifNil: [ aClass ]
-		ifNotNil: [ self commonSuperclassOf: aClassOrNil and: aClass ]
-]
-
-{ #category : 'size invariants' }
-MateGrammarInferrer >> candidateSizePathsFor: target among: fields in: instances [
-	"Paths whose value could be the size of the collection field target:
-	an integer field, the number of arguments of a symbol field, the size of an earlier collection field,
-	or one of these one field further, inside the objects a field holds."
-
-	| paths |
-
-	paths := OrderedCollection new.
-	fields do: [ :field |
-		field = target ifFalse: [ | values |
-			values := instances collect: [ :each | each instVarNamed: field ].
-			(values allSatisfy: [ :each | each isInteger ]) ifTrue: [ paths add: { field } ].
-			(values allSatisfy: [ :each | each isSymbol ]) ifTrue: [ paths add: { field. 'numArgs' } ].
-			((values allSatisfy: [ :each | self isPlainCollection: each ]) and: [ (fields indexOf: field) < (fields indexOf: target) ])
-				ifTrue: [ paths add: { field. 'size' } ].
-			(values allSatisfy: [ :each | self isComposite: each ]) ifTrue: [
-				(self commonFieldsOf: values) do: [ :inner | | innerValues |
-					innerValues := values collect: [ :each | each instVarNamed: inner ].
-					(innerValues allSatisfy: [ :each | each isSymbol ]) ifTrue: [ paths add: { field. inner. 'numArgs' } ].
-					(innerValues allSatisfy: [ :each | each isInteger ]) ifTrue: [ paths add: { field. inner } ] ] ] ] ].
-	^ paths
-]
-
-{ #category : 'size invariants' }
-MateGrammarInferrer >> commonFieldsOf: objects [
-
-	| common |
-
-	common := objects first class allInstVarNames.
-	objects do: [ :each | common := common select: [ :name | each class allInstVarNames includes: name ] ].
-	^ common
-]
-
-{ #category : 'size invariants' }
-MateGrammarInferrer >> isComposite: anObject [
-
-	^ anObject notNil and: [
-		  (anObject isNumber or: [ anObject isString or: [ anObject isCollection or: [ anObject isBehavior ] ] ]) not ]
-]
-
-{ #category : 'size invariants' }
-MateGrammarInferrer >> isPlainCollection: anObject [
-
-	^ anObject notNil and: [ anObject isCollection and: [ anObject isString not ] ]
-]
-
-{ #category : 'size invariants' }
-MateGrammarInferrer >> order: fieldDeclarations for: invariants [
-	"Generation builds fields in order, and a size invariant computes its collection from its path:
-	move each collection after the field its path starts from."
-
-	| ordered |
-
-	ordered := fieldDeclarations asOrderedCollection.
-	(invariants select: [ :each | each isSizeInvariant ]) do: [ :invariant | | source target |
-		source := ordered detect: [ :each | each name = invariant sourceField ].
-		target := ordered detect: [ :each | each name = invariant field ].
-		(ordered indexOf: source) > (ordered indexOf: target) ifTrue: [
-			ordered remove: target.
-			ordered add: target afterIndex: (ordered indexOf: source) ] ].
-	^ ordered asArray
 ]
 
 { #category : 'shapes' }
@@ -831,4 +770,64 @@ MateGrammarInferrer >> sizePathFor: target among: fields in: instances [
 			[ (invariant expectedSizeOf: each) = (each instVarNamed: target) size ] on: Error do: [ false ] ])
 				ifTrue: [ ^ path ] ].
 	^ nil
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> statesFrom: values [
+
+	| objectClasses elementClasses states |
+
+	objectClasses := (values select: [ :each | observer isObserved: each ]) collect: #class as: Set.
+	elementClasses := ((values select: [ :each | observer isCollectionValue: each ])
+		flatCollect: [ :each | (observer elementsOf: each) select: [ :element | observer isObserved: element ] ])
+		collect: #class as: Set.
+
+	states := OrderedCollection new.
+	objectClasses ifNotEmpty: [ states add: { #objects. objectClasses asArray } ].
+	elementClasses ifNotEmpty: [ states add: { #collections. elementClasses asArray } ].
+	^ states
+]
+
+{ #category : 'declarations' }
+MateGrammarInferrer >> typeOf: anObject [
+
+	^ (anObject class includesBehavior: Boolean)
+		ifTrue: [ Boolean ]
+		ifFalse: [ anObject class ]
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> unifyReferenceFields [
+
+	| definitions |
+
+	definitions := Set new.
+	referenceFields keysDo: [ :key |
+		definitions add: { key first withAllSuperclasses detect: [ :each | each instVarNames includes: key second ]. key second } ].
+
+	definitions do: [ :definition | | holders type |
+		holders := observer observedClasses select: [ :each | each includesBehavior: definition first ].
+		type := nil.
+		holders do: [ :holder |
+			referenceFields at: { holder. definition second } ifPresent: [ :each | type := self widen: type with: each ].
+			(observer instancesOf: holder) do: [ :instance | | value |
+				value := instance instVarNamed: definition second.
+				(observer isObserved: value) ifTrue: [ type := self widen: type with: value class ] ] ].
+		holders do: [ :holder | referenceFields at: { holder. definition second } put: type ] ]
+]
+
+{ #category : 'declarations' }
+MateGrammarInferrer >> unionOf: values [
+
+	^ values
+		inject: nil
+		into: [ :union :each | MateOptionalType union: union with: (self typeOf: each) ]
+]
+
+{ #category : 'relationships' }
+MateGrammarInferrer >> widen: aClassOrNil with: aClass [
+
+	^ aClassOrNil
+		ifNil: [ aClass ]
+		ifNotNil: [ self commonSuperclassOf: aClassOrNil and: aClass ]
 ]

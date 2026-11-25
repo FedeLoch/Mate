@@ -25,7 +25,7 @@ OCArrayNode -> {
 	parentheses: { type: [ Interval ], collection: OrderedCollection, sizeBetween: 0 and: 1 },
 	left: { type: SmallInteger, between: 0 and: 9503 },
 	right: { type: SmallInteger, between: 0 and: 30484 },
-	statements: { type: [ OCArrayNode | OCAssignmentNode | OCBlockNode | OCCascadeNode | OCLiteralArrayNode | OCLiteralValueNode | OCMessageNode | OCReturnNode | OCVariableNode ], collection: OrderedCollection, sizeBetween: 0 and: 1229 },
+	statements: { type: [ OCArrayNode | OCAssignmentNode | OCBlockNode | OCCascadeNode | OCLiteralArrayNode | OCLiteralValueNode | OCMessageNode | OCReturnNode | OCVariableNode ], collection: OrderedCollection, sizeBetween: 0 and: 10 },
 	periods: { type: [ SmallInteger ], collection: OrderedCollection, sizeBetween: 0 and: 1228 },
 	invariants: { left < right },
 	selfReferences: { statements[ .parent ] }
@@ -59,7 +59,7 @@ OCCascadeNode -> {
 	parent: { refType: OCProgramNode },
 	properties: SmallDictionary?,
 	parentheses: { type: [ Interval ], collection: OrderedCollection, sizeBetween: 0 and: 1 },
-	messages: { type: [ OCMessageNode ], collection: OrderedCollection, sizeBetween: 2 and: 104 },
+	messages: { type: [ OCMessageNode ], collection: OrderedCollection, sizeBetween: 2 and: 10 },
 	semicolons: { type: [ SmallInteger ], collection: OrderedCollection, sizeBetween: 1 and: 103 },
 	selfReferences: { messages[ .parent ] }
 }
@@ -157,9 +157,9 @@ OCSequenceNode -> {
 	properties: SmallDictionary?,
 	leftBar: { type: SmallInteger, between: 0 and: 7291, nullable: true },
 	rightBar: { type: SmallInteger, between: 0 and: 7295, nullable: true },
-	statements: { type: [ OCArrayNode | OCAssignmentNode | OCBlockNode | OCCascadeNode | OCLiteralArrayNode | OCLiteralValueNode | OCMessageNode | OCReturnNode | OCVariableNode ], collection: OrderedCollection, sizeBetween: 0 and: 178 },
+	statements: { type: [ OCArrayNode | OCAssignmentNode | OCBlockNode | OCCascadeNode | OCLiteralArrayNode | OCLiteralValueNode | OCMessageNode | OCReturnNode | OCVariableNode ], collection: OrderedCollection, sizeBetween: 0 and: 10 },
 	periods: { type: [ SmallInteger ], collection: OrderedCollection, sizeBetween: 0 and: 177 },
-	temporaries: { type: [ OCVariableNode ], collection: OrderedCollection, sizeBetween: 0 and: 36 },
+	temporaries: { type: [ OCVariableNode ], collection: OrderedCollection, sizeBetween: 0 and: 10 },
 	selfReferences: { statements[ .parent ] }
 }
 
@@ -168,8 +168,21 @@ OCVariableNode -> {
 	properties: SmallDictionary?,
 	parentheses: { type: [ Interval ], collection: OrderedCollection, sizeBetween: 0 and: 2 },
 	name: ByteSymbol | ByteString,
-	variable: OCUnresolvedVariable,
+	variable: OCUnresolvedVariable | ArgumentVariable | UndeclaredVariable | TemporaryVariable | CopiedLocalVariable,
 	start: { type: SmallInteger, between: 0 and: 30614 }
+}
+
+ArgumentVariable -> {
+	name: ByteSymbol | ByteString,
+	escaping: Boolean | ByteSymbol,
+	usage: { oneOf: { #read . #write . nil } }
+}
+
+CopiedLocalVariable -> {
+	name: ByteSymbol | ByteString,
+	escaping: Boolean | ByteSymbol,
+	usage: { oneOf: { #read . #write . nil } },
+	originalVar: (ArgumentVariable | TemporaryVariable)
 }
 
 OCWarningNotice -> {
