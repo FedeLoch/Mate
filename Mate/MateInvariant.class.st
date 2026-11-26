@@ -54,6 +54,12 @@ MateInvariant >> holdsFor: anObject [
 	^ self accepts: (anObject instVarNamed: left) with: (anObject instVarNamed: right)
 ]
 
+{ #category : 'testing' }
+MateInvariant >> isSizeInvariant [
+
+	^ false
+]
+
 { #category : 'accessing' }
 MateInvariant >> left [
 

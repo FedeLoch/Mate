@@ -19,6 +19,17 @@ Class {
 	#tag : 'Inference'
 }
 
+{ #category : 'shapes' }
+MateGrammarInferrer class >> symbolShapes [
+	"Shapes of symbols, from the most specific to the most general, as regular expressions."
+
+	^ {
+		  'unary selector' -> '[a-zA-Z_][a-zA-Z0-9_]*'.
+		  'keyword selector' -> '([a-zA-Z_][a-zA-Z0-9_]*\:)+'.
+		  'binary selector' -> '[-+*/\\<>=~@%|&?,]+'.
+		  'selector' -> '[a-zA-Z_][a-zA-Z0-9_]*|([a-zA-Z_][a-zA-Z0-9_]*\:)+|[-+*/\\<>=~@%|&?,]+' }
+]
+
 { #category : 'relationships' }
 MateGrammarInferrer >> acceptBackReference: steps for: aClass ownerClasses: ownerClasses support: support [
 
@@ -38,6 +49,30 @@ MateGrammarInferrer >> acceptBackReference: steps for: aClass ownerClasses: owne
 		description: (MateWriter new writeReferencePath: path)
 		support: support
 		accepted: true
+]
+
+{ #category : 'size invariants' }
+MateGrammarInferrer >> candidateSizePathsFor: target among: fields in: instances [
+	"Paths whose value could be the size of the collection field target:
+	an integer field, the number of arguments of a symbol field, the size of an earlier collection field,
+	or one of these one field further, inside the objects a field holds."
+
+	| paths |
+
+	paths := OrderedCollection new.
+	fields do: [ :field |
+		field = target ifFalse: [ | values |
+			values := instances collect: [ :each | each instVarNamed: field ].
+			(values allSatisfy: [ :each | each isInteger ]) ifTrue: [ paths add: { field } ].
+			(values allSatisfy: [ :each | each isSymbol ]) ifTrue: [ paths add: { field. 'numArgs' } ].
+			((values allSatisfy: [ :each | self isPlainCollection: each ]) and: [ (fields indexOf: field) < (fields indexOf: target) ])
+				ifTrue: [ paths add: { field. 'size' } ].
+			(values allSatisfy: [ :each | self isComposite: each ]) ifTrue: [
+				(self commonFieldsOf: values) do: [ :inner | | innerValues |
+					innerValues := values collect: [ :each | each instVarNamed: inner ].
+					(innerValues allSatisfy: [ :each | each isSymbol ]) ifTrue: [ paths add: { field. inner. 'numArgs' } ].
+					(innerValues allSatisfy: [ :each | each isInteger ]) ifTrue: [ paths add: { field. inner } ] ] ] ] ].
+	^ paths
 ]
 
 { #category : 'relationships' }
@@ -119,6 +154,16 @@ MateGrammarInferrer >> collectionDeclarationFor: profile in: aClass [
 	^ decl
 ]
 
+{ #category : 'size invariants' }
+MateGrammarInferrer >> commonFieldsOf: objects [
+
+	| common |
+
+	common := objects first class allInstVarNames.
+	objects do: [ :each | common := common select: [ :name | each class allInstVarNames includes: name ] ].
+	^ common
+]
+
 { #category : 'relationships' }
 MateGrammarInferrer >> commonSuperclassOf: aClass and: anotherClass [
 
@@ -128,7 +173,7 @@ MateGrammarInferrer >> commonSuperclassOf: aClass and: anotherClass [
 { #category : 'declarations' }
 MateGrammarInferrer >> declarationFor: aClass [
 
-	| instances fieldDeclarations |
+	| instances fieldDeclarations invariants |
 
 	instances := observer instancesOf: aClass.
 
@@ -143,11 +188,14 @@ MateGrammarInferrer >> declarationFor: aClass [
 				in: aClass ]
 		thenSelect: #notNil.
 
+	invariants := (self invariantsFor: aClass) select: [ :each |
+		each isSizeInvariant not or: [ self sizeInvariant: each fitsFields: fieldDeclarations ] ].
+
 	^ MateInstDecl new
 		type: aClass;
-		instanceVariableDeclarations: fieldDeclarations asArray;
+		instanceVariableDeclarations: (self order: fieldDeclarations for: invariants);
 		selfReferences: (backReferences at: aClass ifAbsent: [ #() ]) asArray;
-		invariants: (self invariantsFor: aClass);
+		invariants: invariants;
 		yourself
 ]
 
@@ -217,6 +265,7 @@ MateGrammarInferrer >> fieldDeclarationFor: profile in: aClass [
 		self record: #nullable on: aClass field: profile name description: 'nil in ', profile nilCount printString, ' of ', profile observationCount printString, ' observations' support: profile observationCount accepted: true ].
 
 	profile isNumeric ifTrue: [ decl constraint: (self numericConstraintFor: profile in: aClass) ].
+	(self shapeConstraintFor: profile in: aClass) ifNotNil: [ :constraint | decl constraint: constraint ].
 
 	^ decl
 ]
@@ -433,7 +482,14 @@ MateGrammarInferrer >> invariantsFor: aClass [
 											support: instances size
 											accepted: true ] ] ] ].
 
-	^ invariants asArray
+	^ (invariants , (self sizeInvariantsFor: aClass in: instances)) asArray
+]
+
+{ #category : 'size invariants' }
+MateGrammarInferrer >> isComposite: anObject [
+
+	^ anObject notNil and: [
+		  (anObject isNumber or: [ anObject isString or: [ anObject isCollection or: [ anObject isBehavior ] ] ]) not ]
 ]
 
 { #category : 'declarations' }
@@ -457,6 +513,12 @@ MateGrammarInferrer >> isEnumeration: profile in: aClass [
 		accepted: false.
 
 	^ false
+]
+
+{ #category : 'size invariants' }
+MateGrammarInferrer >> isPlainCollection: anObject [
+
+	^ anObject notNil and: [ anObject isCollection and: [ anObject isString not ] ]
 ]
 
 { #category : 'accessing' }
@@ -554,6 +616,23 @@ MateGrammarInferrer >> oneOfDeclarationFor: profile in: aClass [
 	^ MateInstOneOfVarDecl new name: profile name; options: options asArray
 ]
 
+{ #category : 'size invariants' }
+MateGrammarInferrer >> order: fieldDeclarations for: invariants [
+	"Generation builds fields in order, and a size invariant computes its collection from its path:
+	move each collection after the field its path starts from."
+
+	| ordered |
+
+	ordered := fieldDeclarations asOrderedCollection.
+	(invariants select: [ :each | each isSizeInvariant ]) do: [ :invariant | | source target |
+		source := ordered detect: [ :each | each name = invariant sourceField ].
+		target := ordered detect: [ :each | each name = invariant field ].
+		(ordered indexOf: source) > (ordered indexOf: target) ifTrue: [
+			ordered remove: target.
+			ordered add: target afterIndex: (ordered indexOf: source) ] ].
+	^ ordered asArray
+]
+
 { #category : 'relationships' }
 MateGrammarInferrer >> pathsFrom: aClass length: length [
 
@@ -619,6 +698,78 @@ MateGrammarInferrer >> sampleOf: aClass [
 
 	step := instances size / maxRelationshipSamples.
 	^ (0 to: maxRelationshipSamples - 1) collect: [ :index | instances at: (index * step) floor + 1 ]
+]
+
+{ #category : 'shapes' }
+MateGrammarInferrer >> shapeConstraintFor: profile in: aClass [
+	"Symbols that all have the shape of a selector get a regular expression, from the most specific shape."
+
+	| values |
+
+	values := profile nonNilValues.
+	(values notEmpty and: [ values allSatisfy: [ :each | each class == ByteSymbol ] ]) ifFalse: [ ^ nil ].
+	values size < minimumSupport ifTrue: [ ^ nil ].
+
+	self class symbolShapes do: [ :shape |
+		(values allSatisfy: [ :each | each matchesRegex: shape value ]) ifTrue: [
+			self
+				record: #shape
+				on: aClass
+				field: profile name
+				description: 'every value is a ', shape key
+				support: values size
+				accepted: true.
+			^ MateConstraint matching: shape value ] ].
+
+	^ nil
+]
+
+{ #category : 'size invariants' }
+MateGrammarInferrer >> sizeInvariant: invariant fitsFields: fieldDeclarations [
+
+	| target |
+
+	(fieldDeclarations anySatisfy: [ :each | each name = invariant sourceField ]) ifFalse: [ ^ false ].
+	target := fieldDeclarations detect: [ :each | each name = invariant field ] ifNone: [ ^ false ].
+	^ target isKindOf: MateInstArrayVarDecl
+]
+
+{ #category : 'size invariants' }
+MateGrammarInferrer >> sizeInvariantsFor: aClass in: instances [
+	"For every collection field whose size varies, the first path whose value is always that size."
+
+	| fields invariants |
+
+	fields := aClass allInstVarNames.
+	invariants := OrderedCollection new.
+
+	(fields select: [ :field |
+		(instances allSatisfy: [ :each | self isPlainCollection: (each instVarNamed: field) ])
+			and: [ (instances collect: [ :each | (each instVarNamed: field) size ]) asSet size > 1 ] ])
+		do: [ :target |
+			(self sizePathFor: target among: fields in: instances) ifNotNil: [ :path | | invariant |
+				invariant := MateSizeInvariant path: path field: target.
+				invariants add: invariant.
+				self
+					record: #invariant
+					on: aClass
+					field: target
+					description: invariant printString
+					support: instances size
+					accepted: true ] ].
+
+	^ invariants
+]
+
+{ #category : 'size invariants' }
+MateGrammarInferrer >> sizePathFor: target among: fields in: instances [
+
+	(self candidateSizePathsFor: target among: fields in: instances) do: [ :path | | invariant |
+		invariant := MateSizeInvariant path: path field: target.
+		(instances allSatisfy: [ :each |
+			[ (invariant expectedSizeOf: each) = (each instVarNamed: target) size ] on: Error do: [ false ] ])
+				ifTrue: [ ^ path ] ].
+	^ nil
 ]
 
 { #category : 'relationships' }

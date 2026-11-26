@@ -16,7 +16,7 @@ Class {
 { #category : 'accessing' }
 MateViolationInjector class >> allKinds [
 
-	^ #( #range #oneOf #type #nil #size #element #reference #invariant )
+	^ #( #range #oneOf #pattern #type #nil #size #element #reference #invariant )
 ]
 
 { #category : 'accessing' }
@@ -132,12 +132,16 @@ MateViolationInjector >> invalidValueFor: isInvalid [
 { #category : 'sites' }
 MateViolationInjector >> invariantSitesFor: owner declaration: decl [
 
-	^ decl invariants inject: OrderedCollection new into: [ :sites :invariant | | left right |
+	| sites |
+
+	sites := (decl invariants reject: [ :each | each isSizeInvariant ]) inject: OrderedCollection new into: [ :found :invariant | | left right |
 		left := owner instVarNamed: invariant left.
 		right := owner instVarNamed: invariant right.
 		(left isNumber and: [ right isNumber ]) ifTrue: [
-			sites add: (self site: owner field: invariant left block: [ self violate: invariant on: owner ]) ].
-		sites ]
+			found add: (self site: owner field: invariant left block: [ self violate: invariant on: owner ]) ].
+		found ].
+
+	^ sites addAll: (self sizeInvariantSitesFor: owner declaration: decl); yourself
 ]
 
 { #category : 'testing' }
@@ -190,6 +194,26 @@ MateViolationInjector >> ownersIn: derivation [
 					owners add: instance ] ].
 
 	^ owners
+]
+
+{ #category : 'sites' }
+MateViolationInjector >> patternSitesFor: owner declaration: decl [
+	"Strings and symbols that must match a regular expression: one step outside it."
+
+	^ (decl instanceVariableDeclarations select: [ :each |
+		each class == MateInstVarDecl and: [ each constraint notNil and: [ each constraint hasPattern ] ] ])
+		inject: OrderedCollection new
+		into: [ :sites :each |
+			(owner instVarNamed: each name) ifNotNil: [ :value |
+				(self valuesNotMatching: each constraint near: value) ifNotEmpty: [ :invalidValues |
+					sites add: (self site: owner field: each name block: [
+						self
+							set: each name
+							of: owner
+							to: (invalidValues atRandom: random)
+							kind: #pattern
+							description: 'does not match ', each constraint pattern printString ]) ] ].
+			sites ]
 ]
 
 { #category : 'sites' }
@@ -279,6 +303,20 @@ MateViolationInjector >> sitesIn: derivation kinds: kinds excluding: violations 
 ]
 
 { #category : 'sites' }
+MateViolationInjector >> sizeInvariantSitesFor: owner declaration: decl [
+	"Collections whose size is fixed by a size invariant: one element more or one less."
+
+	^ (decl invariants select: [ :each | each isSizeInvariant ])
+		inject: OrderedCollection new
+		into: [ :sites :invariant | | collection arrayDecl |
+			collection := owner instVarNamed: invariant field.
+			arrayDecl := decl instanceVariableDeclarationNamed: invariant field.
+			((self isCollection: collection of: arrayDecl) and: [ (invariant expectedSizeOf: owner) notNil ]) ifTrue: [
+				sites add: (self site: owner field: invariant field block: [ self violate: invariant of: arrayDecl on: owner ]) ].
+			sites ]
+]
+
+{ #category : 'sites' }
 MateViolationInjector >> sizeSitesFor: owner declaration: decl [
 
 	^ (self arrayDeclarationsOf: decl) inject: OrderedCollection new into: [ :sites :each | | collection |
@@ -305,6 +343,24 @@ MateViolationInjector >> typeSitesFor: owner declaration: decl [
 		sites ]
 ]
 
+{ #category : 'violations' }
+MateViolationInjector >> valuesNotMatching: aConstraint near: aValue [
+	"Values one step away from aValue that the constraint rejects: an excluded value,
+	or aValue with a character that the expression does not accept added, or with its first character removed."
+
+	| candidates |
+
+	candidates := OrderedCollection new.
+	aConstraint excluded ifNotNil: [ :excluded | candidates addAll: excluded ].
+	' #;.0' do: [ :character |
+		candidates add: aValue asString, (String with: character).
+		candidates add: (String with: character), aValue asString ].
+	aValue isEmpty ifFalse: [ candidates add: aValue asString allButFirst ].
+
+	^ (candidates collect: [ :each | aValue isSymbol ifTrue: [ each asSymbol ] ifFalse: [ each ] ])
+		reject: [ :each | aConstraint includes: each ]
+]
+
 { #category : 'values' }
 MateViolationInjector >> valuesOutside: aConstraint [
 
@@ -320,6 +376,31 @@ MateViolationInjector >> valuesOutside: aConstraint [
 		values add: (min isInteger ifTrue: [ min - 1 ] ifFalse: [ min asFloat predecessor ]) ].
 
 	^ values asArray
+]
+
+{ #category : 'violations' }
+MateViolationInjector >> violate: invariant of: arrayDecl on: owner [
+	"Give the collection one element more or one less than the invariant computes."
+
+	| elements expected |
+
+	elements := (owner instVarNamed: invariant field) asArray.
+	expected := invariant expectedSizeOf: owner.
+
+	(expected > 0 and: [ random next < 0.5 ]) ifTrue: [
+		^ self
+			set: invariant field
+			of: owner
+			to: (arrayDecl collectionFrom: (elements first: expected - 1))
+			kind: #invariant
+			description: 'breaks ', invariant printString, ' with one element less' ].
+
+	^ self
+		set: invariant field
+		of: owner
+		to: (arrayDecl collectionFrom: (elements copyWith: (generator gen: ((MateOptionalType typesOf: arrayDecl elementType) atRandom: random))))
+		kind: #invariant
+		description: 'breaks ', invariant printString, ' with one element more'
 ]
 
 { #category : 'mutating' }

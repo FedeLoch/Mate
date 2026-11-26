@@ -198,8 +198,11 @@ Example -> {
   owner: { refType: Example },
   low: SmallInteger,
   high: SmallInteger,
+  name: { type: ByteSymbol, matching: '[a-z][a-zA-Z0-9]*', except: { #self . #super } },
+  selector: { type: ByteSymbol, matching: '[a-z]+|[a-z]+\:|[a-z]+\:[a-z]+\:' },
+  arguments: { type: [ SmallInteger ], sizeBetween: 0 and: 2 },
   selfReferences: { children[ .owner ] },
-  invariants: { low <= high }
+  invariants: { low <= high, selector numArgs = arguments size }
 }
 ```
 
@@ -216,7 +219,10 @@ Example -> {
 | `collection: OrderedCollection` | Generate the elements into this collection class (`Array`, `OrderedCollection`, `Set`, `IdentitySet` or `Bag`) through `withAll:` instead of an `Array` |
 | `refType: T` | Reference filled by a `selfReferences` path, not generated |
 | `X class`, `X classTrait` | Metaclass types |
+| `matching: 'regex'` | A string or symbol that matches the whole regular expression (Pharo syntax: escape `:` as `\:`); see [String shapes](#string-shapes) |
+| `except: { ... }` | Values the field never takes, even when they satisfy the rest of the description |
 | `invariants: { a <= b }` | A relation between two numeric fields of the same object (`<`, `<=`, `=`, `>`, `>=`); generation retries or repairs the fields until it holds, and validation rejects objects that break it |
+| `invariants: { path = field size }` | The size of a collection field computed from a path, such as `selector numArgs = arguments size`; see [Size invariants](#size-invariants) |
 
 Identifiers may contain letters, digits and `_`. Numbers may be negative and use decimals or exponents. Malformed input raises an error that includes the position where parsing failed.
 
@@ -244,6 +250,42 @@ Canvas -> { shapes: { type: [ Shape ], sizeBetween: 0 and: 10 }, selected: (Shap
 - Aliases only exist in the grammar: generation and validation see the types they stand for. Each use gets its own copy, so every field keeps its own rewards and visit counts during guided fuzzing.
 - `mateDefinition` writes the aliases first, sorted by name, keeps their names in the rules, and its output parses back into the same grammar.
 
+### Size invariants
+
+A size invariant fixes the size of a collection field from a value computed on the same object:
+
+```smalltalk
+OCMessageNode -> {
+	receiver: OCLiteralValueNode | OCVariableNode | OCMessageNode,
+	selector: OCSelectorNode,
+	arguments: { type: [ OCLiteralValueNode | OCVariableNode ], collection: OrderedCollection, sizeBetween: 0 and: 3 },
+	invariants: { selector value numArgs = arguments size }
+}
+```
+
+- The left side is a path: a field of the object, then steps separated by spaces. A step reads a field of the previous value when it has one (`value` of the selector node), and sends a unary message otherwise (`numArgs`). The right side is a collection field followed by `size`. Both sides can be swapped.
+- Generation builds fields in the order they are declared, and computes the size of the collection from the path, so the field the path starts from must be declared before the collection; parsing rejects the grammar otherwise.
+- When the computed size is outside the collection's `sizeBetween:`, the field the path starts from is generated again, up to 30 times, and generation fails after that.
+- The computed size is kept at the depth limit and when collections are shrunk, since a different size would break the invariant.
+- Validation computes the path on the object and compares it with the size of the collection.
+
+### String shapes
+
+`matching:` gives the shape of a string or symbol as a regular expression, and `except:` lists values to leave out:
+
+```smalltalk
+OCSelectorNode -> {
+	value: { type: ByteSymbol,
+		matching: '[a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_][a-zA-Z0-9_]*\:([a-zA-Z_][a-zA-Z0-9_]*\:)?|[-+*/\\<>=~@%|&?,]+',
+		except: { #ifTrue: . #ifFalse: . #and: . #or: . #whileTrue: . #timesRepeat: } }
+}
+```
+
+- The expression uses Pharo's syntax (`RxParser`), where `:` introduces a character class such as `[:alpha:]`, so a literal colon is written `\:`. The whole value must match. Parsing rejects an expression that does not compile.
+- Generation walks the parsed expression: an alternation chooses a branch, a repetition chooses how many times (`*` and `+` add at most 8 repetitions to their minimum), and a character class chooses one of its characters (printable ASCII for classes such as `\w`, `.` or negated ones). Values in `except:` are generated again.
+- Validation checks `matchesRegex:` and that the value is not in `except:`. `except:` also works with `in:` lists.
+- `matching:` applies to `ByteString`, `WideString` and `ByteSymbol` fields.
+
 ## Fuzzing
 
 ### Reproducible generation
@@ -269,7 +311,13 @@ Built-in generators are biased toward values that tend to expose bugs, and alway
 
 ### Depth limit and nullable fields
 
-Generation stops recursing at `maxDerivationHeight` (12 by default). At the limit, a field whose type could recurse into an object that is already being built takes a non-recursive option of its type if it has one, otherwise it is set to `nil`; other fields are generated as usual. Nullable fields are set to `nil` with probability `nilProbability` (0.1 by default):
+Generation stops recursing at `maxDerivationHeight` (12 by default). Past the limit:
+
+- a field or collection element whose type is a union with built-in options (values, `nil`) takes one of them;
+- a collection of objects takes its minimum size when its elements can be built with finitely many objects (a cascade keeps its two messages), and is left empty when they cannot (a node that always needs two nodes of its own type);
+- a collection sized by a size invariant keeps that size.
+
+Nullable fields are set to `nil` with probability `nilProbability` (0.1 by default):
 
 ```smalltalk
 grammar generator maxDerivationHeight: 6; nilProbability: 0.2.
@@ -342,12 +390,13 @@ derivation violations.
 | --- | --- |
 | `#range` | a number just outside its bounds (`level := 100` when the range is 0..99) |
 | `#oneOf` | a value outside a `oneOf:` or `in:` list |
+| `#pattern` | a string or symbol one step outside its `matching:` expression (a character added or removed), or one of its `except:` values |
 | `#type` | a value of a class the field does not accept, or a non-collection in a collection field |
 | `#nil` | `nil` in a field that is not nullable |
 | `#size` | a collection one element over its maximum or under its minimum |
 | `#element` | a collection element of a class the collection does not accept |
 | `#reference` | a back-reference that no longer points to its owner (`child parent := nil`) |
-| `#invariant` | two fields that break an `invariants:` relation |
+| `#invariant` | two fields that break an `invariants:` relation, or a collection with one element more or one less than its size invariant computes |
 
 You can restrict the kinds, or break more than one rule per invalid object (each on a different field):
 
@@ -446,6 +495,8 @@ What it infers:
 | Collections | element types (including `nil` when collections have empty slots), the collection class (`Array`, `OrderedCollection`, `Set`, `IdentitySet`, `Bag`) and size ranges, observed through their elements rather than their private slots. Collections of plain values keep their observed minimum size (a polygon needs its vertices); collections of objects always allow 0 elements, so recursive structures can end |
 | Back-references | paths of up to three steps where an object always reaches itself, such as `children[ .parent ]` or Bloc's `children.array[ .parent ]`; the closing field becomes a `refType`. When two objects point at each other (an element and its event dispatcher), only the direction that starts from the object nearer the observed roots is kept, so generation, which builds graphs from the root down, creates both objects. A path found for one class is shared with the other classes of its hierarchy where it also holds, and an inherited closing field (such as `parent`) gets one reference type for the whole hierarchy |
 | Invariants | `<`, `<=` or `=` between numeric fields of the same object, unless the ranges already imply them |
+| Size invariants | `path = field size` for a collection whose size varies, when one path always gives its size: an integer field, `numArgs` of a symbol field, `size` of an earlier collection, or one of these one field further (`selector value numArgs`). The collection is moved after the field the path starts from |
+| String shapes | `matching:` for `ByteSymbol` fields that are not enumerations, when every value has the shape of a unary, keyword or binary selector, or of any selector (`MateGrammarInferrer symbolShapes`). `except:` is never inferred |
 
 Every decision is recorded, including the rejected ones, so you can review them:
 

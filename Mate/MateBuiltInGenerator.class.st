@@ -10,6 +10,17 @@ Class {
 }
 
 { #category : 'translating' }
+MateBuiltInGenerator >> fromString: aString [
+	"Convert a string generated from a regular expression into a value of my type."
+
+	(type includesBehavior: String) ifFalse: [
+		^ self error: 'matching: only applies to strings and symbols, not to ', type name ].
+	^ type = WideString
+		ifTrue: [ aString asWideString ]
+		ifFalse: [ aString asString ]
+]
+
+{ #category : 'translating' }
 MateBuiltInGenerator >> generate [
 
 	^ self generate: SharedRandom globalGenerator
@@ -22,6 +33,16 @@ MateBuiltInGenerator >> generate: aRandom [
 ]
 
 { #category : 'translating' }
+MateBuiltInGenerator >> generateMatching: aConstraint random: aRandom [
+	"A value matching the regular expression of aConstraint and not among its excluded values."
+
+	100 timesRepeat: [ | value |
+		value := self fromString: (MateRegexGenerator generate: aConstraint pattern random: aRandom).
+		(aConstraint includes: value) ifTrue: [ ^ value ] ].
+	^ self error: 'Unable to generate a ', type name, ' satisfying ', aConstraint printString
+]
+
+{ #category : 'translating' }
 MateBuiltInGenerator >> generateWithConstraint: aConstraint [
 
 	^ self generateWithConstraint: aConstraint random: SharedRandom globalGenerator
@@ -31,7 +52,10 @@ MateBuiltInGenerator >> generateWithConstraint: aConstraint [
 MateBuiltInGenerator >> generateWithConstraint: aConstraint random: aRandom [
 
 	aConstraint ifNil: [ ^ self generate: aRandom ].
-	aConstraint hasOptions ifTrue: [ ^ aConstraint options atRandom: aRandom ].
+	aConstraint hasOptions ifTrue: [
+		^ (aConstraint options reject: [ :each | aConstraint excluded notNil and: [ aConstraint excluded includes: each ] ])
+			atRandom: aRandom ].
+	aConstraint hasPattern ifTrue: [ ^ self generateMatching: aConstraint random: aRandom ].
 
 	^ self generateWithin: aConstraint random: aRandom
 ]

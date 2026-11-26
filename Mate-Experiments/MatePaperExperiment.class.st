@@ -37,60 +37,61 @@ MatePaperExperiment >> evalConfiguration: conf condition: condition [
 	incrCoverageResult := IncrementalCoverageResult for: {  } from: collector.
 	cases := OrderedCollection new.
 	iterations := 0.
-	initialMilliseconds := Time primMillisecondClock.
+	initialMilliseconds := Time millisecondClockValue.
 	errors := IdentitySet new.
 
 	collector installOn: [
-		[ condition value: iterations value: initialMilliseconds ] whileFalse: [ | generated result diff initialCaseTime |
-			initialCaseTime := Time primMillisecondClock.
-			generated := nil.
-			collector resetResult.
+			[ condition value: iterations value: initialMilliseconds ] whileFalse: [
+					| generated result diff initialCaseTime |
+					initialCaseTime := Time millisecondClockValue.
+					generated := nil.
+					collector resetResult.
 
-			isError := false.
-			collector basicRun: [
-				[
-					self withHeapLimit: [
-						generated := self genOne: conf.
-						self withTimeout: [ self bechmark: generated ] phase: 'benchmark' ] ] onErrorDo: [ :e |
-						(e isKindOf: MateHeapLimitReached) ifTrue: [ generated := nil ].
-						errors add: e description.
-						invalids := invalids + 1.
-						isError := true ] ].
-			result := collector collectResult.
-			diff := result nodes difference: incrCoverageResult nodes.
-			
-			"feed the generator"
-			generated ifNotNil: [
-				[ self withHeapLimit: [ self feed: conf input: generated diff: diff ] ]
-					on: MateHeapLimitReached
-					do: [ :e |
-						generated := nil.
-						errors add: e description.
-						isError := true ] ].
-			
-			"add the new case with the current code coverage result for this new generated"
-			cases add: {
-				('caseReachedCoverage' -> (result percentage asFloat)).
-				('elapsedTime' -> (Time primMillisecondClock - initialCaseTime)).
-				('newPaths' -> (diff collect: #path)).
-				('isError' -> isError)
-			} asDictionary.
-			incrCoverageResult incrementWith: result.
-			iterations := iterations + 1.
-		]
-	].
+					isError := false.
+					collector basicRun: [
+							[
+								self withHeapLimit: [
+										generated := self genOne: conf.
+										self withTimeout: [ self bechmark: generated ] phase: 'benchmark' ] ] onErrorDo: [ :e |
+									(e isKindOf: MateHeapLimitReached) ifTrue: [ generated := nil ].
+									errors add: e description.
+									invalids := invalids + 1.
+									isError := true ] ].
+					result := collector collectResult.
+					diff := result nodes difference: incrCoverageResult nodes.
+
+					"feed the generator"
+					generated ifNotNil: [
+							[ self withHeapLimit: [ self feed: conf input: generated diff: diff ] ]
+								on: MateHeapLimitReached
+								do: [ :e |
+										generated := nil.
+										errors add: e description.
+										isError := true ] ].
+
+					"add the new case with the current code coverage result for this new generated"
+					cases add: {
+							('caseReachedCoverage' -> result percentage asFloat).
+							('elapsedTime' -> (Time millisecondClockValue - initialCaseTime)).
+							('newPaths' -> (diff collect: #path)).
+							('isError' -> isError) } asDictionary.
+					incrCoverageResult incrementWith: result.
+					iterations := iterations + 1 ] ].
 
 	^ {
-		  ('errors' -> (errors inject: Dictionary new into: [ :dict :elem | | key |
-				key := elem takeFirst: 200.
-				dict at: key ifPresent: [ :curr | dict at: key put: (curr + 1) ]  ifAbsentPut: [ 1 ].
-			dict])).
+		  ('errors' -> (errors inject: Dictionary new into: [ :dict :elem |
+				    | key |
+				    key := elem takeFirst: 200.
+				    dict at: key ifPresent: [ :curr | dict at: key put: curr + 1 ] ifAbsentPut: [ 1 ].
+				    dict ])).
 		  ('configuration' -> conf class name).
 		  ('totalIterations' -> iterations).
-		  ('totalTimeInMilliseconds' -> (Time primMillisecondClock - initialMilliseconds)).
+		  ('totalTimeInMilliseconds' -> (Time millisecondClockValue - initialMilliseconds)).
 		  ('reachedCoverage' -> incrCoverageResult percentage asFloat).
 		  ('reachedPaths' -> (incrCoverageResult nodes collect: #path)).
-		  ('validityRate' -> (iterations = 0 ifTrue: [ 0.0 ] ifFalse: [ (iterations - invalids / iterations) asFloat ])).
+		  ('validityRate' -> (iterations = 0
+			    ifTrue: [ 0.0 ]
+			    ifFalse: [ (iterations - invalids / iterations) asFloat ])).
 		  ('cases' -> cases) } asDictionary
 ]
 
@@ -183,16 +184,14 @@ MatePaperExperiment >> rootType [
 
 { #category : 'running' }
 MatePaperExperiment >> run: fileName duration: duration [
-	
-	| maxMilliseconds|
-	
+
+	| maxMilliseconds |
 	maxMilliseconds := duration asMilliSeconds.
-	
+
 	^ self run: fileName withBlock: [ :conf |
-		self evalConfiguration: conf condition: [ :its :initialTimeMill |
-			(Time primMillisecondClock - initialTimeMill) >= maxMilliseconds
-		]
-	]
+			  self
+				  evalConfiguration: conf
+				  condition: [ :its :initialTimeMill | Time millisecondClockValue - initialTimeMill >= maxMilliseconds ] ]
 ]
 
 { #category : 'running' }

@@ -228,6 +228,12 @@ MateWriter >> writeConstraint: aConstraint on: aStream [
 		aStream nextPutAll: ', atLeast: '; nextPutAll: (self writeLiteral: aConstraint min) ].
 	(aConstraint min isNil and: [ aConstraint max notNil ]) ifTrue: [
 		aStream nextPutAll: ', atMost: '; nextPutAll: (self writeLiteral: aConstraint max) ].
+	aConstraint hasPattern ifTrue: [
+		aStream nextPutAll: ', matching: '; nextPutAll: aConstraint pattern storeString ].
+	aConstraint excluded ifNotNil: [ :excluded |
+		aStream nextPutAll: ', except: { '.
+		excluded do: [ :each | aStream nextPutAll: (self writeLiteral: each) ] separatedBy: [ aStream nextPutAll: ' . ' ].
+		aStream nextPutAll: ' }' ].
 	aConstraint hasOptions ifTrue: [
 		aStream nextPutAll: ', in: [ '.
 		aConstraint options do: [ :each | aStream nextPutAll: (self writeLiteral: each) ] separatedBy: [ aStream nextPutAll: ', ' ].
@@ -237,7 +243,11 @@ MateWriter >> writeConstraint: aConstraint on: aStream [
 { #category : 'writing' }
 MateWriter >> writeLiteral: anObject [
 
-	anObject isSymbol ifTrue: [ ^ anObject storeString ].
+	"The language reads #name and #key:words:, and any other symbol between quotes (#'+')."
+	anObject isSymbol ifTrue: [
+		^ (anObject notEmpty and: [ anObject allSatisfy: [ :each | each isAlphaNumeric or: [ each = $_ or: [ each = $: ] ] ] ])
+			ifTrue: [ '#', anObject ]
+			ifFalse: [ '#', anObject asString storeString ] ].
 	anObject isString ifTrue: [ ^ anObject storeString ].
 	anObject isInteger ifTrue: [ ^ anObject printString ].
 	anObject isFloat ifTrue: [

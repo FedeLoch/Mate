@@ -10,6 +10,12 @@ Class {
 }
 
 { #category : 'translating' }
+MateByteSymbolGenerator >> fromString: aString [
+
+	^ aString asSymbol
+]
+
+{ #category : 'translating' }
 MateByteSymbolGenerator >> generate: aRandom [
 
 	| string |
