@@ -24,6 +24,24 @@ MatePaperASTExperiment >> mateFullGrammar [
 ]
 
 { #category : 'running' }
+MatePaperASTExperiment >> mateRandomInstanceSelectionWithoutConstraintsGrammar [
+
+	^ MateASTWithoutConstraintsAndRandomRefSelectionGrammar new
+]
+
+{ #category : 'running' }
+MatePaperASTExperiment >> mateWithRefsWithoutConstraintsGrammar [
+
+	^ MateASTWithoutConstraintsGrammar new
+]
+
+{ #category : 'running' }
+MatePaperASTExperiment >> mateWithoutRefsAndOptionalNilGrammarWithoutConstraints [
+
+	^ MateASTWithoutConstraintsNilSelectionGrammar new
+]
+
+{ #category : 'running' }
 MatePaperASTExperiment >> methodsToInstrument [
 
 	^ OCMethodNode package methods
